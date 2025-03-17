@@ -88,7 +88,8 @@ class MoyuV10CubeConnection extends SmartCubeConnection {
 
         this.deviceName = this.device.name.trim();
 
-        this.mac = 'CF:30:16:00:' + this.deviceName.slice(9, 11) + ':' + this.deviceName.slice(11, 13);
+        // 00 for v10 ai
+        this.mac = 'CF:30:16:01:' + this.deviceName.slice(9, 11) + ':' + this.deviceName.slice(11, 13);
 
         this.lastTs = 0;
         this.moveCnt = -1;
@@ -103,6 +104,8 @@ class MoyuV10CubeConnection extends SmartCubeConnection {
             key[i] = (key[i] + value[5 - i]) % 255;
             iv[i] = (iv[i] + value[5 - i]) % 255;
         }
+        console.log(key);
+        console.log(iv);
         return [key, iv];
     }
 

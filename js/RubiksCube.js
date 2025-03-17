@@ -56,6 +56,8 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+const uSideIndices = new Set([9, 10, 11, 18, 19, 20, 36, 37, 38, 45, 46, 47]);
+
 // find a non-center sticker that does not move for the entire alg
 function findPivot(alg) {
     let cube = new RubiksCube();
@@ -67,11 +69,15 @@ function findPivot(alg) {
         states.push(cube.getMaskValues());
     }
     
-    console.log(states.map(state => state.join(",")).join("\n"));
+    // console.log(states.map(state => state.join(",")).join("\n"));
     
     for (let i = 0; i < 54; ++i) {
         // skip centers
         if (i % 9 == 4) continue;
+
+        // skip U layer
+        if (i < 9) continue;
+        if (uSideIndices.has(i)) continue;
 
         let stateSet = new Set();
         for (let state of states) {
