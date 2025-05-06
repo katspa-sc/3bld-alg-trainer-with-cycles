@@ -351,8 +351,8 @@ function showPage(){
 }
 
 var defaults = {"useVirtual":true,
-                "hideTimer":true,
-                "includeRecognitionTime":false,
+                "hideTimer":false,
+                "includeRecognitionTime":true,
                 "showScramble":true,
                 "realScrambles":false,
                 "randAUF":false,
