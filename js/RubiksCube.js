@@ -31,6 +31,28 @@ var currentAlgIndex = 0;
 var algorithmHistory = [];
 var shouldRecalculateStatistics = true;
 
+let utterance = null;
+let selectedVoice = null;
+
+// Load available voices and select a specific one
+function loadVoices() {
+    var voices = window.speechSynthesis.getVoices();
+    var filteredVoices = voices.filter(voice => voice.lang.startsWith('pl'));
+
+    // Find the desired voice by name or language
+    selectedVoice = filteredVoices[1];
+    if (!selectedVoice) {
+        console.warn("Desired voice not found. Using default voice.");
+    }
+}
+
+// Ensure voices are loaded (some browsers load them asynchronously)
+if (typeof speechSynthesis !== "undefined" && speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+} else {
+    loadVoices();
+}
+
 Cube.initSolver();
 
 const holdingOrientation = document.getElementById('holdingOrientation');
@@ -705,7 +727,7 @@ function addAUFs(algArr){
 // }
 
 function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
-    console.log("raw alg: ", raw_alg);
+  //  console.log("raw alg: ", raw_alg);
     const scramble = !obfuscateAlg
         ? alg.cube.invert(raw_alg)
         : obfuscate(alg.cube.invert(raw_alg));
@@ -714,7 +736,7 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     cube.resetCube();
     cube.doAlgorithm(scramble);
 
-    console.log("Scramble applied to cube:", scramble);
+   // console.log("Scramble applied to cube:", scramble);
 
     const edgeBufferPosition = 7; // UF sticker index
     const cornerBufferPosition = 8; // UFR sticker index
@@ -735,6 +757,8 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
 
     const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
+    speakText(letters.join(' '));
+
     // Concatenate the letters to form the result
     const cycleLetters = letters.join('');
 
@@ -749,7 +773,7 @@ function testGenerateAlgScramble() {
     const shouldPrescramble = false; // Set to true if you want to test pre-scrambling
 
     const result = generateAlgScramble(rawAlgStr, obfuscateAlg, shouldPrescramble);
-    console.log("Generated Scramble:", result);
+  //  console.log("Generated Scramble:", result);
 }
 
 
@@ -915,7 +939,7 @@ function testAlg(algTest, addToHistory=true){
     if (addToHistory){
         algorithmHistory.push(algTest);
     }
-    console.log(algTest);
+ //   console.log(algTest);
 
 }
 
@@ -946,7 +970,7 @@ function updateAlgsetStatistics(algList){
 
 function reTestAlg(){
     var lastTest = algorithmHistory[algorithmHistory.length-1];
-    console.log(lastTest);
+ //   console.log(lastTest);
     if (lastTest==undefined){
         return;
     }
@@ -1033,7 +1057,7 @@ function displayAlgorithmFromHistory(index){
 
     var algTest = algorithmHistory[index];
 
-    console.log( algTest );
+  //  console.log( algTest );
 
     var timerText;
     if (algTest.solveTime == null){
@@ -1393,7 +1417,7 @@ function nextScramble(displayReady=true){
     if (isUsingVirtualCube() ){
         testAlg(generateAlgTest());
         if (isIncludeRecognitionTime) {
-            console.log("start timer");
+    //        console.log("start timer");
             startTimer();
         } 
     }
@@ -2081,3 +2105,27 @@ RubiksCube.prototype.getThreeCycleMapping = function(edgeBuffer, cornerBuffer) {
 
     return cycle;
 };
+
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        if (!utterance) {
+            // Create the utterance instance only once
+            utterance = new SpeechSynthesisUtterance();
+            utterance.lang = 'pl-PL'; // Set language
+            utterance.rate = 1; // Adjust speed if needed
+                    // Set the voice if available
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+        }
+
+        // Stop any ongoing speech before speaking new text
+        window.speechSynthesis.cancel();
+
+        // Update the text and speak
+        utterance.text = text;
+        window.speechSynthesis.speak(utterance);
+    } else {
+        console.warn('Text-to-Speech is not supported in this browser.');
+    }
+}
