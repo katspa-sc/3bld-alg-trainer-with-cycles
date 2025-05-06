@@ -738,7 +738,7 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     // Concatenate the letters to form the result
     const cycleLetters = letters.join('');
 
-    return cycleLetters, scramble;
+    return [cycleLetters, scramble];
 }
 
 function testGenerateAlgScramble() {
@@ -814,7 +814,8 @@ function generateOrientation(){
 }
 
 class AlgTest {
-    constructor(rawAlgs, scramble, solutions, preorientation, solveTime, time, visualCubeView, orientRandPart) {
+    constructor(cycleLetters, rawAlgs, scramble, solutions, preorientation, solveTime, time, visualCubeView, orientRandPart) {
+        this.cycleLetters = cycleLetters
         this.rawAlgs = rawAlgs;
         this.scramble = scramble;
         this.solutions = solutions;
@@ -880,9 +881,7 @@ function generateAlgTest(){
         solutions = rawAlgs;
     }
 
-    // pass the solutions[0] through comm to moves converter
-    // console.log(solutions[0]);
-    var cycleLetters, scramble = generateAlgScramble(correctRotation(commToMoves(solutions[0])),obfuscateAlg,shouldPrescramble);
+    var [cycleLetters, scramble] = generateAlgScramble(correctRotation(commToMoves(solutions[0])), obfuscateAlg, shouldPrescramble);
 
     var [preorientation, orientRandPart] = generateOrientation();
     orientRandPart = alg.cube.simplify(orientRandPart);
@@ -891,7 +890,7 @@ function generateAlgTest(){
     var time = Date.now();
     var visualCubeView = "plan";
 
-    var algTest = new AlgTest(rawAlgs, scramble, solutions, preorientation, solveTime, time, visualCubeView, orientRandPart);
+    var algTest = new AlgTest(cycleLetters, rawAlgs, scramble, solutions, preorientation, solveTime, time, visualCubeView, orientRandPart);
     return algTest;
 }
 function testAlg(algTest, addToHistory=true){
@@ -899,10 +898,13 @@ function testAlg(algTest, addToHistory=true){
     var scramble = document.getElementById("scramble");
 
     if (document.getElementById("showScramble").checked){
-        scramble.innerHTML = "<span style=\"color: #90f182\">" + algTest.orientRandPart + "</span>" + " " + algTest.scramble;
+        scramble.innerHTML = "<span style=\"color: #90f182\">" + algTest.orientRandPart + "</span>" + " " + algTest.rawAlgs[0];
     } else{
         scramble.innerHTML = "&nbsp;";
     }
+
+    var cycleLettersElement = document.getElementById("cycle");
+    cycleLettersElement.innerHTML = algTest.cycleLetters;
 
     document.getElementById("algdisp").innerHTML = "";
 

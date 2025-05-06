@@ -36,6 +36,12 @@ p.scramble {
   text-align: center;
 }
 
+p.cycle {
+  vertical-align: middle; 
+  text-align: center;
+  font-size: 40px;
+}
+
 p.algdisp {
 
 
