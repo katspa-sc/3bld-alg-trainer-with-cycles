@@ -1,5 +1,20 @@
-
 const SOLVED_STATE = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
+const SOLVED_POSITIONS = [
+    [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], // U face
+    [2, 9], [2, 10], [2, 11], [2, 12], [2, 13], [2, 14], [2, 15], [2, 16], [2, 17], // R
+    [3, 18], [3, 19], [3, 20], [3, 21], [3, 22], [3, 23], [3, 24], [3, 25], [3, 26], // F 
+    [4, 27], [4, 28], [4, 29], [4, 30], [4, 31], [4, 32], [4, 33], [4, 34], [4, 35], // D 
+    [5, 36], [5, 37], [5, 38], [5, 39], [5, 40], [5, 41], [5, 42], [5, 43], [5, 44], // L 
+    [6, 45], [6, 46], [6, 47], [6, 48], [6, 49], [6, 50], [6, 51], [6, 52], [6, 53]  // B 
+];
+const POSITION_TO_LETTER_MAP = {
+    0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
+    9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
+    18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
+    27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
+    36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G', 
+    45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
+};
 
 var currentRotation = "";
 var currentAlgorithm = ""; //After an alg gets tested for the first time, it becomes the currentAlgorithm.
@@ -652,6 +667,8 @@ L' U' R L2 R2 D F2 D' R2 U B2 R2 F2 D' L2 R' D' L' B2 R F2 R U2
 */
 function obfuscate(algorithm, numPremoves=3, minLength=16){
 
+    return algorithm;
+
     //Cube.initSolver();
     var premoves = getPremoves(numPremoves);
     var rc = new RubiksCube();
@@ -674,19 +691,66 @@ function addAUFs(algArr){
     return algArr;
 }
 
-function generateAlgScramble(raw_alg,obfuscateAlg,shouldPrescramble){
+// function generateAlgScramble(raw_alg,obfuscateAlg,shouldPrescramble){
     
-    // if (set == "F3L" && !document.getElementById("userDefined").checked){
-    //     return Cube.random().solve();
-    // }
-    if (!obfuscateAlg){
-        return alg.cube.invert(raw_alg);
-    } else if (!shouldPrescramble){//if realscrambles not checked but should not prescramble, just obfuscate the inverse
-        return obfuscate(alg.cube.invert(raw_alg));
+//     // if (set == "F3L" && !document.getElementById("userDefined").checked){
+//     //     return Cube.random().solve();
+//     // }
+//     if (!obfuscateAlg){
+//         return alg.cube.invert(raw_alg);
+//     } else if (!shouldPrescramble){//if realscrambles not checked but should not prescramble, just obfuscate the inverse
+//         return obfuscate(alg.cube.invert(raw_alg));
+//     }
+
+// }
+
+function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
+    console.log("raw alg: ", raw_alg);
+    const scramble = !obfuscateAlg
+        ? alg.cube.invert(raw_alg)
+        : obfuscate(alg.cube.invert(raw_alg));
+
+    // Apply the scramble to the cube
+    cube.resetCube();
+    cube.doAlgorithm(scramble);
+
+    console.log("Scramble applied to cube:", scramble);
+
+    const edgeBufferPosition = 7; // UF sticker index
+    const cornerBufferPosition = 8; // UFR sticker index
+
+    // Get the 3-cycle mapping
+    const cycleMapping = cube.getThreeCycleMapping(edgeBufferPosition, cornerBufferPosition);
+    if (!cycleMapping) {
+        return scramble; // Not a 3-cycle, return the scramble as is
     }
 
+    // Ensure the buffer is the first position in the cycle
+    const bufferPosition = cycleMapping.includes(edgeBufferPosition) ? edgeBufferPosition : cornerBufferPosition;
+    const bufferIndex = cycleMapping.indexOf(bufferPosition);
+    const rearrangedCycle = [...cycleMapping.slice(bufferIndex), ...cycleMapping.slice(0, bufferIndex)];
+
+    // Remove the buffer position from the cycle
+    const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
+
+    const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
+
+    // Concatenate the letters to form the result
+    const cycleLetters = letters.join('');
+
+    return cycleLetters, scramble;
 }
 
+function testGenerateAlgScramble() {
+    const algs = createAlgList()
+    // get the first element from algs split by newline
+    const rawAlgStr = algs[0]
+    const obfuscateAlg = true; // Set to true if you want to test obfuscation
+    const shouldPrescramble = false; // Set to true if you want to test pre-scrambling
+
+    const result = generateAlgScramble(rawAlgStr, obfuscateAlg, shouldPrescramble);
+    console.log("Generated Scramble:", result);
+}
 
 
 function generatePreScramble(raw_alg, generator, times, obfuscateAlg, premoves=""){
@@ -818,7 +882,7 @@ function generateAlgTest(){
 
     // pass the solutions[0] through comm to moves converter
     // console.log(solutions[0]);
-    var scramble = generateAlgScramble(correctRotation(commToMoves(solutions[0])),obfuscateAlg,shouldPrescramble);
+    var cycleLetters, scramble = generateAlgScramble(correctRotation(commToMoves(solutions[0])),obfuscateAlg,shouldPrescramble);
 
     var [preorientation, orientRandPart] = generateOrientation();
     orientRandPart = alg.cube.simplify(orientRandPart);
@@ -1543,6 +1607,10 @@ const showSolutionButton = document.querySelector('button[name="showSolutionButt
 if (showSolutionButton)
     showSolutionButton.addEventListener('click', displayAlgorithmForPreviousTest);
 
+const testScrambleButton = document.querySelector('button[name="testScrambleButton"]');
+if (testScrambleButton)
+    testScrambleButton.addEventListener('click', testGenerateAlgScramble);
+
 
 
 //CUBE OBJECT
@@ -1964,3 +2032,50 @@ function RubiksCube() {
     }
 }
 
+RubiksCube.prototype.getThreeCycleMapping = function(edgeBuffer, cornerBuffer) {
+    const unsolvedPositions = [];
+
+    // Step 1: Identify unsolved positions
+    for (let i = 0; i < this.cubestate.length; i++) {
+        if (this.cubestate[i][0] !== SOLVED_POSITIONS[i][0] || this.cubestate[i][1] !== SOLVED_POSITIONS[i][1]) {
+            unsolvedPositions.push(i);
+        }
+    }
+
+    // Determine if it's an edge cycle or a corner cycle
+    let bufferPosition;
+    if (unsolvedPositions.length === 6) {
+        bufferPosition = edgeBuffer; // Edge cycle
+    } else if (unsolvedPositions.length === 9) {
+        bufferPosition = cornerBuffer; // Corner cycle
+    } else {
+        console.log("Not a valid 3-cycle: ", unsolvedPositions);
+        return null;
+    }
+
+    // Step 2: Determine the target positions
+    const cycleMapping = {};
+    for (const pos of unsolvedPositions) {
+        const targetPosition = this.cubestate[pos][1]; // Where the piece should go
+        cycleMapping[pos] = targetPosition;
+    }
+
+    // Step 3: Find the cycle containing the buffer
+    const visited = new Set();
+    const cycle = [];
+    let current = bufferPosition;
+
+    while (!visited.has(current)) {
+        visited.add(current);
+        cycle.push(current);
+        current = cycleMapping[current];
+    }
+
+    // Ensure the cycle is valid (contains exactly 3 positions)
+    if (cycle.length !== 3) {
+        console.log("Invalid cycle for buffer position:", bufferPosition);
+        return null;
+    }
+
+    return cycle;
+};
