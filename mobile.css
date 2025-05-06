@@ -50,7 +50,7 @@ hr {
 #flexbox {
     display: flex;
     flex-direction: column;
-    min-height: 100vh
+    min-height: calc(100vh - 50px); /* Subtract the height of the controls */
 }
 
 p.scramble {
