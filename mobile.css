@@ -54,15 +54,19 @@ hr {
 }
 
 p.scramble {
-    height: 10%;
+    height: 0%;
+    margin: 0%;
+    margin-top: 10px;
     vertical-align: middle;
     text-align: center;
+    font-size: 45px;
 }
 
 p.cycle {
     vertical-align: middle; 
     text-align: center;
-    font-size: 40px;
+    font-size: 60px;
+    margin: 1%;
   }
 
 table {
@@ -249,14 +253,25 @@ a:visited {
 
 
 .on_screen_controls {
-    flex: 0.05;
+    position: fixed; /* Ensure the buttons stay in place */
+    bottom: 50px;    /* Place them slightly above the bottom (adjust as needed) */
+    left: 0;
+    width: 100%;     /* Make them span the full width */
     display: flex;
-
+    justify-content: space-around; /* Distribute buttons evenly */
+    background-color: var(--secondary-color); /* Optional: Add a background color */
+    padding: 10px 0; /* Optional: Add padding for better spacing */
 }
 
 .sidebar_buttons {
-    flex: 0.025;
+    position: fixed; /* Ensure the buttons stay in place */
+    bottom: 0;       /* Align them to the bottom of the viewport */
+    left: 0;
+    width: 100%;     /* Make them span the full width */
     display: flex;
+    justify-content: space-around; /* Distribute buttons evenly */
+    background-color: var(--secondary-color); /* Optional: Add a background color */
+    padding: 10px 0; /* Optional: Add padding for better spacing */
 }
 
 .sidebar_button {
