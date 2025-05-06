@@ -758,8 +758,7 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
 
     const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
-    speakText(letters[0]);
-    speakText(letters[1]);
+    speakText(letters.join(". "));
 
     // Concatenate the letters to form the result
     const cycleLetters = letters.join('');
@@ -2112,7 +2111,7 @@ function speakText(text) {
         }
 
         // Stop any ongoing speech before speaking new text
-      //  window.speechSynthesis.cancel();
+        window.speechSynthesis.cancel();
 
         // Update the text and speak
         utterance.text = text;
