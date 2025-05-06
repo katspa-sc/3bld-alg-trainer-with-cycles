@@ -728,39 +728,29 @@ function addAUFs(algArr){
 // }
 
 function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
-  //  console.log("raw alg: ", raw_alg);
     const scramble = !obfuscateAlg
         ? alg.cube.invert(raw_alg)
         : obfuscate(alg.cube.invert(raw_alg));
 
-    // Apply the scramble to the cube
     cube.resetCube();
     cube.doAlgorithm(scramble);
-
-   // console.log("Scramble applied to cube:", scramble);
 
     const edgeBufferPosition = 7; // UF sticker index
     const cornerBufferPosition = 8; // UFR sticker index
 
-    // Get the 3-cycle mapping
     const cycleMapping = cube.getThreeCycleMapping(edgeBufferPosition, cornerBufferPosition);
     if (!cycleMapping) {
-        return scramble; // Not a 3-cycle, return the scramble as is
+        return scramble;
     }
 
-    // Ensure the buffer is the first position in the cycle
     const bufferPosition = cycleMapping.includes(edgeBufferPosition) ? edgeBufferPosition : cornerBufferPosition;
     const bufferIndex = cycleMapping.indexOf(bufferPosition);
     const rearrangedCycle = [...cycleMapping.slice(bufferIndex), ...cycleMapping.slice(0, bufferIndex)];
 
-    // Remove the buffer position from the cycle
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
-
     const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
     speakText(letters.join(". "));
-
-    // Concatenate the letters to form the result
     const cycleLetters = letters.join('');
 
     return [cycleLetters, scramble];
@@ -2096,22 +2086,21 @@ RubiksCube.prototype.getThreeCycleMapping = function(edgeBuffer, cornerBuffer) {
     return cycle;
 };
 
-// Text-to-Speech functionality
+
 function speakText(text) {
     if ('speechSynthesis' in window) {
         if (!utterance) {
             // Create the utterance instance only once
             utterance = new SpeechSynthesisUtterance();
-            utterance.lang = 'pl-PL'; // Set language
             utterance.rate = 1; // Adjust speed if needed
-                    // Set the voice if available
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
         }
 
         // Stop any ongoing speech before speaking new text
         window.speechSynthesis.cancel();
+
+        // Get the language from the text box or use a default
+        const language = localStorage.getItem("ttsLanguage") || "pl-PL";
+        utterance.lang = language;
 
         // Update the text and speak
         utterance.text = text;
@@ -2120,3 +2109,70 @@ function speakText(text) {
         console.warn('Text-to-Speech is not supported in this browser.');
     }
 }
+
+function setCustomLetterScheme(scheme) {
+    if (scheme.length !== 54) {
+        alert("The letter scheme must be exactly 54 characters long.");
+        return false;
+    }
+
+    const newMap = {};
+    for (let i = 0; i < 54; i++) {
+        newMap[i] = scheme[i];
+    }
+
+    // Update the global POSITION_TO_LETTER_MAP
+    Object.assign(POSITION_TO_LETTER_MAP, newMap);
+
+    // Save to localStorage for persistence
+    localStorage.setItem("customLetterScheme", scheme);
+
+   // alert("Custom letter scheme saved successfully!");
+    return true;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const savedScheme = localStorage.getItem("customLetterScheme");
+    if (savedScheme) {
+        setCustomLetterScheme(savedScheme);
+        document.getElementById("letterScheme").value = savedScheme;
+    }
+});
+
+document.getElementById("saveLetterScheme").addEventListener("click", function () {
+    const scheme = document.getElementById("letterScheme").value.trim();
+    if (setCustomLetterScheme(scheme)) {
+        alert("Custom letter scheme saved successfully!");
+    }
+});
+
+document.getElementById("resetLetterScheme").addEventListener("click", function () {
+    localStorage.removeItem("customLetterScheme");
+    Object.assign(POSITION_TO_LETTER_MAP, {
+        0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
+        9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
+        18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
+        27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
+        36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
+        45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
+    });
+    document.getElementById("letterScheme").value = "";
+    alert("Letter scheme reset to default.");
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const savedLanguage = localStorage.getItem("ttsLanguage");
+    if (savedLanguage) {
+        document.getElementById("ttsLanguage").value = savedLanguage;
+    }
+});
+
+document.getElementById("saveTTSLanguage").addEventListener("click", function () {
+    const language = document.getElementById("ttsLanguage").value.trim();
+    if (language) {
+        localStorage.setItem("ttsLanguage", language);
+        alert("TTS language saved successfully!");
+    } else {
+        alert("Please enter a valid language code (e.g., en-US, pl-PL).");
+    }
+});
