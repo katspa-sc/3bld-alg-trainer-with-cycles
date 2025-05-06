@@ -178,7 +178,7 @@ function applyMoves(moves) {
     let ori = cube.wcaOrient();
     doAlg(alg.cube.invert(ori), false);
     let startingRotation = ori;
-  //  console.log("starting rotation: ", startingRotation);
+    console.log("starting rotation: ", startingRotation);
 
 
     let fixPivotRotation = "";
@@ -201,7 +201,7 @@ function applyMoves(moves) {
                 // doAlg(fixPivotRotation, true);
                 // doAlg(alg.cube.invert(fixPivotRotation), true);
 
-          //      console.log(lastTest.solutions[0], "pivot at", pivotIndex, "fix with rotation", fixPivotRotation);
+                console.log(lastTest.solutions[0], "pivot at", pivotIndex, "fix with rotation", fixPivotRotation);
 
                 
             }
@@ -209,7 +209,7 @@ function applyMoves(moves) {
 
         cube.doAlgorithm(alg.cube.invert(tmp));
 
-  //      console.log("doing alg: ", lastTest.solutions[0]);
+        console.log("doing alg: ", lastTest.solutions[0]);
     }
 
     let simplifiedMove = moves;
@@ -234,7 +234,7 @@ function applyMoves(moves) {
     );
 
     if (fixPivotRotation.length > 0)
-   //     console.log("need to do fpr", fixPivotRotation);
+        console.log("need to do fpr", fixPivotRotation);
 
 
     doAlg("U U'", true);
@@ -581,7 +581,7 @@ function getRotationMap(moves) {
     let rotationMap = {};
 
     let rotationCube = new RubiksCube();
-  //  console.log('moves: ', moves);
+    console.log('moves: ', moves);
     rotationCube.doAlgorithm(moves);
     // let rotationCubeString = rotationCube.toString();
     // console.log(rotationCubeString);
@@ -595,7 +595,7 @@ function getRotationMap(moves) {
 }
 
 function updateVirtualCube(initialRotations = holdingOrientation.value + ' ' + currentPreorientation) {
- //   console.log("preorientation: ", currentPreorientation);
+    console.log("preorientation: ", currentPreorientation);
     vc.cubeString = cube.toString();
     let initialMaskedCubeString = cube.toInitialMaskedString(initialMask.value);
     // console.log(initialMaskedCubeString);
@@ -728,7 +728,6 @@ function addAUFs(algArr){
 
 function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
   //  console.log("raw alg: ", raw_alg);
-  //  console.log("raw alg: ", raw_alg);
     const scramble = !obfuscateAlg
         ? alg.cube.invert(raw_alg)
         : obfuscate(alg.cube.invert(raw_alg));
@@ -737,7 +736,6 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     cube.resetCube();
     cube.doAlgorithm(scramble);
 
-   // console.log("Scramble applied to cube:", scramble);
    // console.log("Scramble applied to cube:", scramble);
 
     const edgeBufferPosition = 7; // UF sticker index
@@ -759,9 +757,7 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
 
     const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
-    speakText(letters.join(' '));
-
-   speakText(letters[0] + " " + letters[1]);
+    speakText(letters.join(','));
 
     // Concatenate the letters to form the result
     const cycleLetters = letters.join('');
@@ -1056,7 +1052,6 @@ function displayAlgorithmFromHistory(index){
     var algTest = algorithmHistory[index];
 
   //  console.log( algTest );
-  //  console.log( algTest );
 
     var timerText;
     if (algTest.solveTime == null){
@@ -1147,7 +1142,7 @@ function stopTimer(logTime=true){
         var solveTime = new SolveTime(time,'');
         lastTest.solveTime = solveTime;
         timeArray.push(solveTime);
-    //    console.log(timeArray);
+        console.log(timeArray);
         updateTimeList();
     }
 
@@ -1860,12 +1855,7 @@ function RubiksCube() {
                         break;
 
                 }
-            } else {
-
-              //  console.log("Invalid alg, or no alg specified:" + alg + "|");
-
             }
-
         }
 
     }
@@ -2074,7 +2064,7 @@ RubiksCube.prototype.getThreeCycleMapping = function(edgeBuffer, cornerBuffer) {
     } else if (unsolvedPositions.length === 9) {
         bufferPosition = cornerBuffer; // Corner cycle
     } else {
-     //   console.log("Not a valid 3-cycle: ", unsolvedPositions);
+        console.log("Not a valid 3-cycle: ", unsolvedPositions);
         return null;
     }
 
@@ -2098,7 +2088,7 @@ RubiksCube.prototype.getThreeCycleMapping = function(edgeBuffer, cornerBuffer) {
 
     // Ensure the cycle is valid (contains exactly 3 positions)
     if (cycle.length !== 3) {
-  //      console.log("Invalid cycle for buffer position:", bufferPosition);
+        console.log("Invalid cycle for buffer position:", bufferPosition);
         return null;
     }
 
