@@ -31,6 +31,28 @@ var currentAlgIndex = 0;
 var algorithmHistory = [];
 var shouldRecalculateStatistics = true;
 
+let utterance = null;
+let selectedVoice = null;
+
+// Load available voices and select a specific one
+function loadVoices() {
+    var voices = window.speechSynthesis.getVoices();
+    var filteredVoices = voices.filter(voice => voice.lang.startsWith('pl'));
+
+    // Find the desired voice by name or language
+    selectedVoice = filteredVoices[1];
+    if (!selectedVoice) {
+        console.warn("Desired voice not found. Using default voice.");
+    }
+}
+
+// Ensure voices are loaded (some browsers load them asynchronously)
+if (typeof speechSynthesis !== "undefined" && speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+} else {
+    loadVoices();
+}
+
 Cube.initSolver();
 
 const holdingOrientation = document.getElementById('holdingOrientation');
@@ -706,6 +728,7 @@ function addAUFs(algArr){
 
 function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
   //  console.log("raw alg: ", raw_alg);
+  //  console.log("raw alg: ", raw_alg);
     const scramble = !obfuscateAlg
         ? alg.cube.invert(raw_alg)
         : obfuscate(alg.cube.invert(raw_alg));
@@ -714,6 +737,7 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     cube.resetCube();
     cube.doAlgorithm(scramble);
 
+   // console.log("Scramble applied to cube:", scramble);
    // console.log("Scramble applied to cube:", scramble);
 
     const edgeBufferPosition = 7; // UF sticker index
@@ -734,6 +758,8 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
 
     const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
+
+    speakText(letters.join(' '));
 
    speakText(letters[0] + " " + letters[1]);
 
@@ -1029,6 +1055,7 @@ function displayAlgorithmFromHistory(index){
 
     var algTest = algorithmHistory[index];
 
+  //  console.log( algTest );
   //  console.log( algTest );
 
     var timerText;
@@ -2078,28 +2105,7 @@ RubiksCube.prototype.getThreeCycleMapping = function(edgeBuffer, cornerBuffer) {
     return cycle;
 };
 
-let utterance = null;
-let selectedVoice = null;
-
-// Load available voices and select a specific one
-function loadVoices() {
-    var voices = window.speechSynthesis.getVoices();
-    var filteredVoices = voices.filter(voice => voice.lang.startsWith('pl'));
-
-    // Find the desired voice by name or language
-    selectedVoice = filteredVoices[1];
-    if (!selectedVoice) {
-        console.warn("Desired voice not found. Using default voice.");
-    }
-}
-
-// Ensure voices are loaded (some browsers load them asynchronously)
-if (typeof speechSynthesis !== "undefined" && speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = loadVoices;
-} else {
-    loadVoices();
-}
-
+// Text-to-Speech functionality
 function speakText(text) {
     if ('speechSynthesis' in window) {
         if (!utterance) {
