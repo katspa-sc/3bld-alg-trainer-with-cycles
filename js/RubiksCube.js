@@ -42,6 +42,7 @@ function loadVoices() {
     // Find the desired voice by name or language
     selectedVoice = filteredVoices[1];
     if (!selectedVoice) {
+        selectedVoice = filteredVoices[0]; // Fallback to the first available voice
         console.warn("Desired voice not found. Using default voice.");
     }
 }
@@ -757,7 +758,8 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
 
     const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
-    speakText(letters.join(','));
+    speakText(letters[0]);
+    speakText(letters[1]);
 
     // Concatenate the letters to form the result
     const cycleLetters = letters.join('');
@@ -2110,7 +2112,7 @@ function speakText(text) {
         }
 
         // Stop any ongoing speech before speaking new text
-        window.speechSynthesis.cancel();
+      //  window.speechSynthesis.cancel();
 
         // Update the text and speak
         utterance.text = text;
