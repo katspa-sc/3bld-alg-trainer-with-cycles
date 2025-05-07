@@ -40,11 +40,14 @@ function loadVoices() {
     var filteredVoices = voices.filter(voice => voice.lang.startsWith('pl'));
 
     // Find the desired voice by name or language
-    selectedVoice = filteredVoices[1];
+  //  selectedVoice = filteredVoices[1];
     if (!selectedVoice) {
-        selectedVoice = filteredVoices[0]; // Fallback to the first available voice
+  //      selectedVoice = filteredVoices[0]; // Fallback to the first available voice
         console.warn("Desired voice not found. Using default voice.");
+    } else {
+	selectedVoice = filteredVoices[0];
     }
+	
 }
 
 // Ensure voices are loaded (some browsers load them asynchronously)
