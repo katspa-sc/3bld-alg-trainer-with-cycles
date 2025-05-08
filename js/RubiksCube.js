@@ -1067,7 +1067,7 @@ function displayAlgorithmFromHistory(index){
     scramble.style.color = '#e6e6e6';
 }
 
-function displayAlgorithmForPreviousTest(reTest=true){//not a great name
+function displayAlgorithmForPreviousTest(reTest=true, showSolution=true){//not a great name
 
     var lastTest = algorithmHistory[algorithmHistory.length-1];
     if (lastTest==undefined){
@@ -1078,7 +1078,11 @@ function displayAlgorithmForPreviousTest(reTest=true){//not a great name
         reTestAlg();
     }
 
+    if (showSolution){
     updateTrainer("<span style=\"color: #90f182\">" + lastTest.orientRandPart + "</span>" + " "+ lastTest.scramble, lastTest.solutions.join("<br><br>"), null, null);
+    } else {
+    updateTrainer(null, null, null, null);
+    }
 
     scramble.style.color = '#e6e6e6';
 }
@@ -1467,7 +1471,7 @@ function updateControls() {
     keymaps.forEach(function(keymap){
         listener.register(keymap[0], function() {  doAlg(keymap[1], true) });
     });
-    listener.register(new KeyCombo("Backspace"), function() { displayAlgorithmForPreviousTest();});
+    listener.register(new KeyCombo("Backspace"), function() { displayAlgorithmForPreviousTest(true, true);});
     listener.register(new KeyCombo("Escape"), function() {
         if (isUsingVirtualCube()){
             stopTimer(false);
@@ -1540,11 +1544,11 @@ function press(event) { //Stops the screen from scrolling down when you press sp
             if (isUsingVirtualCube()){
                 if (timerIsRunning){
                     stopTimer();
-                    displayAlgorithmForPreviousTest();//put false here if you don't want the cube to retest.
+                    displayAlgorithmForPreviousTest(true, false);//put false here if you don't want the cube to retest.
                     //window.setTimeout(function (){reTestAlg();}, 250);
                 }
                 else {
-                    displayAlgorithmForPreviousTest();
+                    displayAlgorithmForPreviousTest(true, false);
                 }
 
             }
@@ -1557,7 +1561,7 @@ function press(event) { //Stops the screen from scrolling down when you press sp
 
                         //document.getElementById("timer").innerHTML = time;
                     } else {
-                        displayAlgorithmForPreviousTest();
+                        displayAlgorithmForPreviousTest(true, false);
                     }
 
                 }
