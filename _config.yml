@@ -1,1 +1,0 @@
-commit: "{{ site.github.build_revision }}"
