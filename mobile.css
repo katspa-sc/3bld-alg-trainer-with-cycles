@@ -105,6 +105,7 @@ tr {
     top: 10%;
     left: 5%;
     right: 5%;
+    bottom: 10%;
     width: 90%;
     height: 80vh;
     z-index: 9999;
@@ -369,3 +370,20 @@ pre {
 }
 
 html, body {touch-action: none;}
+
+@media (max-width: 768px) {
+    #left_popup {
+        top: 5%; /* Adjust position for smaller screens */
+        left: 5%;
+        width: 90%; /* Make it wider on smaller screens */
+        max-height: 80%; /* Allow more height */
+    }
+
+    #left_popup textarea {
+        font-size: 14px; /* Reduce font size for textareas */
+    }
+
+    #left_popup input {
+        font-size: 14px; /* Reduce font size for inputs */
+    }
+}

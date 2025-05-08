@@ -23,20 +23,22 @@
 
             <div class="on_screen_controls">
                 <button id="onscreenLeft" class="big_button arrow_button">&lt</button>
-                <button class="big_button flex-item" onclick="displayAlgorithmForPreviousTest()">Solution</button>
+                <!-- <button class="big_button flex-item" onclick="displayAlgorithmForPreviousTest()">Solution</button> -->
                 <button class="big_button flex-item" onclick="nextScramble()">Next</button>
+                <button class="big_button flex-item" id="connectSmartCube">Connect Smartcube</button>
                 <button id="onscreenRight" class="big_button arrow_button">&gt</button>
             </div>
 
 
-            <p id="scramble" class=scramble>Scramble</p><hr>
+            <p id="scramble" class=scramble>Scramble</p>
+            <hr>
             <p id="cycle" class=cycle>Cycle</p>
 
             <div id="touchStartArea">
 
                 <div class=column_middle>
-                    <div id="simcube"> 
-                        <canvas id="cube" width="1200" height="1200" ></canvas>
+                    <div id="simcube">
+                        <canvas id="cube" width="1200" height="1200"></canvas>
                     </div>
 
                     <div id="timer_div">
@@ -46,7 +48,7 @@
                     <div id="algdisplayer">
                         <p id="algdisp" class=algdisp>Solution</p>
                     </div>
-                
+
 
                 </div>
 
@@ -60,7 +62,7 @@
 
     <div id="loader"></div>
 
-     <div style="display:none;" id="page" class="animate-bottom">
+    <div style="display:none;" id="page" class="animate-bottom">
         <div id="flexbox">
 
             <div class="sidebar_buttons">
@@ -77,14 +79,15 @@
             </div>
 
 
-            <p id="scramble" class=scramble>Scramble</p><hr>
+            <p id="scramble" class=scramble>Scramble</p>
+            <hr>
             <p id="cycle" class=cycle>Cycle</p>
 
             <div id="touchStartArea">
 
                 <div class=column_middle>
-                    <div id="simcube"> 
-                        <canvas id="cube" width="1200" height="1200" ></canvas>
+                    <div id="simcube">
+                        <canvas id="cube" width="1200" height="1200"></canvas>
                     </div>
 
                     <div id="timer_div">
@@ -94,7 +97,7 @@
                     <div id="algdisplayer">
                         <p id="algdisp" class=algdisp>Solution</p>
                     </div>
-                
+
 
                 </div>
 
@@ -109,69 +112,75 @@
     <div id="left_popup">
         <div class=column_left>
 
-            <button id="connectSmartCube">Connect Smart Cube</button><br><br>
-
             Enter algs:
             <!-- <input id="userDefined" type="checkbox">Use user defined algset <button id="addSelected">Add currently selected algs</button><br> -->
-            <textarea id="userDefinedAlgs" cols=50 rows=20 placeholder="Place one alg per line. Lines starting with # will be ignored"></textarea>
+            <textarea id="userDefinedAlgs" cols=50 rows=20
+                placeholder="Place one alg per line. Lines starting with # will be ignored"></textarea>
 
             <h2>Settings</h2>
 
-            <form action="javascript:void(0);">     
-                
-                <div>
-                    Holding cube at <input type="text" id="holdingOrientation" value="" size="4"> rotation away from WCA orientation<br>
-                </div>    
-                <div>
-                    Initial mask: <br>
-                    <input id="initialMask" size="51" maxlength="54" placeholder="Enter a string of 54 characters all 'x' or '.'"><br>
-                </div>
-                <div>
-                    Final mask: <br>
-                    <input id="finalMask" size="51" maxlength="54" placeholder="Enter a string of 54 characters all 'x' or '.'"><br>
-                </div>
+            <form action="javascript:void(0);">
+                <input id="enableTTS" type="checkbox">Enable TTS<br>
                 <input id="useVirtual" type="checkbox">Use Virtual Cube<br>
                 <input id="hideTimer" type="checkbox">Hide timer<br>
                 <input id="includeRecognitionTime" type="checkbox">Include recognition time<br>
                 <input id="showScramble" type="checkbox">Show Scramble<br>
                 <input id="realScrambles" type="checkbox">Use Real Scrambles<br>
-                <input id="randAUF" type="checkbox">Random AUF<br>
-                <input id="prescramble" type="checkbox" checked="true">Scramble subsequent steps (requires real scrambles to be checked)<br>
-                <input id="goInOrder" type="checkbox">Go in order<br>
-                <input id="goToNextCase" type="checkbox">Don't show alg after stopping timer (press the left arrow key to view previous case)<br>
-                <input id="mirrorAllAlgs" type="checkbox">Mirror across M <input id="randomizeMMirror" type="checkbox">Randomize<br>
-                <input id="mirrorAllAlgsAcrossS" type="checkbox">Mirror across S <input id="randomizeSMirror" type="checkbox">Randomize<br>
 
-                
+                <div class="hidden">>
+                    <div>
+                        Holding cube at <input type="text" id="holdingOrientation" value="" size="4"> rotation away from
+                        WCA orientation<br>
+                    </div>
+                    <div>
+                        Initial mask: <br>
+                        <input id="initialMask" size="51" maxlength="54"
+                            placeholder="Enter a string of 54 characters all 'x' or '.'"><br>
+                    </div>
+                    <div>
+                        Final mask: <br>
+                        <input id="finalMask" size="51" maxlength="54"
+                            placeholder="Enter a string of 54 characters all 'x' or '.'"><br>
+                    </div>
 
+                    <input id="randAUF" type="checkbox">Random AUF<br>
+                    <input id="prescramble" type="checkbox" checked="true">Scramble subsequent steps (requires real
+                    scrambles to be checked)<br>
+                    <input id="goInOrder" type="checkbox">Go in order<br>
+                    <input id="goToNextCase" type="checkbox">Don't show alg after stopping timer (press the left arrow
+                    key to view previous case)<br>
+                    <input id="mirrorAllAlgs" type="checkbox">Mirror across M
+                    <input id="randomizeMMirror" type="checkbox">Randomize<br>
+                    <input id="mirrorAllAlgsAcrossS" type="checkbox">Mirror across S
+                    <input id="randomizeSMirror" type="checkbox">Randomize<br>
+                </div>
 
             </form>
             <br>
-
-            Preorientation: <br>
+            <div class="hidden">
+                Preorientation: <br>
 
                 <input id="fullCN" type="checkbox"> Full colour neutrality<br>
                 or<br>
                 Starting from WCA orientation: <br>
                 First do one
-                <input type="text" id="colourneutrality1" value="" size="2"> 
+                <input type="text" id="colourneutrality1" value="" size="2">
                 rotation<br>
 
-                then do a random number of 
-                <input type="text" id="colourneutrality2" value="" size="2"> 
+                then do a random number of
+                <input type="text" id="colourneutrality2" value="" size="2">
                 rotations, <br>
 
-                and finally do a random number of 
-                <input type="text" id="colourneutrality3" value="" size="2"> 
+                and finally do a random number of
+                <input type="text" id="colourneutrality3" value="" size="2">
                 rotations.<br>
-                <a href="scramblingNote.html">Note on preorientation settings</a> 
+                <a href="scramblingNote.html">Note on preorientation settings</a>
                 <br><br>
 
-            <br>
+                <br>
 
-                
                 Currently Qiyi and Moyu V10 smart cubes are supported.<br><br>
-
+            </div>
         </div>
     </div>
 
@@ -186,30 +195,14 @@
             </div>
             <p id="statistics">&nbsp</p>
 
-
             <div style="text-align: left">
                 <button id="deleteLast">Delete last solve</button>
                 <button id="clearTimes">Clear all</button>
                 <br><br>
                 <table id="algsetStatistics">
                 </table>
-                <h2>Instructions</h2>
-                <b>Enter/Tab/Space</b>: New scramble.<br>
-                <b>Space</b>: Stop timer and show algorithm.<br>
-                <b>Left and right arrow keys</b>: View previously tested algs. <br>
-                <b>Backspace</b>: Show algorithm without starting timer.
-
-                <h3>Virtual cube controls</h3>
-                Space: Stop timer, show algorithm and reset case.<br>
-                Timer will automatically stop if the cube is solved.<br>
-                Esc: Reset case without showing algorithm.<br>
-                <h4> View/Edit Keyboard Controls <a href="controls.html">here</a>. </h4>
-
             </div>
-
         </div>
-
-
     </div>
 
 
