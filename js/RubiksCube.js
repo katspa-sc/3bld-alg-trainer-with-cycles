@@ -750,7 +750,7 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
     const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
-    speakText(letters.join(". "));
+    speakText(parseLettersForTTS(letters));
     const cycleLetters = letters.join('');
 
     return [cycleLetters, scramble];
@@ -2086,6 +2086,21 @@ RubiksCube.prototype.getThreeCycleMapping = function(edgeBuffer, cornerBuffer) {
     return cycle;
 };
 
+function parseLettersForTTS(letters) {
+    if (letters.length === 2) {
+        const pair = letters.join(""); // Combine letters into a pair (e.g., "AG")
+        const word = LETTER_PAIR_TO_WORD[pair]; // Look up the word for the pair
+
+        if (word && word.trim() !== "") {
+            return word; // Return the word if found
+        } else {
+            return letters.join(" "); // Fallback: Return the letters individually
+        }
+    } else {
+        return letters.join(" "); // Fallback for non-pairs
+    }
+}
+
 
 function speakText(text) {
     if ('speechSynthesis' in window) {
@@ -2176,3 +2191,16 @@ document.getElementById("saveTTSLanguage").addEventListener("click", function ()
         alert("Please enter a valid language code (e.g., en-US, pl-PL).");
     }
 });
+
+
+const LETTER_PAIR_TO_WORD = {
+    // list of all letter pairs starting with letter A and having a blank value
+    "ZA": "za",
+    "AW": "aw",
+    "AR": "ar",
+    "FA": "fa",
+    "RA": "ra",
+    "AL": "al",
+    "AZ": "az",
+    "WA": "wa",
+};
