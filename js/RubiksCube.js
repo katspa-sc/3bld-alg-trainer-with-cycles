@@ -12,9 +12,12 @@ const POSITION_TO_LETTER_MAP = {
     9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
     18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
     27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
-    36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G', 
+    36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
     45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
 };
+
+const moveHistory = [];
+const MAX_HISTORY_LENGTH = 10; // Limit the history to the last 10 moves
 
 var currentRotation = "";
 var currentAlgorithm = ""; //After an alg gets tested for the first time, it becomes the currentAlgorithm.
@@ -26,7 +29,7 @@ const canvas = document.getElementById("cube");
 const ctx = canvas.getContext("2d");
 const VIRTUAL_CUBE_SIZE = 400;
 var vc = new VisualCube(1200, 1200, VIRTUAL_CUBE_SIZE, -0.523598, -0.209439, 0, 3, 0.08);
-var stickerSize = canvas.width/5;
+var stickerSize = canvas.width / 5;
 var currentAlgIndex = 0;
 var algorithmHistory = [];
 var shouldRecalculateStatistics = true;
@@ -39,14 +42,7 @@ function loadVoices() {
     var voices = window.speechSynthesis.getVoices();
     var filteredVoices = voices.filter(voice => voice.lang.startsWith('pl'));
 
-    // Find the desired voice by name or language
-  //  selectedVoice = filteredVoices[1];
-    if (!selectedVoice) {
-  //      selectedVoice = filteredVoices[0]; // Fallback to the first available voice
-        console.warn("Desired voice not found. Using default voice.");
-    } else {
-	selectedVoice = filteredVoices[0];
-    }
+    selectedVoice = filteredVoices[0];
 }
 
 if (localStorage.getItem("enableTTS") === null) {
@@ -64,57 +60,64 @@ Cube.initSolver();
 
 const holdingOrientation = document.getElementById('holdingOrientation');
 let currentPreorientation = "";
+const initialMask = document.getElementById('initialMask');
+const finalMask = document.getElementById('finalMask');
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
+    handleOrientation();
+    handleInitialMask();
+    handleFinalMask();
+    enableTtsOnStartup();
+});
+
+const uSideIndices = new Set([9, 10, 11, 18, 19, 20, 36, 37, 38, 45, 46, 47]);
+
+function handleFinalMask() {
+    const savedValue = localStorage.getItem('finalMask');
+    if (savedValue !== null) {
+        finalMask.value = savedValue;
+    }
+    finalMask.addEventListener('input', function () {
+        localStorage.setItem('finalMask', finalMask.value);
+    });
+}
+
+function handleInitialMask() {
+    const savedValue = localStorage.getItem('initialMask');
+    if (savedValue !== null) {
+        initialMask.value = savedValue;
+    }
+    initialMask.addEventListener('input', function () {
+        localStorage.setItem('initialMask', initialMask.value);
+    });
+}
+
+function handleOrientation() {
     const savedValue = localStorage.getItem('holdingOrientation');
     if (savedValue !== null) {
         holdingOrientation.value = savedValue;
     }
-    holdingOrientation.addEventListener('input', function() {
+    holdingOrientation.addEventListener('input', function () {
         localStorage.setItem('holdingOrientation', holdingOrientation.value);
     });
 
     cube.resetCube();
     updateVirtualCube();
-});
-
-const initialMask = document.getElementById('initialMask');
-document.addEventListener("DOMContentLoaded", function() {
-    const savedValue = localStorage.getItem('initialMask');
-    if (savedValue !== null) {
-        initialMask.value = savedValue;
-    }
-    initialMask.addEventListener('input', function() {
-        localStorage.setItem('initialMask', initialMask.value);
-    });
-});
-
-const finalMask = document.getElementById('finalMask');
-document.addEventListener("DOMContentLoaded", function() {
-    const savedValue = localStorage.getItem('finalMask');
-    if (savedValue !== null) {
-        finalMask.value = savedValue;
-    }
-    finalMask.addEventListener('input', function() {
-        localStorage.setItem('finalMask', finalMask.value);
-    });
-});
-
-const uSideIndices = new Set([9, 10, 11, 18, 19, 20, 36, 37, 38, 45, 46, 47]);
+}
 
 // find a non-center sticker that does not move for the entire alg
 function findPivot(alg) {
     let cube = new RubiksCube();
     let moves = alg.split(" ");
     let states = [];
-    
+
     for (let move of moves) {
         cube.doAlgorithm(move);
         states.push(cube.getMaskValues());
     }
-    
+
     // console.log(states.map(state => state.join(",")).join("\n"));
-    
+
     for (let i = 0; i < 54; ++i) {
         // skip centers
         if (i % 9 == 4) continue;
@@ -181,7 +184,7 @@ function simplifyRotation(move, rotation) {
     return move; // Return unchanged if no transformation is needed
 }
 
-function applyMoves(moves) {   
+function applyMoves(moves) {
     let ori = cube.wcaOrient();
     doAlg(alg.cube.invert(ori), false);
     let startingRotation = ori;
@@ -191,8 +194,8 @@ function applyMoves(moves) {
     let fixPivotRotation = "";
 
     if (algorithmHistory.length > 0) {
-        var lastTest = algorithmHistory[algorithmHistory.length-1];
-        if (lastTest==undefined){
+        var lastTest = algorithmHistory[algorithmHistory.length - 1];
+        if (lastTest == undefined) {
             return;
         }
 
@@ -210,7 +213,7 @@ function applyMoves(moves) {
 
                 console.log(lastTest.solutions[0], "pivot at", pivotIndex, "fix with rotation", fixPivotRotation);
 
-                
+
             }
         }
 
@@ -224,20 +227,25 @@ function applyMoves(moves) {
         simplifiedMove = simplifyRotation(simplifiedMove, rotation);
     }
 
+    moveHistory.push(moves);
+    if (moveHistory.length > MAX_HISTORY_LENGTH) {
+        moveHistory.shift(); // Remove the oldest move if history exceeds the limit
+    }
+
     cube.doAlgorithm(
-        startingRotation 
-        + " " + 
+        startingRotation
+        + " " +
         alg.cube.invert(holdingOrientation.value)
-        + " " +  
-        moves 
-        + " " + 
+        + " " +
+        moves
+        + " " +
         holdingOrientation.value
-        + " " + 
-        alg.cube.invert(startingRotation) 
-        + " " +  
+        + " " +
+        alg.cube.invert(startingRotation)
+        + " " +
         fixPivotRotation
         // alg.cube.invert(fixPivotRotation)
-        
+
     );
 
     if (fixPivotRotation.length > 0)
@@ -247,6 +255,8 @@ function applyMoves(moves) {
     doAlg("U U'", true);
 
     updateVirtualCube();
+
+    checkForSpecialSequences();
 }
 
 // connect smart cube
@@ -254,28 +264,10 @@ function applyMoves(moves) {
 
 let conn = null;
 
-var connectSmartCube = document.getElementById("connectSmartCube");
-connectSmartCube.addEventListener('click', async () => {
-    try {
-        if (conn) {
-            await conn.disconnect();
-            connectSmartCube.textContent = 'Connect Smart Cube';
-            alert(`Smart cube ${conn.deviceName} disconnected`);
-            conn = null;
-        } else {
-            conn = await connect(applyMoves);
-            if (!conn) {
-                alert(`Smart cube is not supported`);
-            } else {
-                await conn.initAsync();
-                connectSmartCube.textContent = 'Disconnect Smart Cube';
-                alert(`Smart cube ${conn.deviceName} connected`);
-            }
-        }
-    } catch (e) {
-        connectSmartCube.textContent = 'Connect Smart Cube';
-    }
-}); 
+var connectSmartCubeElement = document.getElementById("connectSmartCube");
+connectSmartCubeElement.addEventListener('click', async () => {
+    await connectSmartCube();
+});
 
 
 // buttons
@@ -283,23 +275,23 @@ connectSmartCube.addEventListener('click', async () => {
 function adjustButtonWidths() {
     minButtonWidth = 100;
     var buttonGrids = document.querySelectorAll('.button-grid');
-    buttonGrids.forEach(function(grid) {
+    buttonGrids.forEach(function (grid) {
         var buttons = grid.querySelectorAll('.cube-select-button');
         var containerWidth = window.innerWidth;
         var packSize = buttons.length;
-        
-        var buttonWidth = Math.min(100, ((containerWidth - 2 * 20 - (packSize + 1)) / packSize)); 
+
+        var buttonWidth = Math.min(100, ((containerWidth - 2 * 20 - (packSize + 1)) / packSize));
         buttonWidth = Math.max(30, buttonWidth);
         minButtonWidth = Math.min(buttonWidth, minButtonWidth);
 
-        buttons.forEach(function(button) {
+        buttons.forEach(function (button) {
             button.style.width = minButtonWidth + 'px';
             button.style.height = minButtonWidth * 0.85 + 'px'; // Set height equal to width
         });
     });
 }
 
-window.addEventListener('resize', adjustButtonWidths); 
+window.addEventListener('resize', adjustButtonWidths);
 
 function handleButtonClick(event) {
     console.log("Button clicked:", event.target.textContent);
@@ -352,59 +344,60 @@ var keypadLayout = [
 
 document.getElementById("loader").style.display = "none";
 var myVar = setTimeout(showPage, 1);
-function showPage(){
+function showPage() {
     document.getElementById("page").style.display = "block";
 }
 
-var defaults = {"useVirtual":true,
-                "hideTimer":false,
-                "includeRecognitionTime":true,
-                "showScramble":true,
-                "realScrambles":false,
-                "randAUF":false,
-                "prescramble":false,
-                "goInOrder":false,
-                "goToNextCase":false,
-                "mirrorAllAlgs":false,
-                "mirrorAllAlgsAcrossS":false,
-                "colourneutrality1":"",
-                "colourneutrality2":"",
-                "colourneutrality3":"",
-                // "colourneutrality2":"x2",
-                // "colourneutrality3":"y",
-                // "userDefined":false,
-                "userDefinedAlgs":"",
-                "fullCN":false,
-                // "algsetpicker":document.getElementById("algsetpicker").options[0].value,
-                "visualCubeView":"plan",
-                "randomizeSMirror":false,
-                "randomizeMMirror":false,
-               };
+var defaults = {
+    "useVirtual": true,
+    "hideTimer": false,
+    "includeRecognitionTime": true,
+    "showScramble": true,
+    "realScrambles": false,
+    "randAUF": false,
+    "prescramble": false,
+    "goInOrder": false,
+    "goToNextCase": false,
+    "mirrorAllAlgs": false,
+    "mirrorAllAlgsAcrossS": false,
+    "colourneutrality1": "",
+    "colourneutrality2": "",
+    "colourneutrality3": "",
+    // "colourneutrality2":"x2",
+    // "colourneutrality3":"y",
+    // "userDefined":false,
+    "userDefinedAlgs": "",
+    "fullCN": false,
+    // "algsetpicker":document.getElementById("algsetpicker").options[0].value,
+    "visualCubeView": "plan",
+    "randomizeSMirror": false,
+    "randomizeMMirror": false,
+};
 
-for (var setting in defaults){ 
-// If no previous setting exists, use default and update localStorage. Otherwise, set to previous setting
-    if (typeof(defaults[setting]) === "boolean"){
+for (var setting in defaults) {
+    // If no previous setting exists, use default and update localStorage. Otherwise, set to previous setting
+    if (typeof (defaults[setting]) === "boolean") {
         var previousSetting = localStorage.getItem(setting);
-        if (previousSetting == null){
+        if (previousSetting == null) {
             document.getElementById(setting).checked = defaults[setting];
             localStorage.setItem(setting, defaults[setting]);
         }
         else {
-            document.getElementById(setting).checked = previousSetting == "true"? true : false;
+            document.getElementById(setting).checked = previousSetting == "true" ? true : false;
         }
     }
     else {
         var previousSetting = localStorage.getItem(setting);
-        if (previousSetting == null){
+        if (previousSetting == null) {
             var element = document.getElementById(setting)
-            if (element != null){
+            if (element != null) {
                 element.value = defaults[setting];
             }
             localStorage.setItem(setting, defaults[setting]);
         }
         else {
             var element = document.getElementById(setting)
-            if (element != null){
+            if (element != null) {
                 element.value = previousSetting;
             }
         }
@@ -420,7 +413,7 @@ setVirtualCube(document.getElementById("useVirtual").checked);
 updateVirtualCube();
 
 var useVirtual = document.getElementById("useVirtual");
-useVirtual.addEventListener("click", function(){
+useVirtual.addEventListener("click", function () {
     setVirtualCube(this.checked);
     localStorage.setItem("useVirtual", this.checked);
     stopTimer(false);
@@ -428,7 +421,7 @@ useVirtual.addEventListener("click", function(){
 });
 
 var hideTimer = document.getElementById("hideTimer");
-hideTimer.addEventListener("click", function(){
+hideTimer.addEventListener("click", function () {
     setTimerDisplay(!this.checked);
     localStorage.setItem("hideTimer", this.checked);
     stopTimer(false);
@@ -437,71 +430,71 @@ hideTimer.addEventListener("click", function(){
 
 var includeRecognitionTime = document.getElementById("includeRecognitionTime");
 var isIncludeRecognitionTime = localStorage.getItem("includeRecognitionTime") === "true";
-includeRecognitionTime.addEventListener("click", function(){
+includeRecognitionTime.addEventListener("click", function () {
     localStorage.setItem("includeRecognitionTime", this.checked);
     isIncludeRecognitionTime = includeRecognitionTime.checked;
 });
 
 var visualCube = document.getElementById("visualcube");
-visualCube.addEventListener("click", function(){
+visualCube.addEventListener("click", function () {
     var currentView = localStorage.getItem("visualCubeView")
-    var newView = currentView == ""? "plan": "";
+    var newView = currentView == "" ? "plan" : "";
     localStorage.setItem("visualCubeView", newView);
     var algTest = algorithmHistory[historyIndex];
 });
 
 
 var showScramble = document.getElementById("showScramble");
-showScramble.addEventListener("click", function(){
+showScramble.addEventListener("click", function () {
     localStorage.setItem("showScramble", this.checked);
 });
 
 var realScrambles = document.getElementById("realScrambles");
-realScrambles.addEventListener("click", function(){
+realScrambles.addEventListener("click", function () {
     localStorage.setItem("realScrambles", this.checked);
 });
 
 var randAUF = document.getElementById("randAUF");
-randAUF.addEventListener("click", function(){
+randAUF.addEventListener("click", function () {
     localStorage.setItem("randAUF", this.checked);
 });
 
 var prescramble = document.getElementById("prescramble");
-prescramble.addEventListener("click", function(){
+prescramble.addEventListener("click", function () {
     localStorage.setItem("prescramble", this.checked);
 });
 
 var randomizeSMirror = document.getElementById("randomizeSMirror");
-randomizeSMirror.addEventListener("click", function(){
+randomizeSMirror.addEventListener("click", function () {
     localStorage.setItem("randomizeSMirror", this.checked);
 });
 
 var randomizeMMirror = document.getElementById("randomizeMMirror");
-randomizeMMirror.addEventListener("click", function(){
+randomizeMMirror.addEventListener("click", function () {
     localStorage.setItem("randomizeMMirror", this.checked);
 });
 
 var goInOrder = document.getElementById("goInOrder");
-goInOrder.addEventListener("click", function(){
+goInOrder.addEventListener("click", function () {
     localStorage.setItem("goInOrder", this.checked);
-    currentAlgIndex=0;
+    currentAlgIndex = 0;
 });
 
 var goToNextCase = document.getElementById("goToNextCase");
-goToNextCase.addEventListener("click", function(){
-    if (isUsingVirtualCube()){
+goToNextCase.addEventListener("click", function () {
+    if (isUsingVirtualCube()) {
         alert("Note: This option has no effect when using the virtual cube.")
     }
     localStorage.setItem("goToNextCase", this.checked);
 });
 
 var mirrorAllAlgs = document.getElementById("mirrorAllAlgs");
-mirrorAllAlgs.addEventListener("click", function(){
+mirrorAllAlgs.addEventListener("click", function () {
     localStorage.setItem("mirrorAllAlgs", this.checked);
 });
 
 var mirrorAllAlgsAcrossS = document.getElementById("mirrorAllAlgsAcrossS");
-mirrorAllAlgsAcrossS.addEventListener("click", function(){
+mirrorAllAlgsAcrossS.addEventListener("click", function () {
     localStorage.setItem("mirrorAllAlgsAcrossS", this.checked);
 });
 
@@ -512,7 +505,7 @@ mirrorAllAlgsAcrossS.addEventListener("click", function(){
 // });
 
 var fullCN = document.getElementById("fullCN");
-fullCN.addEventListener("click", function(){
+fullCN.addEventListener("click", function () {
     localStorage.setItem("fullCN", this.checked);
 });
 
@@ -524,9 +517,9 @@ fullCN.addEventListener("click", function(){
 // });
 
 var clearTimes = document.getElementById("clearTimes");
-clearTimes.addEventListener("click", function(){
+clearTimes.addEventListener("click", function () {
 
-    if (confirm("Clear all times?")){
+    if (confirm("Clear all times?")) {
         timeArray = [];
         updateTimeList();
         updateStats();
@@ -535,7 +528,7 @@ clearTimes.addEventListener("click", function(){
 });
 
 var deleteLast = document.getElementById("deleteLast");
-deleteLast.addEventListener("click", function(){
+deleteLast.addEventListener("click", function () {
     timeArray.pop();
     algorithmHistory.pop();
     updateTimeList();
@@ -552,14 +545,14 @@ deleteLast.addEventListener("click", function(){
 //     document.getElementById("userDefinedAlgs").value += "\n" + algList.join("\n");
 // });
 
-try{ // only for mobile
+try { // only for mobile
     const leftPopUpButton = document.getElementById("left_popup_button");
     const rightPopUpButton = document.getElementById("right_popup_button");
-    leftPopUpButton.addEventListener("click", function(){
+    leftPopUpButton.addEventListener("click", function () {
 
         const leftPopUp = document.getElementById("left_popup");
         const rightPopUp = document.getElementById("right_popup");
-        if (leftPopUp.style.display == "block"){
+        if (leftPopUp.style.display == "block") {
             leftPopUp.style.display = "none";
         }
         else {
@@ -568,11 +561,11 @@ try{ // only for mobile
         }
     });
 
-    rightPopUpButton.addEventListener("click", function(){
+    rightPopUpButton.addEventListener("click", function () {
 
         const leftPopUp = document.getElementById("left_popup");
         const rightPopUp = document.getElementById("right_popup");
-        if (rightPopUp.style.display == "block"){
+        if (rightPopUp.style.display == "block") {
             rightPopUp.style.display = "none";
         }
         else {
@@ -595,7 +588,7 @@ function getRotationMap(moves) {
 
     let faces = "URFDLB";
     for (let i = 0; i < 6; ++i) {
-        rotationMap[faces[i]] = faces[rotationCube.cubestate[9*i+5][0]-1];
+        rotationMap[faces[i]] = faces[rotationCube.cubestate[9 * i + 5][0] - 1];
     }
 
     return rotationMap;
@@ -622,12 +615,13 @@ function updateVirtualCube(initialRotations = holdingOrientation.value + ' ' + c
             vc.cubeString = setCharAt(vc.cubeString, k, 'x');
         }
     }
-    
+
     vc.drawCube(ctx);
 }
 
+let timerIsRunning = false;
 
-function doAlg(algorithm, updateTimer=false){
+function doAlg(algorithm, updateTimer = false) {
     cube.doAlgorithm(algorithm);
     // updateVirtualCube();
 
@@ -639,7 +633,7 @@ function doAlg(algorithm, updateTimer=false){
         }
     }
 
-    if (timerIsRunning && cube.isSolved(initialMask.value) && isUsingVirtualCube()){
+    if (timerIsRunning && cube.isSolved(initialMask.value) && isUsingVirtualCube()) {
         if (updateTimer) {
             stopTimer();
             nextScramble();
@@ -651,9 +645,9 @@ function doAlg(algorithm, updateTimer=false){
 }
 
 
-function getRandAuf(letter){
-    var rand = Math.floor(Math.random()*4);//pick 0,1,2 or 3
-    var aufs = [letter + " ", letter +"' ",letter + "2 ", ""];
+function getRandAuf(letter) {
+    var rand = Math.floor(Math.random() * 4);//pick 0,1,2 or 3
+    var aufs = [letter + " ", letter + "' ", letter + "2 ", ""];
     return aufs[rand];
 }
 
@@ -661,16 +655,16 @@ function getRandAuf(letter){
 function getPremoves(length) {
     var previous = "U"; // prevents first move from being U or D
     var moveset = ['U', 'R', 'F', 'D', 'L', 'B'];
-    var amts = [" ","' "];
+    var amts = [" ", "' "];
     var randmove = "";
     var sequence = "";
-    for (let i=0; i<length; i++) {
+    for (let i = 0; i < length; i++) {
         do {
-            randmove = moveset[Math.floor(Math.random()*moveset.length)];
+            randmove = moveset[Math.floor(Math.random() * moveset.length)];
         } while (previous != "" && (randmove === previous || Math.abs(moveset.indexOf(randmove) - moveset.indexOf(previous)) === 3))
         previous = randmove;
         sequence += randmove;
-        sequence += amts[Math.floor(Math.random()*amts.length)];
+        sequence += amts[Math.floor(Math.random() * amts.length)];
     }
     return sequence;
 }
@@ -694,7 +688,7 @@ L' U' R L2 R2 D F2 D' R2 U B2 R2 F2 D' L2 R' D' L' B2 R F2 R U2
 
 
 */
-function obfuscate(algorithm, numPremoves=3, minLength=16){
+function obfuscate(algorithm, numPremoves = 3, minLength = 16) {
 
     return algorithm;
 
@@ -704,24 +698,24 @@ function obfuscate(algorithm, numPremoves=3, minLength=16){
     rc.doAlgorithm(alg.cube.invert(premoves) + algorithm);
     var orient = alg.cube.invert(rc.wcaOrient());
     var solution = alg.cube.simplify(premoves + (alg.cube.invert(rc.solution())) + orient).replace(/2'/g, "2");
-    return solution.split(" ").length >= minLength ? solution : obfuscate(algorithm, numPremoves+1, minLength);
+    return solution.split(" ").length >= minLength ? solution : obfuscate(algorithm, numPremoves + 1, minLength);
 
 }
 
-function addAUFs(algArr){
+function addAUFs(algArr) {
 
     var rand1 = getRandAuf("U");
     var rand2 = getRandAuf("U");
     //algorithm = getRandAuf() + algorithm + " " +  getRandAuf()
     var i = 0;
-    for (;i<algArr.length;i++){
-        algArr[i] = alg.cube.simplify(rand1 + algArr[i] + " " + rand2); 
+    for (; i < algArr.length; i++) {
+        algArr[i] = alg.cube.simplify(rand1 + algArr[i] + " " + rand2);
     }
     return algArr;
 }
 
 // function generateAlgScramble(raw_alg,obfuscateAlg,shouldPrescramble){
-    
+
 //     // if (set == "F3L" && !document.getElementById("userDefined").checked){
 //     //     return Cube.random().solve();
 //     // }
@@ -767,20 +761,20 @@ function testGenerateAlgScramble() {
 }
 
 
-function generatePreScramble(raw_alg, generator, times, obfuscateAlg, premoves=""){
+function generatePreScramble(raw_alg, generator, times, obfuscateAlg, premoves = "") {
 
     var genArray = generator.split(",");
 
     var scramble = premoves;
     var i = 0;
 
-    for (; i<times; i++){
-        var rand = Math.floor(Math.random()*genArray.length);
+    for (; i < times; i++) {
+        var rand = Math.floor(Math.random() * genArray.length);
         scramble += genArray[rand];
     }
     scramble += alg.cube.invert(raw_alg);
 
-    if (obfuscateAlg){
+    if (obfuscateAlg) {
         return obfuscate(scramble);
     }
     else {
@@ -789,9 +783,9 @@ function generatePreScramble(raw_alg, generator, times, obfuscateAlg, premoves="
 
 }
 
-function generateOrientation(){
+function generateOrientation() {
     var cn1 = document.getElementById("colourneutrality1").value;
-    if (document.getElementById("fullCN").checked){
+    if (document.getElementById("fullCN").checked) {
         var firstRotation = ["", "x", "x'", "x2", "y", "y'"]
         // each one of these first rotations puts a different color face on F
         var secondRotation = ["", "z", "z'", "z2"]
@@ -800,10 +794,10 @@ function generateOrientation(){
         // must result in a unique orientation because a different color is on F
         // and a different edge is on UF. Hence all 6x4=24 rotations are reached.
 
-        var rand1 = Math.floor(Math.random()*6);
-        var rand2 = Math.floor(Math.random()*4);
+        var rand1 = Math.floor(Math.random() * 6);
+        var rand2 = Math.floor(Math.random() * 4);
         var randomPart = firstRotation[rand1] + secondRotation[rand2];
-        if (randomPart == "x2z2"){
+        if (randomPart == "x2z2") {
             randomPart = "y2";
         }
         var fullOrientation = cn1 + randomPart; // Preorientation to perform starting from white top green front
@@ -818,8 +812,8 @@ function generateOrientation(){
     localStorage.setItem("colourneutrality2", cn2);
     localStorage.setItem("colourneutrality3", cn3);
 
-    var rand1 = Math.floor(Math.random()*4);
-    var rand2 = Math.floor(Math.random()*4);
+    var rand1 = Math.floor(Math.random() * 4);
+    var rand2 = Math.floor(Math.random() * 4);
 
     //console.log(cn1 + cn2.repeat(rand1) + cn3.repeat(rand2));
     var randomPart = cn2.repeat(rand1) + cn3.repeat(rand2); // Random part of the orientation
@@ -848,11 +842,11 @@ function correctRotation(alg) {
     var rc = new RubiksCube();
     rc.doAlgorithm(alg);
     var ori = rc.wcaOrient();
-	
+
     return alg + " " + ori;
 }
 
-function generateAlgTest(){
+function generateAlgTest() {
 
     var obfuscateAlg = document.getElementById("realScrambles").checked;
     var shouldPrescramble = document.getElementById("prescramble").checked;
@@ -871,25 +865,25 @@ function generateAlgTest(){
     //Do non-randomized mirroring first. This allows a user to practise left slots, back slots, front slots, rights slots
     // etc for F2L like algsets
     if (mirrorAllAlgs.checked && !randomizeMMirror.checked) {
-        rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis="M");
+        rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis = "M");
     }
     if (mirrorAllAlgsAcrossS.checked && !randomizeSMirror.checked) {
-        rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis="S");
+        rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis = "S");
     }
     if (mirrorAllAlgs.checked && randomizeMMirror.checked) {
-        if (Math.random() > 0.5){
-            rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis="M");
+        if (Math.random() > 0.5) {
+            rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis = "M");
         }
     }
     if (mirrorAllAlgsAcrossS.checked && randomizeSMirror.checked) {
-        if (Math.random() > 0.5){
-            rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis="S");
+        if (Math.random() > 0.5) {
+            rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis = "S");
         }
     }
 
 
     var solutions;
-    if (randAUF){
+    if (randAUF) {
         solutions = addAUFs(rawAlgs);
     } else {
         solutions = rawAlgs;
@@ -907,13 +901,13 @@ function generateAlgTest(){
     var algTest = new AlgTest(cycleLetters, rawAlgs, scramble, solutions, preorientation, solveTime, time, visualCubeView, orientRandPart);
     return algTest;
 }
-function testAlg(algTest, addToHistory=true){
+function testAlg(algTest, addToHistory = true) {
 
     var scramble = document.getElementById("scramble");
 
-    if (document.getElementById("showScramble").checked){
+    if (document.getElementById("showScramble").checked) {
         scramble.innerHTML = "<span style=\"color: #90f182\">" + algTest.orientRandPart + "</span>" + " " + algTest.rawAlgs[0];
-    } else{
+    } else {
         scramble.innerHTML = "&nbsp;";
     }
 
@@ -926,26 +920,28 @@ function testAlg(algTest, addToHistory=true){
     doAlg(algTest.scramble, false);
     updateVirtualCube();
 
-    if (addToHistory){
+    if (addToHistory) {
         algorithmHistory.push(algTest);
     }
-  //  console.log(algTest);
+    //  console.log(algTest);
 
 }
 
-function updateAlgsetStatistics(algList){
-    var stats = {"STM": averageMovecount(algList, "btm", false).toFixed(3),
-                "SQTM": averageMovecount(algList, "bqtm", false).toFixed(3),
-                "STM (including AUF)": averageMovecount(algList, "btm", true).toFixed(3),
-                "SQTM (including AUF)": averageMovecount(algList, "bqtm", true).toFixed(3),
-                "Number of algs": algList.length};
+function updateAlgsetStatistics(algList) {
+    var stats = {
+        "STM": averageMovecount(algList, "btm", false).toFixed(3),
+        "SQTM": averageMovecount(algList, "bqtm", false).toFixed(3),
+        "STM (including AUF)": averageMovecount(algList, "btm", true).toFixed(3),
+        "SQTM (including AUF)": averageMovecount(algList, "bqtm", true).toFixed(3),
+        "Number of algs": algList.length
+    };
 
     var table = document.getElementById("algsetStatistics");
     table.innerHTML = "";
     var th = document.createElement("th");
     th.appendChild(document.createTextNode("Algset Statistics"));
     table.appendChild(th);
-    for (var key in stats){
+    for (var key in stats) {
         var tr = document.createElement("tr");
         var description = document.createElement("td");
         var value = document.createElement("td");
@@ -958,41 +954,41 @@ function updateAlgsetStatistics(algList){
 
 }
 
-function reTestAlg(){
-    var lastTest = algorithmHistory[algorithmHistory.length-1];
-  //  console.log(lastTest);
-    if (lastTest==undefined){
+function reTestAlg() {
+    var lastTest = algorithmHistory[algorithmHistory.length - 1];
+    //  console.log(lastTest);
+    if (lastTest == undefined) {
         return;
     }
     cube.resetCube();
     doAlg(lastTest.scramble, false);
-  //  console.log("ok");
+    //  console.log("ok");
     updateVirtualCube();
 
 }
 
-function updateTrainer(scramble, solutions, algorithm, timer){
-    if (scramble!=null){
+function updateTrainer(scramble, solutions, algorithm, timer) {
+    if (scramble != null) {
         document.getElementById("scramble").innerHTML = scramble;
     }
-    if (solutions!=null){
+    if (solutions != null) {
         document.getElementById("algdisp").innerHTML = solutions;
     }
 
-    if (algorithm!=null){
+    if (algorithm != null) {
         cube.resetCube();
         doAlg(algorithm, false);
     }
 
-    if (timer!=null){
+    if (timer != null) {
         document.getElementById("timer").innerHTML = timer;
     }
 }
 
-function fixAlgorithms(algorithms){
+function fixAlgorithms(algorithms) {
     //for now this just removes brackets
     var i = 0;
-    for (;i<algorithms.length;i++){
+    for (; i < algorithms.length; i++) {
         // console.log(algorithms[i]);
         let currAlg = algorithms[i].replace(/\[|\]|\)|\(/g, "");
         // currAlg = commToMoves(currAlg);
@@ -1002,7 +998,7 @@ function fixAlgorithms(algorithms){
         // if (!isCommutator(currAlg)) {
         //     algorithms[i] = alg.cube.simplify(currAlg);
         // }
-        
+
     }
     return algorithms;
     //TODO Allow commutators
@@ -1014,8 +1010,8 @@ function validTextColour(stringToTest) {
     if (stringToTest === "inherit") { return false; }
     if (stringToTest === "transparent") { return false; }
 
-    var visualCubeColoursArray = ['black', 'dgrey', 'grey', 'silver', 'white', 'yellow', 
-                                  'red', 'orange', 'blue', 'green', 'purple', 'pink'];
+    var visualCubeColoursArray = ['black', 'dgrey', 'grey', 'silver', 'white', 'yellow',
+        'red', 'orange', 'blue', 'green', 'purple', 'pink'];
 
     if (stringToTest[0] !== '#') {
         return visualCubeColoursArray.indexOf(stringToTest) > -1;
@@ -1024,8 +1020,8 @@ function validTextColour(stringToTest) {
     }
 }
 
-function stripLeadingHashtag(colour){
-    if (colour[0] == '#'){
+function stripLeadingHashtag(colour) {
+    if (colour[0] == '#') {
         return colour.substring(1);
     }
 
@@ -1033,9 +1029,9 @@ function stripLeadingHashtag(colour){
 }
 
 
-function displayAlgorithm(algTest, reTest=true){    
+function displayAlgorithm(algTest, reTest = true) {
     //If reTest is true, the scramble will also be setup on the virtual cube
-    if (reTest){
+    if (reTest) {
         reTestAlg();
     }
 
@@ -1044,71 +1040,99 @@ function displayAlgorithm(algTest, reTest=true){
     scramble.style.color = '#e6e6e6';
 }
 
-function displayAlgorithmFromHistory(index){    
+function displayAlgorithmFromHistory(index) {
 
     var algTest = algorithmHistory[index];
 
-  //  console.log( algTest );
+    //  console.log( algTest );
 
     var timerText;
-    if (algTest.solveTime == null){
+    if (algTest.solveTime == null) {
         timerText = 'n/a'
     } else {
         timerText = algTest.solveTime.toString()
     }
 
     updateTrainer(
-        "<span style=\"color: #90f182\">" + algTest.orientRandPart + "</span>" + " "+ algTest.scramble, 
-        algTest.solutions.join("<br><br>"), 
-        algTest.preorientation + algTest.scramble, 
+        "<span style=\"color: #90f182\">" + algTest.orientRandPart + "</span>" + " " + algTest.scramble,
+        algTest.solutions.join("<br><br>"),
+        algTest.preorientation + algTest.scramble,
         timerText
     );
 
     scramble.style.color = '#e6e6e6';
 }
 
-function displayAlgorithmForPreviousTest(reTest=true, showSolution=true){//not a great name
+function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//not a great name
 
-    var lastTest = algorithmHistory[algorithmHistory.length-1];
-    if (lastTest==undefined){
+    var lastTest = algorithmHistory[algorithmHistory.length - 1];
+    if (lastTest == undefined) {
         return;
     }
     //If reTest is true, the scramble will also be setup on the virtual cube
-    if (reTest){
+    if (reTest) {
         reTestAlg();
     }
 
-    if (showSolution){
-    updateTrainer("<span style=\"color: #90f182\">" + lastTest.orientRandPart + "</span>" + " "+ lastTest.scramble, lastTest.solutions.join("<br><br>"), null, null);
+    if (showSolution) {
+        updateTrainer("<span style=\"color: #90f182\">" + lastTest.orientRandPart + "</span>" + " " + lastTest.scramble, lastTest.solutions.join("<br><br>"), null, null);
     } else {
-    updateTrainer(null, null, null, null);
+        updateTrainer(null, null, null, null);
     }
 
     scramble.style.color = '#e6e6e6';
 }
 
-function randomFromList(set){
+let lastSelectedAlgorithm = null;
 
-    if (document.getElementById("goInOrder").checked){
-        return set[currentAlgIndex++%set.length];
-    }   
+function randomFromList(set) {
+    if (document.getElementById("goInOrder").checked) {
+        return set[currentAlgIndex++ % set.length];
+    }
 
-    var size = set.length;
-    var rand = Math.floor(Math.random()*size);
+    let size = set.length;
+    let rand;
+    let selectedAlgorithm;
 
-    return set[rand];
+    do {
+        rand = Math.floor(Math.random() * size);
+        selectedAlgorithm = set[rand];
+    } while (selectedAlgorithm === lastSelectedAlgorithm && size > 1);
+
+    lastSelectedAlgorithm = selectedAlgorithm; // Update the last selected algorithm
+    return selectedAlgorithm;
+}
+
+var timeArray = [];
+
+function getMean(timeArray) {
+    var i;
+    var total = 0;
+    for (i = 0; i < timeArray.length; i++) {
+        total += timeArray[i].timeValue();
+    }
+
+    return total / timeArray.length;
+}
+
+function updateStats() {
+    var statistics = document.getElementById("statistics");
+
+    statistics.innerHTML = "&nbsp";
+
+    if (timeArray.length != 0) {
+        statistics.innerHTML += "Mean of " + timeArray.length + ": " + getMean(timeArray).toFixed(2) + "<br>";
+    }
 
 }
-var starttime;
-var timerUpdateInterval;
-var timerIsRunning = false;
-function startTimer(){
 
-    if (timerIsRunning){
+function startTimer() {
+
+    if (timerIsRunning) {
         return;
     }
 
-    if (document.getElementById("timer").style.display == 'none'){
+    if (document.getElementById("timer").style.display == 'none') {
         //don't do anything if timer is hidden
         return;
     }
@@ -1117,30 +1141,28 @@ function startTimer(){
     timerIsRunning = true;
 }
 
-function stopTimer(logTime=true){
+function stopTimer(logTime = true) {
 
-    if (!timerIsRunning){
+    if (!timerIsRunning) {
         return;
     }
 
-    if (document.getElementById("timer").style.display == 'none'){
+    if (document.getElementById("timer").style.display == 'none') {
         //don't do anything if timer is hidden
         return;
     }
-
 
     clearInterval(timerUpdateInterval);
     timerIsRunning = false;
 
     var time = parseFloat(document.getElementById("timer").innerHTML);
-    if (isNaN(time)){
+    if (isNaN(time)) {
         return NaN;
     }
 
-
-    if (logTime){
-        var lastTest = algorithmHistory[algorithmHistory.length-1];
-        var solveTime = new SolveTime(time,'');
+    if (logTime) {
+        var lastTest = algorithmHistory[algorithmHistory.length - 1];
+        var solveTime = new SolveTime(time, '');
         lastTest.solveTime = solveTime;
         timeArray.push(solveTime);
         console.log(timeArray);
@@ -1151,40 +1173,16 @@ function stopTimer(logTime=true){
     return time;
 }
 
-function updateTimer(){
-    document.getElementById("timer").innerHTML = ((Date.now()-starttime)/1000).toFixed(2);
-}
-var timeArray = [];
-
-function getMean(timeArray){
-    var i;
-    var total = 0;
-    for(i=0;i<timeArray.length;i++){
-        total += timeArray[i].timeValue();
-    }
-
-    return total/timeArray.length;
+function updateTimer() {
+    document.getElementById("timer").innerHTML = ((Date.now() - starttime) / 1000).toFixed(2);
 }
 
-function updateStats(){
-    var statistics = document.getElementById("statistics");
-
-    statistics.innerHTML = "&nbsp";
-
-    if (timeArray.length!=0){
-        statistics.innerHTML += "Mean of " + timeArray.length + ": " + getMean(timeArray).toFixed(2) + "<br>";
-    }
-
-}
-
-
-
-function updateTimeList(){
+function updateTimeList() {
     var i;
     var timeList = document.getElementById("timeList");
     var scrollTimes = document.getElementById("scrollTimes");
     timeList.innerHTML = "&nbsp";
-    for (i=0; i<timeArray.length;i++){
+    for (i = 0; i < timeArray.length; i++) {
         timeList.innerHTML += timeArray[i].toString();
         timeList.innerHTML += " ";
     }
@@ -1255,66 +1253,66 @@ function updateTimeList(){
 //     toggleAlgsetSelectAll.textContent = !anyUnchecked ? 'Select All' : 'Unselect All';
 // });
 
-function clearSelectedAlgsets(){
+function clearSelectedAlgsets() {
     var elements = document.getElementById("algsetpicker").options;
-    for(var i = 0; i < elements.length; i++){
+    for (var i = 0; i < elements.length; i++) {
         elements[i].selected = false;
     }
 }
 
-function findMistakesInUserAlgs(userAlgs){
+function findMistakesInUserAlgs(userAlgs) {
     var errorMessage = "";
     var newList = [];
-    var newListDisplay = [] // contains all valid algs + commented algs
-    for (var i = 0; i < userAlgs.length; i++){
-        if (userAlgs[i].trim().startsWith("#")){
-            // Allow 'commenting' of algs with #, like python
-            newListDisplay.push(userAlgs[i]);
-            continue;
-        }
-        userAlgs[i] = userAlgs[i].replace(/[\u2018\u0060\u2019\u00B4]/g, "'");  
-        userAlgs[i] = userAlgs[i].replace(/"/g, "");  
-        //replace astrophe like characters with '
-        if (!isCommutator(userAlgs[i])) {
+    var newListDisplay = []; // contains all valid algs + commented algs
+
+    for (var i = 0; i < userAlgs.length; i++) {
+        let alg = userAlgs[i].trim();
+
+        // Replace apostrophe-like characters with a standard single quote
+        alg = alg.replace(/[\u2018\u0060\u2019\u00B4]/g, "'").replace(/"/g, "");
+
+        let algWithParenthesis = alg;
+
+        // Remove comments in parentheses and trim
+        alg = alg.replace(/\([^)]*\)/g, "").trim();
+
+        if (!isCommutator(alg)) {
             try {
-                alg.cube.simplify(userAlgs[i]);
-                if (userAlgs[i].trim()!="" ){
-                    newList.push(userAlgs[i]);
-                    newListDisplay.push(userAlgs[i]);
+                alg.cube.simplify(alg);
+                if (alg !== "") {
+                    newList.push(alg);
+                    newListDisplay.push(algWithParenthesis);
                 }
+            } catch (err) {
+                errorMessage += `"${userAlgs[i]}" is an invalid alg and has been removed\n`;
             }
-            catch(err){
-                errorMessage += "\"" + userAlgs[i] + "\"" + " is an invalid alg and has been removed\n";
-            }
+        } else {
+            // TODO: Check valid commutators
+            newList.push(alg);
+            newListDisplay.push(algWithParenthesis);
         }
-        else {
-            // TODO: check valid comms
-            newList.push(userAlgs[i]);
-            newListDisplay.push(userAlgs[i]);
-        }
-        
     }
 
-    if (errorMessage!=""){
+    if (errorMessage !== "") {
         alert(errorMessage);
     }
 
     document.getElementById("userDefinedAlgs").value = newListDisplay.join("\n");
-    localStorage.setItem("userDefinedAlgs", newList.join("\n"));
+    localStorage.setItem("userDefinedAlgs", newListDisplay.join("\n"));
     return newList;
 }
 
-function createAlgList(){
+function createAlgList() {
     algList = findMistakesInUserAlgs(document.getElementById("userDefinedAlgs").value.split("\n"));
-    if (algList.length == 0){
+    if (algList.length == 0) {
         alert("Please enter some algs into the User Defined Algs box.");
     }
     return algList;
 }
 
-function mirrorAlgsAcrossAxis(algList, axis="M"){
+function mirrorAlgsAcrossAxis(algList, axis = "M") {
     algList = fixAlgorithms(algList);
-    if (axis=="M"){
+    if (axis == "M") {
         return algList.map(x => alg.cube.mirrorAcrossM(x));
     }
     else {
@@ -1322,11 +1320,11 @@ function mirrorAlgsAcrossAxis(algList, axis="M"){
     }
 }
 
-function averageMovecount(algList, metric, includeAUF){
+function averageMovecount(algList, metric, includeAUF) {
 
     var totalmoves = 0;
     var i = 0;
-    for (; i<algList.length; i++){
+    for (; i < algList.length; i++) {
         var topAlg = algList[i].split("!")[0];
         topAlg = topAlg.replace(/\[|\]|\)|\(/g, "");
         // convert to moves if in comm notation
@@ -1335,8 +1333,8 @@ function averageMovecount(algList, metric, includeAUF){
         // console.log(topAlg);
 
         var moves = alg.cube.simplify(alg.cube.expand(alg.cube.fromString(topAlg)));
-        
-        if (!includeAUF){
+
+        if (!includeAUF) {
             while (moves[0].base === "U" || moves[0].base === "y") {
                 moves.splice(0, 1)
             }
@@ -1344,16 +1342,16 @@ function averageMovecount(algList, metric, includeAUF){
                 moves.splice(moves.length - 1)
             }
         }
-        totalmoves += alg.cube.countMoves(moves, {"metric": metric});
+        totalmoves += alg.cube.countMoves(moves, { "metric": metric });
     }
 
-    return totalmoves/algList.length;
+    return totalmoves / algList.length;
 }
 
-function toggleVirtualCube(){
+function toggleVirtualCube() {
     var sim = document.getElementById("simcube");
 
-    if (sim.style.display == 'none'){
+    if (sim.style.display == 'none') {
         sim.style.display = 'block';
     }
     else {
@@ -1361,9 +1359,9 @@ function toggleVirtualCube(){
     }
 }
 
-function setVirtualCube(setting){
+function setVirtualCube(setting) {
     var sim = document.getElementById("simcube");
-    if (setting){
+    if (setting) {
         sim.style.display = 'block';
     } else {
         sim.style.display = 'none';
@@ -1372,23 +1370,23 @@ function setVirtualCube(setting){
     }
 }
 
-function setTimerDisplay(setting){
+function setTimerDisplay(setting) {
     var timer = document.getElementById("timer");
-    if (!isUsingVirtualCube()){
+    if (!isUsingVirtualCube()) {
         alert("The timer can only be hidden when using the simulator cube.");
         document.getElementById("hideTimer").checked = false;
     }
-    else if (setting){
+    else if (setting) {
         timer.style.display = 'block';
     } else {
         timer.style.display = 'none';
     }
 }
 
-function isUsingVirtualCube(){
+function isUsingVirtualCube() {
     var sim = document.getElementById("simcube")
 
-    if (sim.style.display == 'none'){
+    if (sim.style.display == 'none') {
         return false;
     }
     else {
@@ -1403,18 +1401,19 @@ var lastKeyMap = null;
 
 var historyIndex;
 
-function nextScramble(displayReady=true){
+function nextScramble(displayReady = true) {
+    moveHistory.length = 0;
     document.getElementById("scramble").style.color = "white";
     stopTimer(false);
-    if (displayReady){
+    if (displayReady) {
         document.getElementById("timer").innerHTML = 'Ready';
     };
-    if (isUsingVirtualCube() ){
+    if (isUsingVirtualCube()) {
         testAlg(generateAlgTest());
         if (isIncludeRecognitionTime) {
-        //    console.log("start timer");
+            //    console.log("start timer");
             startTimer();
-        } 
+        }
     }
     else {
         testAlg(generateAlgTest());
@@ -1424,12 +1423,12 @@ function nextScramble(displayReady=true){
 
 
 function handleLeftButton() {
-    if (algorithmHistory.length<=1 || timerIsRunning){
+    if (algorithmHistory.length <= 1 || timerIsRunning) {
         return;
     }
     historyIndex--;
 
-    if (historyIndex<0){
+    if (historyIndex < 0) {
         alert('Reached end of solve log');
         historyIndex = 0;
     }
@@ -1437,11 +1436,11 @@ function handleLeftButton() {
 }
 
 function handleRightButton() {
-    if (timerIsRunning){
+    if (timerIsRunning) {
         return;
     }
     historyIndex++;
-    if (historyIndex>=algorithmHistory.length){
+    if (historyIndex >= algorithmHistory.length) {
         nextScramble();
         doNothingNextTimeSpaceIsPressed = false;
         return;
@@ -1451,8 +1450,8 @@ function handleRightButton() {
 }
 
 try { //only for mobile
-document.getElementById("onscreenLeft").addEventListener("click", handleLeftButton);
-document.getElementById("onscreenRight").addEventListener("click", handleRightButton);
+    document.getElementById("onscreenLeft").addEventListener("click", handleLeftButton);
+    document.getElementById("onscreenRight").addEventListener("click", handleRightButton);
 } catch (error) {
 
 }
@@ -1468,23 +1467,23 @@ function updateControls() {
 
     listener.reset();
 
-    keymaps.forEach(function(keymap){
-        listener.register(keymap[0], function() {  doAlg(keymap[1], true) });
+    keymaps.forEach(function (keymap) {
+        listener.register(keymap[0], function () { doAlg(keymap[1], true) });
     });
-    listener.register(new KeyCombo("Backspace"), function() { displayAlgorithmForPreviousTest(true, true);});
-    listener.register(new KeyCombo("Escape"), function() {
-        if (isUsingVirtualCube()){
+    listener.register(new KeyCombo("Backspace"), function () { displayAlgorithmForPreviousTest(true, true); });
+    listener.register(new KeyCombo("Escape"), function () {
+        if (isUsingVirtualCube()) {
             stopTimer(false);
         }
         reTestAlg();
         document.getElementById("scramble").innerHTML = "&nbsp;";
         document.getElementById("algdisp").innerHTML = "";
     });
-    listener.register(new KeyCombo("Enter"), function() {
+    listener.register(new KeyCombo("Enter"), function () {
         nextScramble();
         doNothingNextTimeSpaceIsPressed = false;
     });
-    listener.register(new KeyCombo("Tab"), function() {
+    listener.register(new KeyCombo("Tab"), function () {
         nextScramble();
         doNothingNextTimeSpaceIsPressed = false;
     });
@@ -1496,25 +1495,25 @@ setInterval(updateControls, 300);
 
 
 function release(event) {
-    if (event.key == " " || event.type=="touchend") { //space
-        if (document.activeElement.type == "text"){
+    if (event.key == " " || event.type == "touchend") { //space
+        if (document.activeElement.type == "text") {
             return;
         }
-        if (document.activeElement.type == "textarea"){
+        if (document.activeElement.type == "textarea") {
             return;
         }
 
         document.getElementById("timer").style.color = "white"; //Timer should never be any color other than white when space is not pressed down
-        if (!isUsingVirtualCube()){
-            if (document.getElementById("algdisp").innerHTML == ""){
+        if (!isUsingVirtualCube()) {
+            if (document.getElementById("algdisp").innerHTML == "") {
                 //Right after a new scramble is displayed, space starts the timer
 
 
-                if (doNothingNextTimeSpaceIsPressed){
+                if (doNothingNextTimeSpaceIsPressed) {
                     doNothingNextTimeSpaceIsPressed = false;
                 }
                 else {
-                    startTimer(); 
+                    startTimer();
                 }
             }
         }
@@ -1522,27 +1521,27 @@ function release(event) {
 };
 document.onkeyup = release
 try { //only for mobile
-document.getElementById("touchStartArea").addEventListener("touchend", release);
-} catch(error) {
+    document.getElementById("touchStartArea").addEventListener("touchend", release);
+} catch (error) {
 
 }
 
 var doNothingNextTimeSpaceIsPressed = true;
 function press(event) { //Stops the screen from scrolling down when you press space
-    
+
     if (event.key == " " || event.type == "touchstart") { //space
-        if (document.activeElement.type == "text"){
+        if (document.activeElement.type == "text") {
             return;
         }
 
-        if (document.activeElement.type == "textarea"){
+        if (document.activeElement.type == "textarea") {
             return;
         }
 
         event.preventDefault();
-        if (!event.repeat){
-            if (isUsingVirtualCube()){
-                if (timerIsRunning){
+        if (!event.repeat) {
+            if (isUsingVirtualCube()) {
+                if (timerIsRunning) {
                     stopTimer();
                     displayAlgorithmForPreviousTest(true, false);//put false here if you don't want the cube to retest.
                     //window.setTimeout(function (){reTestAlg();}, 250);
@@ -1553,10 +1552,10 @@ function press(event) { //Stops the screen from scrolling down when you press sp
 
             }
             else { //If not using virtual cube
-                if (timerIsRunning){//If timer is running, stop timer
+                if (timerIsRunning) {//If timer is running, stop timer
                     var time = stopTimer();
                     doNothingNextTimeSpaceIsPressed = true;
-                    if (document.getElementById("goToNextCase").checked){
+                    if (document.getElementById("goToNextCase").checked) {
                         nextScramble(false);
 
                         //document.getElementById("timer").innerHTML = time;
@@ -1565,13 +1564,13 @@ function press(event) { //Stops the screen from scrolling down when you press sp
                     }
 
                 }
-                else if (document.getElementById("algdisp").innerHTML != ""){
+                else if (document.getElementById("algdisp").innerHTML != "") {
                     nextScramble(); //If the solutions are currently displayed, space should test on the next alg.
 
                     doNothingNextTimeSpaceIsPressed = true;
                 }
 
-                else if (document.getElementById("timer").innerHTML == "Ready"){
+                else if (document.getElementById("timer").innerHTML == "Ready") {
                     document.getElementById("timer").style.color = "green";
                 }
             }
@@ -1593,7 +1592,7 @@ class SolveTime {
         this.penalty = penalty;
     }
 
-    toString(decimals=2) {
+    toString(decimals = 2) {
         var timeString = this.time.toFixed(decimals)
         switch (this.penalty) {
             case '+2':
@@ -1625,8 +1624,11 @@ if (nextScrambleButton)
     nextScrambleButton.addEventListener('click', nextScramble);
 
 const showSolutionButton = document.querySelector('button[name="showSolutionButton"]');
+// if (showSolutionButton)
+//     showSolutionButton.addEventListener('click', displayAlgorithmForPreviousTest);
+
 if (showSolutionButton)
-    showSolutionButton.addEventListener('click', displayAlgorithmForPreviousTest);
+    showSolutionButton.addEventListener('click', retryCurrentAlgorithm);
 
 const testScrambleButton = document.querySelector('button[name="testScrambleButton"]');
 if (testScrambleButton)
@@ -1637,67 +1639,67 @@ if (testScrambleButton)
 //CUBE OBJECT
 function RubiksCube() {
     this.cubestate = [
-        [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], 
-        [2, 9], [2, 10], [2, 11], [2, 12], [2, 13], [2, 14], [2, 15], [2, 16], [2, 17], 
-        [3, 18], [3, 19], [3, 20], [3, 21], [3, 22], [3, 23], [3, 24], [3, 25], [3, 26], 
-        [4, 27], [4, 28], [4, 29], [4, 30], [4, 31], [4, 32], [4, 33], [4, 34], [4, 35], 
-        [5, 36], [5, 37], [5, 38], [5, 39], [5, 40], [5, 41], [5, 42], [5, 43], [5, 44], 
+        [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8],
+        [2, 9], [2, 10], [2, 11], [2, 12], [2, 13], [2, 14], [2, 15], [2, 16], [2, 17],
+        [3, 18], [3, 19], [3, 20], [3, 21], [3, 22], [3, 23], [3, 24], [3, 25], [3, 26],
+        [4, 27], [4, 28], [4, 29], [4, 30], [4, 31], [4, 32], [4, 33], [4, 34], [4, 35],
+        [5, 36], [5, 37], [5, 38], [5, 39], [5, 40], [5, 41], [5, 42], [5, 43], [5, 44],
         [6, 45], [6, 46], [6, 47], [6, 48], [6, 49], [6, 50], [6, 51], [6, 52], [6, 53]
     ];
 
-    this.resetCube = function(){
+    this.resetCube = function () {
         this.cubestate = [
-            [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], 
-            [2, 9], [2, 10], [2, 11], [2, 12], [2, 13], [2, 14], [2, 15], [2, 16], [2, 17], 
-            [3, 18], [3, 19], [3, 20], [3, 21], [3, 22], [3, 23], [3, 24], [3, 25], [3, 26], 
-            [4, 27], [4, 28], [4, 29], [4, 30], [4, 31], [4, 32], [4, 33], [4, 34], [4, 35], 
-            [5, 36], [5, 37], [5, 38], [5, 39], [5, 40], [5, 41], [5, 42], [5, 43], [5, 44], 
+            [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8],
+            [2, 9], [2, 10], [2, 11], [2, 12], [2, 13], [2, 14], [2, 15], [2, 16], [2, 17],
+            [3, 18], [3, 19], [3, 20], [3, 21], [3, 22], [3, 23], [3, 24], [3, 25], [3, 26],
+            [4, 27], [4, 28], [4, 29], [4, 30], [4, 31], [4, 32], [4, 33], [4, 34], [4, 35],
+            [5, 36], [5, 37], [5, 38], [5, 39], [5, 40], [5, 41], [5, 42], [5, 43], [5, 44],
             [6, 45], [6, 46], [6, 47], [6, 48], [6, 49], [6, 50], [6, 51], [6, 52], [6, 53]
         ];
     }
 
-    this.resetCubestate = function(){
+    this.resetCubestate = function () {
         var face = 1;
         for (var i = 0; i < 6; ++i) {
             for (var j = 0; j < 9; ++j) {
-                this.cubestate[9*i + j][0] = face;
+                this.cubestate[9 * i + j][0] = face;
             }
 
             ++face;
         }
     }
 
-    this.resetMask = function(){
+    this.resetMask = function () {
         var face = 1;
         for (var i = 0; i < 6; ++i) {
             for (var j = 0; j < 9; ++j) {
-                this.cubestate[9*i + j][1] = 9*i + j;
+                this.cubestate[9 * i + j][1] = 9 * i + j;
             }
 
             ++face;
         }
     }
 
-    this.getMaskValues = function(){
+    this.getMaskValues = function () {
         return this.cubestate.map(facelet => facelet[1]);
     }
 
-    this.solution = function(){
+    this.solution = function () {
         var gcube = Cube.fromString(this.toString());
         return gcube.solve();
     }
 
-    this.isSolved = function(initialMask=""){
-        for (var i = 0; i<6;i++){
+    this.isSolved = function (initialMask = "") {
+        for (var i = 0; i < 6; i++) {
             let uniqueColorsOnFace = new Set();
 
-            for (var j = 0; j<9; j++){
+            for (var j = 0; j < 9; j++) {
                 // console.log(this.toString());
                 // console.log(initialMask);
-                if (initialMask.length == 54 && initialMask[this.cubestate[9*i + j][1]] == 'x') {
+                if (initialMask.length == 54 && initialMask[this.cubestate[9 * i + j][1]] == 'x') {
                     continue;
                 }
-                uniqueColorsOnFace.add(this.cubestate[9*i + j][0]);
+                uniqueColorsOnFace.add(this.cubestate[9 * i + j][0]);
             }
 
             if (uniqueColorsOnFace.size > 1) {
@@ -1706,96 +1708,96 @@ function RubiksCube() {
         }
         return true;
     }
-    this.wcaOrient = function() {
+    this.wcaOrient = function () {
         // u-r--f--d--l--b
         // 4 13 22 31 40 49
         //
         var moves = "";
 
-        if (this.cubestate[13][0]==1) {//R face
+        if (this.cubestate[13][0] == 1) {//R face
             this.doAlgorithm("z'");
-            moves +="z'";
-        } else if (this.cubestate[22][0]==1) {//on F face
+            moves += "z'";
+        } else if (this.cubestate[22][0] == 1) {//on F face
             this.doAlgorithm("x");
-            moves+="x";
-        } else if (this.cubestate[31][0]==1) {//on D face
+            moves += "x";
+        } else if (this.cubestate[31][0] == 1) {//on D face
             this.doAlgorithm("x2");
-            moves+="x2";
-        } else if (this.cubestate[40][0]==1) {//on L face
+            moves += "x2";
+        } else if (this.cubestate[40][0] == 1) {//on L face
             this.doAlgorithm("z");
-            moves+="z";
-        } else if (this.cubestate[49][0]==1) {//on B face
+            moves += "z";
+        } else if (this.cubestate[49][0] == 1) {//on B face
             this.doAlgorithm("x'");
-            moves+="x'";
+            moves += "x'";
         }
 
-        if (this.cubestate[13][0]==3) {//R face
+        if (this.cubestate[13][0] == 3) {//R face
             this.doAlgorithm("y");
-            moves+=" y";
-        } else if (this.cubestate[40][0]==3) {//on L face
+            moves += " y";
+        } else if (this.cubestate[40][0] == 3) {//on L face
             this.doAlgorithm("y'");
-            moves+=" y'";
-        } else if (this.cubestate[49][0]==3) {//on B face
+            moves += " y'";
+        } else if (this.cubestate[49][0] == 3) {//on B face
             this.doAlgorithm("y2");
-            moves+=" y2";
+            moves += " y2";
         }
 
         return moves;
     }
 
-    this.toString = function(){
+    this.toString = function () {
         var str = "";
         var i;
-        var sides = ["U","R","F","D","L","B"]
-        for(i=0;i<this.cubestate.length;i++){
-            str+=sides[this.cubestate[i][0]-1];
+        var sides = ["U", "R", "F", "D", "L", "B"]
+        for (i = 0; i < this.cubestate.length; i++) {
+            str += sides[this.cubestate[i][0] - 1];
         }
         // console.log(str);
         return str;
     }
 
-    this.toInitialMaskedString = function(initialMask){
+    this.toInitialMaskedString = function (initialMask) {
         var str = "";
         var i;
-        var sides = ["U","R","F","D","L","B"]
-        for(i=0;i<this.cubestate.length;i++){
+        var sides = ["U", "R", "F", "D", "L", "B"]
+        for (i = 0; i < this.cubestate.length; i++) {
             if (initialMask[this.cubestate[i][1]] == 'x') {
                 str += 'x';
             } else {
-                str += sides[this.cubestate[i][0]-1];
+                str += sides[this.cubestate[i][0] - 1];
             }
         }
         return str;
     }
 
 
-    this.test = function(alg){
+    this.test = function (alg) {
         this.doAlgorithm(alg);
         updateVirtualCube();
     }
 
-    this.doAlgorithm = function(alg) {
+    this.doAlgorithm = function (alg) {
         if (!alg || alg == "") return;
 
         var moveArr = alg.split(/(?=[A-Za-z])/);
         var i;
 
-        for (i = 0;i<moveArr.length;i++) {
+        for (i = 0; i < moveArr.length; i++) {
             var move = moveArr[i];
             var myRegexp = /([RUFBLDrufbldxyzEMS])(\d*)('?)/g;
             var match = myRegexp.exec(move.trim());
 
 
-            if (match!=null) {
+            if (match != null) {
 
                 var side = match[1];
 
                 var times = 1;
-                if (!match[2]=="") {
+                if (!match[2] == "") {
                     times = match[2] % 4;
                 }
 
-                if (match[3]=="'") {
+                if (match[3] == "'") {
                     times = (4 - times) % 4;
                 }
 
@@ -1861,18 +1863,18 @@ function RubiksCube() {
 
     }
 
-    this.solveNoRotate = function(){
+    this.solveNoRotate = function () {
         //Center sticker indexes: 4, 13, 22, 31, 40, 49
         var cubestate = this.cubestate;
-        this.cubestate = [cubestate[4],cubestate[4],cubestate[4],cubestate[4],cubestate[4],cubestate[4],cubestate[4],cubestate[4],cubestate[4],
-                          cubestate[13],cubestate[13],cubestate[13],cubestate[13],cubestate[13],cubestate[13],cubestate[13],cubestate[13],cubestate[13],
-                          cubestate[22],cubestate[22],cubestate[22],cubestate[22],cubestate[22],cubestate[22],cubestate[22],cubestate[22],cubestate[22],
-                          cubestate[31],cubestate[31],cubestate[31],cubestate[31],cubestate[31],cubestate[31],cubestate[31],cubestate[31],cubestate[31],
-                          cubestate[40],cubestate[40],cubestate[40],cubestate[40],cubestate[40],cubestate[40],cubestate[40],cubestate[40],cubestate[40],
-                          cubestate[49],cubestate[49],cubestate[49],cubestate[49],cubestate[49],cubestate[49],cubestate[49],cubestate[49],cubestate[49]];
+        this.cubestate = [cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4], cubestate[4],
+        cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13], cubestate[13],
+        cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22], cubestate[22],
+        cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31], cubestate[31],
+        cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40], cubestate[40],
+        cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49], cubestate[49]];
     }
 
-    this.doU = function(times) {
+    this.doU = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1881,7 +1883,7 @@ function RubiksCube() {
 
     }
 
-    this.doR = function(times) {
+    this.doR = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1891,7 +1893,7 @@ function RubiksCube() {
 
     }
 
-    this.doF = function(times) {
+    this.doF = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1900,7 +1902,7 @@ function RubiksCube() {
 
     }
 
-    this.doD = function(times) {
+    this.doD = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1909,7 +1911,7 @@ function RubiksCube() {
 
     }
 
-    this.doL = function(times) {
+    this.doL = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1918,7 +1920,7 @@ function RubiksCube() {
 
     }
 
-    this.doB = function(times) {
+    this.doB = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1927,7 +1929,7 @@ function RubiksCube() {
 
     }
 
-    this.doE = function(times) {
+    this.doE = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1936,7 +1938,7 @@ function RubiksCube() {
 
     }
 
-    this.doM = function(times) {
+    this.doM = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1945,7 +1947,7 @@ function RubiksCube() {
 
     }
 
-    this.doS = function(times) {
+    this.doS = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1954,7 +1956,7 @@ function RubiksCube() {
 
     }
 
-    this.doX = function(times) {
+    this.doX = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1964,7 +1966,7 @@ function RubiksCube() {
         }
     }
 
-    this.doY = function(times) {
+    this.doY = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1975,7 +1977,7 @@ function RubiksCube() {
         }
     }
 
-    this.doZ = function(times) {
+    this.doZ = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1986,7 +1988,7 @@ function RubiksCube() {
         }
     }
 
-    this.doUw = function(times) {
+    this.doUw = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -1997,7 +1999,7 @@ function RubiksCube() {
 
     }
 
-    this.doRw = function(times) {
+    this.doRw = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -2007,7 +2009,7 @@ function RubiksCube() {
 
     }
 
-    this.doFw = function(times) {
+    this.doFw = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -2017,7 +2019,7 @@ function RubiksCube() {
 
     }
 
-    this.doDw = function(times) {
+    this.doDw = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -2027,7 +2029,7 @@ function RubiksCube() {
 
     }
 
-    this.doLw = function(times) {
+    this.doLw = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -2037,7 +2039,7 @@ function RubiksCube() {
 
     }
 
-    this.doBw = function(times) {
+    this.doBw = function (times) {
         var i;
         for (i = 0; i < times; i++) {
             var cubestate = this.cubestate;
@@ -2048,7 +2050,7 @@ function RubiksCube() {
     }
 }
 
-RubiksCube.prototype.getThreeCycleMapping = function(edgeBuffer, cornerBuffer) {
+RubiksCube.prototype.getThreeCycleMapping = function (edgeBuffer, cornerBuffer) {
     const unsolvedPositions = [];
 
     // Step 1: Identify unsolved positions
@@ -2112,7 +2114,29 @@ function parseLettersForTTS(letters) {
 }
 
 
-function speakText(text) {
+function checkForSpecialSequences() {
+    const recentMoves = moveHistory.join("");
+
+    // Example: Detect "R R R R" (R4)
+    if (recentMoves.endsWith("D D D D ") || recentMoves.endsWith("D'D'D'D'")) {
+        console.log("Special sequence detected: D4");
+        triggerSpecialAction("D4");
+    }
+
+    // Add more sequences as needed
+    if (recentMoves.endsWith("U U U U ") || recentMoves.endsWith("U'U'U'U'")) {
+        console.log("Special sequence detected: U4");
+        triggerSpecialAction("U4");
+    }
+
+    // Add more sequences as needed
+    if (recentMoves.endsWith("F F F F ") || recentMoves.endsWith("F'F'F'F'")) {
+        console.log("Special sequence detected: F4");
+        triggerSpecialAction("F4");
+    }
+}
+
+function speakText(text, rate = 1.0, readComm = false) {
     const enableTTS = localStorage.getItem("enableTTS") === "true";
 
     if (!enableTTS) {
@@ -2124,7 +2148,7 @@ function speakText(text) {
         if (!utterance) {
             // Create the utterance instance only once
             utterance = new SpeechSynthesisUtterance();
-            utterance.rate = 1; // Adjust speed if needed
+            utterance.rate = rate; // Adjust speed if needed
         }
 
         // Stop any ongoing speech before speaking new text
@@ -2134,12 +2158,146 @@ function speakText(text) {
         const language = localStorage.getItem("ttsLanguage") || "pl-PL";
         utterance.lang = language;
 
-        // Update the text and speak
-        utterance.text = text;
+        if (readComm) {
+            utterance.rate = rate;
+
+            // Preprocess the text to replace special characters with words
+            const replacements = {
+                ":": " potem",
+                "'": " priim",
+                "/": " slesz"
+            };
+
+            // Dynamically construct the regex from the keys of the replacements map
+            const regex = new RegExp(`[${Object.keys(replacements).join("")}]`, "g");
+
+            // Replace all matches using the replacements map and add a comma after each replacement
+            let processedText = text.replace(regex, match => replacements[match] + ",");
+
+            // Add "setap" at the front if there is at least one occurrence of ":"
+            if (text.includes(":")) {
+                processedText = "setap " + processedText;
+            }
+
+            // Split moves with a comma and ensure spaces are preserved
+            processedText = processedText.split(" ").join(", ");
+
+            // Trim double commas
+            processedText = processedText.replace(/,,+/g, ","); // Replace multiple commas with a single comma
+
+            // Replace ", priim" with " prim"
+            processedText = processedText.replace(/, priim/g, " priim");
+
+            // Ensure spaces are preserved between moves
+            processedText = processedText.replace(/, /g, ", ");
+
+            // Remove any leading commas
+            processedText = processedText.replace(/^, /, ""); // Remove leading commas
+
+            // Update the text and speak
+            utterance.text = processedText;
+        } else {
+            utterance.text = text;
+        }
+
         window.speechSynthesis.speak(utterance);
     } else {
         console.warn('Text-to-Speech is not supported in this browser.');
     }
+}
+
+function triggerSpecialAction(sequence) {
+    moveHistory.length = 0; // Clear the history after checking
+    switch (sequence) {
+        case "D4":
+            console.log("D4 detected! Reading out current displayed scramble");
+            // Retrieve the scramble currently displayed on the screen
+            const displayedScrambleElement = document.getElementById("scramble");
+            const displayedScrambleText = displayedScrambleElement ? displayedScrambleElement.textContent : null;
+
+            if (displayedScrambleText) {
+                console.log("Reading out displayed scramble:", displayedScrambleText);
+                speakText(displayedScrambleText, 1, true); // Trigger TTS to read out the displayed scramble
+            } else {
+                console.warn("No displayed scramble available to read out.");
+            }
+            break;
+        case "U4":
+            console.log("U4 detected! Retrying current alg");
+            retryCurrentAlgorithm();
+            break;
+        case "F4":
+            console.log("F4 detected! Running next alg");
+            nextScramble();
+            break;
+        default:
+            console.log(`No action defined for sequence: ${sequence}`);
+    }
+}
+
+function enableTtsOnStartup() {
+    const enableTTSCheckbox = document.getElementById("enableTTS");
+    const savedTTSState = localStorage.getItem("enableTTS");
+
+    // Set the checkbox state based on the saved value or default to true
+    enableTTSCheckbox.checked = savedTTSState === "true";
+
+    // Add an event listener to update localStorage when the checkbox is toggled
+    enableTTSCheckbox.addEventListener("change", function () {
+        localStorage.setItem("enableTTS", enableTTSCheckbox.checked);
+    });
+}
+
+async function connectSmartCube() {
+    try {
+        if (conn) {
+            await conn.disconnect();
+            connectSmartCubeElement.textContent = 'Connect Smart Cube';
+            alert(`Smart cube ${conn.deviceName} disconnected`);
+            conn = null;
+        } else {
+            conn = await connect(applyMoves);
+            if (!conn) {
+                alert(`Smart cube is not supported`);
+            } else {
+                await conn.initAsync();
+                connectSmartCubeElement.textContent = 'Disconnect Smart Cube';
+                // alert(`Smart cube ${conn.deviceName} connected`);
+                nextScramble();
+            }
+        }
+    } catch (e) {
+        connectSmartCubeElement.textContent = 'Connect Smart Cube';
+    }
+}
+
+function retryCurrentAlgorithm() {
+    // Get the last tested algorithm from the history
+    const lastTest = algorithmHistory[algorithmHistory.length - 1];
+    stopTimer(false);
+
+    if (!lastTest) {
+        alert("No algorithm to retry.");
+        return;
+    }
+
+    // Reset the cube and apply the scramble
+    cube.resetCube();
+    doAlg(lastTest.scramble, false);
+    updateVirtualCube();
+
+    // Reset the timer display
+    document.getElementById("timer").innerHTML = "0.00";
+
+    // Optionally, display the algorithm and cycle letters again
+    document.getElementById("scramble").innerHTML = `<span style="color: #90f182">${lastTest.orientRandPart}</span> ${lastTest.rawAlgs[0]}`;
+    document.getElementById("cycle").innerHTML = lastTest.cycleLetters;
+
+    // Trigger TTS to read out the cycle letters
+    speakText(parseLettersForTTS(lastTest.cycleLetters.split("")));
+
+    console.log("Retrying algorithm:", lastTest.rawAlgs[0]);
+    startTimer();
 }
 
 // function setCustomLetterScheme(scheme) {
@@ -2209,18 +2367,6 @@ function speakText(text) {
 //     }
 // });
 
-document.addEventListener("DOMContentLoaded", function () {
-    const enableTTSCheckbox = document.getElementById("enableTTS");
-    const savedTTSState = localStorage.getItem("enableTTS");
-
-    // Set the checkbox state based on the saved value or default to true
-    enableTTSCheckbox.checked = savedTTSState === "true";
-
-    // Add an event listener to update localStorage when the checkbox is toggled
-    enableTTSCheckbox.addEventListener("change", function () {
-        localStorage.setItem("enableTTS", enableTTSCheckbox.checked);
-    });
-});
 
 const LETTER_PAIR_TO_WORD = {
     "AA": "",
@@ -2245,7 +2391,7 @@ const LETTER_PAIR_TO_WORD = {
     "AT": "",
     "AW": "",
     "AZ": "",
-    
+
     "BA": "",
     "BB": "",
     "BC": "",
@@ -2268,7 +2414,7 @@ const LETTER_PAIR_TO_WORD = {
     "BT": "",
     "BW": "",
     "BZ": "",
-    
+
     "CA": "",
     "CB": "",
     "CC": "",
@@ -2291,7 +2437,7 @@ const LETTER_PAIR_TO_WORD = {
     "CT": "",
     "CW": "",
     "CZ": "",
-    
+
     "DA": "",
     "DB": "",
     "DC": "",
@@ -2314,7 +2460,7 @@ const LETTER_PAIR_TO_WORD = {
     "DT": "",
     "DW": "",
     "DZ": "",
-    
+
     "EA": "",
     "EB": "",
     "EC": "",
@@ -2337,7 +2483,7 @@ const LETTER_PAIR_TO_WORD = {
     "ET": "",
     "EW": "",
     "EZ": "",
-    
+
     "FA": "",
     "FB": "",
     "FC": "",
@@ -2360,7 +2506,7 @@ const LETTER_PAIR_TO_WORD = {
     "FT": "",
     "FW": "",
     "FZ": "",
-    
+
     "GA": "",
     "GB": "",
     "GC": "",
@@ -2383,7 +2529,7 @@ const LETTER_PAIR_TO_WORD = {
     "GT": "",
     "GW": "",
     "GZ": "",
-    
+
     "HA": "",
     "HB": "",
     "HC": "",
@@ -2406,7 +2552,7 @@ const LETTER_PAIR_TO_WORD = {
     "HT": "",
     "HW": "",
     "HZ": "",
-    
+
     "IA": "",
     "IB": "",
     "IC": "",
@@ -2429,7 +2575,7 @@ const LETTER_PAIR_TO_WORD = {
     "IT": "",
     "IW": "",
     "IZ": "",
-    
+
     "JA": "",
     "JB": "",
     "JC": "",
@@ -2452,7 +2598,7 @@ const LETTER_PAIR_TO_WORD = {
     "JT": "",
     "JW": "",
     "JZ": "",
-    
+
     "KA": "",
     "KB": "",
     "KC": "",
@@ -2475,7 +2621,7 @@ const LETTER_PAIR_TO_WORD = {
     "KT": "",
     "KW": "",
     "KZ": "",
-    
+
     "LA": "",
     "LB": "",
     "LC": "",
@@ -2498,7 +2644,7 @@ const LETTER_PAIR_TO_WORD = {
     "LT": "",
     "LW": "",
     "LZ": "",
-    
+
     "MA": "",
     "MB": "",
     "MC": "",
@@ -2521,7 +2667,7 @@ const LETTER_PAIR_TO_WORD = {
     "MT": "",
     "MW": "",
     "MZ": "",
-    
+
     "NA": "",
     "NB": "",
     "NC": "",
@@ -2544,7 +2690,7 @@ const LETTER_PAIR_TO_WORD = {
     "NT": "",
     "NW": "",
     "NZ": "",
-    
+
     "OA": "",
     "OB": "",
     "OC": "",
@@ -2567,7 +2713,7 @@ const LETTER_PAIR_TO_WORD = {
     "OT": "",
     "OW": "",
     "OZ": "",
-    
+
     "PA": "",
     "PB": "",
     "PC": "",
@@ -2590,7 +2736,7 @@ const LETTER_PAIR_TO_WORD = {
     "PT": "",
     "PW": "",
     "PZ": "",
-    
+
     "QA": "sza",
     "QB": "szab",
     "QC": "szuc",
@@ -2613,7 +2759,7 @@ const LETTER_PAIR_TO_WORD = {
     "QT": "szot",
     "QW": "szaw",
     "QZ": "szaz",
-    
+
     "RA": "",
     "RB": "",
     "RC": "",
@@ -2636,7 +2782,7 @@ const LETTER_PAIR_TO_WORD = {
     "RT": "",
     "RW": "",
     "RZ": "",
-    
+
     "SA": "",
     "SB": "",
     "SC": "",
@@ -2659,7 +2805,7 @@ const LETTER_PAIR_TO_WORD = {
     "ST": "",
     "SW": "",
     "SZ": "",
-    
+
     "TA": "",
     "TB": "",
     "TC": "",
@@ -2682,7 +2828,7 @@ const LETTER_PAIR_TO_WORD = {
     "TT": "",
     "TW": "",
     "TZ": "",
-    
+
     "WA": "",
     "WB": "",
     "WC": "",
@@ -2705,7 +2851,7 @@ const LETTER_PAIR_TO_WORD = {
     "WT": "",
     "WW": "",
     "WZ": "",
-    
+
     "ZA": "",
     "ZB": "",
     "ZC": "",
@@ -2729,4 +2875,3 @@ const LETTER_PAIR_TO_WORD = {
     "ZW": "",
     "ZZ": ""
 }
-
