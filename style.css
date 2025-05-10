@@ -90,7 +90,7 @@ a:visited {
   position: absolute;
   left: 50%;
   top: 50%;
-  z-index: 1;
+  z-index: 10;
   width: 150px;
   height: 150px;
   margin: -75px 0 0 -75px;
@@ -209,3 +209,16 @@ form input, form label, form button {
 div.hidden {
   display:none;
 }
+
+/* #repetitionCounter {
+  position: absolute;
+  top: 11%;
+  right: 30%;
+  font-size: 2em; /* Make it larger 
+  font-weight: bold;
+   /* background-color: #000000; Light background for visibility */
+  /* padding: 10px 20px; */
+  /* border-radius: 8px; Rounded corners */
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); Subtle shadow 
+  z-index: 9; /* Ensure it stays on top 
+} */

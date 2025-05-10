@@ -45,6 +45,9 @@ function loadVoices() {
     selectedVoice = filteredVoices[0];
 }
 
+let repetitionCounter = parseInt(localStorage.getItem("repetitionCounter")) || 0;
+document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
+
 if (localStorage.getItem("enableTTS") === null) {
     localStorage.setItem("enableTTS", "true"); // Default to enabled
 }
@@ -914,7 +917,7 @@ function testAlg(algTest, addToHistory = true) {
     var cycleLettersElement = document.getElementById("cycle");
     cycleLettersElement.innerHTML = algTest.cycleLetters;
 
-    document.getElementById("algdisp").innerHTML = "";
+    // document.getElementById("algdisp").innerHTML = "";
 
     cube.resetCube();
     doAlg(algTest.scramble, false);
@@ -971,9 +974,9 @@ function updateTrainer(scramble, solutions, algorithm, timer) {
     if (scramble != null) {
         document.getElementById("scramble").innerHTML = scramble;
     }
-    if (solutions != null) {
-        document.getElementById("algdisp").innerHTML = solutions;
-    }
+    // if (solutions != null) {
+    //     document.getElementById("algdisp").innerHTML = solutions;
+    // }
 
     if (algorithm != null) {
         cube.resetCube();
@@ -1085,21 +1088,52 @@ function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//
 
 let lastSelectedAlgorithm = null;
 
+let remainingAlgs = []; // Stores the remaining algorithms for the current cycle
+let isFirstRun = true; // Flag to track the first run
+
 function randomFromList(set) {
-    if (document.getElementById("goInOrder").checked) {
-        return set[currentAlgIndex++ % set.length];
+    // Ensure the set is not empty
+    if (!set || set.length === 0) {
+        alert("No algorithms available. Please add algorithms to the list.");
+        return null;
     }
 
-    let size = set.length;
-    let rand;
-    let selectedAlgorithm;
+    // Initialize remainingAlgs if it's empty
+    if (remainingAlgs.length === 0) {
+        remainingAlgs = [...set];
 
-    do {
-        rand = Math.floor(Math.random() * size);
-        selectedAlgorithm = set[rand];
-    } while (selectedAlgorithm === lastSelectedAlgorithm && size > 1);
+        // Skip the jingle on the first run
+        if (isFirstRun) {
+            isFirstRun = false; // Set the flag to false after the first run
+        } else {
+            // Play the jingle when the set is completed (not the first run)
+            const jingle = document.getElementById("completionJingle");
+            jingle.volume = 0.6
+            jingle.play();
 
-    lastSelectedAlgorithm = selectedAlgorithm; // Update the last selected algorithm
+            // // Delay the prompt until after the jingle starts playing
+            // setTimeout(() => {
+            //     const continuePractice = confirm("You have completed the set! Would you like to continue?");
+            //     if (continuePractice) {
+            //         // Repopulate the remainingAlgs array
+            //         remainingAlgs = [...set];
+            //     } else {
+            //         remainingAlgs = []; // Clear the list if the user doesn't want to continue
+            //     }
+            // }, 500); // Delay the prompt by 500ms (adjust as needed)
+            // return null; // Exit early to avoid selecting an algorithm during the prompt
+        }
+    }
+
+    // Pick a random algorithm from the remainingAlgs array
+    const randIndex = Math.floor(Math.random() * remainingAlgs.length);
+    const selectedAlgorithm = remainingAlgs.splice(randIndex, 1)[0]; // Remove the selected algorithm
+
+    // Update the progress display
+    const currentIndex = set.length - remainingAlgs.length;
+    const totalAlgs = set.length;
+    document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
+
     return selectedAlgorithm;
 }
 
@@ -1166,11 +1200,21 @@ function stopTimer(logTime = true) {
         lastTest.solveTime = solveTime;
         timeArray.push(solveTime);
         console.log(timeArray);
+
+        // Increment the repetition counter
+        incrementReps();
+
         updateTimeList();
     }
 
     updateStats();
     return time;
+}
+
+function incrementReps() {
+    repetitionCounter++;
+    localStorage.setItem("repetitionCounter", repetitionCounter);
+    document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
 }
 
 function updateTimer() {
@@ -1284,7 +1328,24 @@ function findMistakesInUserAlgs(userAlgs) {
                     newListDisplay.push(algWithParenthesis);
                 }
             } catch (err) {
-                errorMessage += `"${userAlgs[i]}" is an invalid alg and has been removed\n`;
+                // attempt to get the cycle anyway
+                cube.resetCube();
+                cube.doAlgorithm(alg);
+                const edgeBufferPosition = 7; // UF sticker index
+                const cornerBufferPosition = 8; // UFR sticker index
+
+                const cycleMapping = cube.getThreeCycleMapping(edgeBufferPosition, cornerBufferPosition);
+                cube.resetCube();
+
+                if (cycleMapping) {
+                    console.log("Alg is not a commutator, but is still a valid 3 cycle:", cycleMapping);
+                    newList.push(alg);
+                    newListDisplay.push(algWithParenthesis);
+                } else {
+                    if (alg !== "") {
+                        errorMessage += `"${userAlgs[i]}" is an invalid alg and has been removed\n`;
+                    }
+                }
             }
         } else {
             // TODO: Check valid commutators
@@ -1477,7 +1538,7 @@ function updateControls() {
         }
         reTestAlg();
         document.getElementById("scramble").innerHTML = "&nbsp;";
-        document.getElementById("algdisp").innerHTML = "";
+        // document.getElementById("algdisp").innerHTML = "";
     });
     listener.register(new KeyCombo("Enter"), function () {
         nextScramble();
@@ -1504,19 +1565,19 @@ function release(event) {
         }
 
         document.getElementById("timer").style.color = "white"; //Timer should never be any color other than white when space is not pressed down
-        if (!isUsingVirtualCube()) {
-            if (document.getElementById("algdisp").innerHTML == "") {
-                //Right after a new scramble is displayed, space starts the timer
+        // if (!isUsingVirtualCube()) {
+        //     if (document.getElementById("algdisp").innerHTML == "") {
+        //         //Right after a new scramble is displayed, space starts the timer
 
 
-                if (doNothingNextTimeSpaceIsPressed) {
-                    doNothingNextTimeSpaceIsPressed = false;
-                }
-                else {
-                    startTimer();
-                }
-            }
-        }
+        //         if (doNothingNextTimeSpaceIsPressed) {
+        //             doNothingNextTimeSpaceIsPressed = false;
+        //         }
+        //         else {
+        //             startTimer();
+        //         }
+        //     }
+        // }
     }
 };
 document.onkeyup = release
@@ -1564,11 +1625,11 @@ function press(event) { //Stops the screen from scrolling down when you press sp
                     }
 
                 }
-                else if (document.getElementById("algdisp").innerHTML != "") {
-                    nextScramble(); //If the solutions are currently displayed, space should test on the next alg.
+                // else if (document.getElementById("algdisp").innerHTML != "") {
+                //     nextScramble(); //If the solutions are currently displayed, space should test on the next alg.
 
-                    doNothingNextTimeSpaceIsPressed = true;
-                }
+                //     doNothingNextTimeSpaceIsPressed = true;
+                // }
 
                 else if (document.getElementById("timer").innerHTML == "Ready") {
                     document.getElementById("timer").style.color = "green";
@@ -1624,11 +1685,8 @@ if (nextScrambleButton)
     nextScrambleButton.addEventListener('click', nextScramble);
 
 const showSolutionButton = document.querySelector('button[name="showSolutionButton"]');
-// if (showSolutionButton)
-//     showSolutionButton.addEventListener('click', displayAlgorithmForPreviousTest);
-
 if (showSolutionButton)
-    showSolutionButton.addEventListener('click', retryCurrentAlgorithm);
+    showSolutionButton.addEventListener('click', displayAlgorithmForPreviousTest);
 
 const testScrambleButton = document.querySelector('button[name="testScrambleButton"]');
 if (testScrambleButton)
@@ -2124,9 +2182,9 @@ function checkForSpecialSequences() {
     }
 
     // Add more sequences as needed
-    if (recentMoves.endsWith("U U U U ") || recentMoves.endsWith("U'U'U'U'")) {
-        console.log("Special sequence detected: U4");
-        triggerSpecialAction("U4");
+    if (recentMoves.endsWith("L L L L ") || recentMoves.endsWith("L'L'L'L'")) {
+        console.log("Special sequence detected: L4");
+        triggerSpecialAction("L4");
     }
 
     // Add more sequences as needed
@@ -2222,12 +2280,12 @@ function triggerSpecialAction(sequence) {
                 console.warn("No displayed scramble available to read out.");
             }
             break;
-        case "U4":
-            console.log("U4 detected! Retrying current alg");
+        case "F4":
+            console.log("F4 detected! Retrying current alg");
             retryCurrentAlgorithm();
             break;
-        case "F4":
-            console.log("F4 detected! Running next alg");
+        case "L4":
+            console.log("L4 detected! Running next alg");
             nextScramble();
             break;
         default:
@@ -2385,7 +2443,7 @@ const LETTER_PAIR_TO_WORD = {
     "AN": "",
     "AO": "",
     "AP": "",
-    "AQ": "asz",
+    "AQ": "a ku",
     "AR": "",
     "AS": "",
     "AT": "",
@@ -2408,12 +2466,12 @@ const LETTER_PAIR_TO_WORD = {
     "BN": "",
     "BO": "",
     "BP": "",
-    "BQ": "bisz",
+    "BQ": "be ku",
     "BR": "",
     "BS": "",
     "BT": "",
-    "BW": "",
-    "BZ": "",
+    "BW": "be wu",
+    "BZ": "be zet",
 
     "CA": "",
     "CB": "",
@@ -2431,7 +2489,7 @@ const LETTER_PAIR_TO_WORD = {
     "CN": "",
     "CO": "",
     "CP": "",
-    "CQ": "cusz",
+    "CQ": "ce ku",
     "CR": "",
     "CS": "",
     "CT": "",
@@ -2454,7 +2512,7 @@ const LETTER_PAIR_TO_WORD = {
     "DN": "",
     "DO": "",
     "DP": "",
-    "DQ": "dasz",
+    "DQ": "de ku",
     "DR": "",
     "DS": "",
     "DT": "",
@@ -2477,7 +2535,7 @@ const LETTER_PAIR_TO_WORD = {
     "EN": "",
     "EO": "",
     "EP": "",
-    "EQ": "esz",
+    "EQ": "e ku",
     "ER": "",
     "ES": "",
     "ET": "",
@@ -2500,7 +2558,7 @@ const LETTER_PAIR_TO_WORD = {
     "FN": "",
     "FO": "",
     "FP": "",
-    "FQ": "fisz",
+    "FQ": "F ku",
     "FR": "",
     "FS": "",
     "FT": "",
@@ -2523,7 +2581,7 @@ const LETTER_PAIR_TO_WORD = {
     "GN": "",
     "GO": "",
     "GP": "",
-    "GQ": "gosz",
+    "GQ": "G ku",
     "GR": "",
     "GS": "",
     "GT": "",
@@ -2546,7 +2604,7 @@ const LETTER_PAIR_TO_WORD = {
     "HN": "",
     "HO": "",
     "HP": "",
-    "HQ": "hasz",
+    "HQ": "",
     "HR": "",
     "HS": "",
     "HT": "",
@@ -2569,7 +2627,7 @@ const LETTER_PAIR_TO_WORD = {
     "IN": "",
     "IO": "",
     "IP": "",
-    "IQ": "isz",
+    "IQ": "",
     "IR": "",
     "IS": "",
     "IT": "",
@@ -2592,7 +2650,7 @@ const LETTER_PAIR_TO_WORD = {
     "JN": "",
     "JO": "",
     "JP": "",
-    "JQ": "jusz",
+    "JQ": "",
     "JR": "",
     "JS": "",
     "JT": "",
@@ -2615,7 +2673,7 @@ const LETTER_PAIR_TO_WORD = {
     "KN": "",
     "KO": "",
     "KP": "",
-    "KQ": "kosz",
+    "KQ": "",
     "KR": "",
     "KS": "",
     "KT": "",
@@ -2638,7 +2696,7 @@ const LETTER_PAIR_TO_WORD = {
     "LN": "",
     "LO": "",
     "LP": "",
-    "LQ": "lasz",
+    "LQ": "",
     "LR": "",
     "LS": "",
     "LT": "",
@@ -2661,7 +2719,7 @@ const LETTER_PAIR_TO_WORD = {
     "MN": "",
     "MO": "",
     "MP": "",
-    "MQ": "mysz",
+    "MQ": "",
     "MR": "",
     "MS": "",
     "MT": "",
@@ -2684,7 +2742,7 @@ const LETTER_PAIR_TO_WORD = {
     "NN": "",
     "NO": "",
     "NP": "",
-    "NQ": "nasz",
+    "NQ": "",
     "NR": "",
     "NS": "",
     "NT": "",
@@ -2707,7 +2765,7 @@ const LETTER_PAIR_TO_WORD = {
     "ON": "",
     "OO": "",
     "OP": "",
-    "OQ": "sz",
+    "OQ": "",
     "OR": "",
     "OS": "",
     "OT": "",
@@ -2730,35 +2788,35 @@ const LETTER_PAIR_TO_WORD = {
     "PN": "",
     "PO": "",
     "PP": "",
-    "PQ": "pasz",
+    "PQ": "",
     "PR": "",
     "PS": "",
     "PT": "",
     "PW": "",
     "PZ": "",
 
-    "QA": "sza",
-    "QB": "szab",
-    "QC": "szuc",
-    "QD": "szad",
-    "QE": "sze",
-    "QF": "szef",
-    "QG": "szlug",
-    "QH": "szach",
-    "QI": "szi",
-    "QJ": "szaj",
-    "QK": "szuk",
-    "QL": "szal",
-    "QM": "szam",
-    "QN": "szyn",
-    "QO": "szo",
-    "QP": "szop",
-    "QQ": "szisz",
-    "QR": "sznur",
-    "QS": "szos",
-    "QT": "szot",
-    "QW": "szaw",
-    "QZ": "szaz",
+    "QA": "",
+    "QB": "",
+    "QC": "",
+    "QD": "",
+    "QE": "",
+    "QF": "",
+    "QG": "",
+    "QH": "",
+    "QI": "",
+    "QJ": "",
+    "QK": "",
+    "QL": "",
+    "QM": "",
+    "QN": "",
+    "QO": "",
+    "QP": "",
+    "QQ": "",
+    "QR": "",
+    "QS": "",
+    "QT": "",
+    "QW": "",
+    "QZ": "",
 
     "RA": "",
     "RB": "",
@@ -2776,7 +2834,7 @@ const LETTER_PAIR_TO_WORD = {
     "RN": "",
     "RO": "",
     "RP": "",
-    "RQ": "rasz",
+    "RQ": "",
     "RR": "",
     "RS": "",
     "RT": "",
@@ -2799,7 +2857,7 @@ const LETTER_PAIR_TO_WORD = {
     "SN": "",
     "SO": "",
     "SP": "",
-    "SQ": "susz",
+    "SQ": "",
     "SR": "",
     "SS": "",
     "ST": "",
@@ -2822,7 +2880,7 @@ const LETTER_PAIR_TO_WORD = {
     "TN": "",
     "TO": "",
     "TP": "",
-    "TQ": "tasz",
+    "TQ": "",
     "TR": "",
     "TS": "",
     "TT": "",
@@ -2830,7 +2888,7 @@ const LETTER_PAIR_TO_WORD = {
     "TZ": "",
 
     "WA": "",
-    "WB": "",
+    "WB": "wu B",
     "WC": "",
     "WD": "",
     "WE": "",
@@ -2845,7 +2903,7 @@ const LETTER_PAIR_TO_WORD = {
     "WN": "",
     "WO": "",
     "WP": "",
-    "WQ": "wiesz",
+    "WQ": "",
     "WR": "",
     "WS": "",
     "WT": "",
@@ -2853,7 +2911,7 @@ const LETTER_PAIR_TO_WORD = {
     "WZ": "",
 
     "ZA": "",
-    "ZB": "",
+    "ZB": "zet B",
     "ZC": "",
     "ZD": "",
     "ZE": "",
@@ -2868,7 +2926,7 @@ const LETTER_PAIR_TO_WORD = {
     "ZN": "",
     "ZO": "",
     "ZP": "",
-    "ZQ": "zesz",
+    "ZQ": "",
     "ZR": "",
     "ZS": "",
     "ZT": "",

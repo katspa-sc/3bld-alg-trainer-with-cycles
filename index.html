@@ -8,7 +8,6 @@
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-
     <div id="loader"></div>
     <div style="display:none;" id="page" class="animate-bottom">
 
@@ -108,9 +107,13 @@
                 <p id="timer">0.00</p>
             </div>
 
-            <div id="algdisplayer">
-                <p id="algdisp" class=algdisp>Solution</p>
+            <div id="progressDisplay">
+                <p>Progress: 0/0</p>
             </div>
+
+            <!-- <div id="algdisplayer">
+                <p id="algdisp" class=algdisp>Solution</p>
+            </div> -->
 
             <div id="controls">
                 <button name="nextScrambleButton">Next Scramble</button>
@@ -137,6 +140,7 @@
                 <br><br>
                 <table id="algsetStatistics">
                 </table>
+                <h4>Comm reps on this device: </h5><h2><div id="repetitionCounter">0</div></h2>
                 <h2>Instructions</h2>
                 <b>Enter/Tab/Space</b>: New scramble.<br>
                 <b>Space</b>: Stop timer and show algorithm.<br>
@@ -161,6 +165,8 @@
             </div>
         </div>
     </div>
+
+    <audio id="completionJingle" src="linkedin_1.ogg" preload="auto"></audio>
 
     <script src="js/cube.js"></script>
     <script src="js/solve.js"></script>
