@@ -2309,22 +2309,38 @@ function enableTtsOnStartup() {
 async function connectSmartCube() {
     try {
         if (conn) {
+            // Disconnect the cube if already connected
             await conn.disconnect();
             connectSmartCubeElement.textContent = 'Connect Smart Cube';
             alert(`Smart cube ${conn.deviceName} disconnected`);
             conn = null;
         } else {
+            // Attempt to connect to the cube
             conn = await connect(applyMoves);
             if (!conn) {
                 alert(`Smart cube is not supported`);
             } else {
                 await conn.initAsync();
                 connectSmartCubeElement.textContent = 'Disconnect Smart Cube';
-                // alert(`Smart cube ${conn.deviceName} connected`);
-                nextScramble();
+
+                // Check the current progress
+                const progressText = document.getElementById("progressDisplay").innerText;
+                const [currentProgress, totalProgress] = progressText
+                    .replace("Progress: ", "")
+                    .split("/")
+                    .map(Number);
+
+                if (currentProgress === 0) {
+                    // Start a new session if progress is 0
+                    nextScramble();
+                } else {
+                    // Retry the current scramble if progress is higher than 0
+                    retryCurrentAlgorithm();
+                }
             }
         }
     } catch (e) {
+        console.error("Error connecting to smart cube:", e);
         connectSmartCubeElement.textContent = 'Connect Smart Cube';
     }
 }
@@ -2489,12 +2505,12 @@ const LETTER_PAIR_TO_WORD = {
     "CN": "",
     "CO": "",
     "CP": "",
-    "CQ": "ce ku",
+    "CQ": "C ku",
     "CR": "",
     "CS": "",
     "CT": "",
-    "CW": "",
-    "CZ": "",
+    "CW": "C wu",
+    "CZ": "C zet",
 
     "DA": "",
     "DB": "",
@@ -2889,7 +2905,7 @@ const LETTER_PAIR_TO_WORD = {
 
     "WA": "",
     "WB": "wu B",
-    "WC": "",
+    "WC": "wu C",
     "WD": "",
     "WE": "",
     "WF": "",
@@ -2912,7 +2928,7 @@ const LETTER_PAIR_TO_WORD = {
 
     "ZA": "",
     "ZB": "zet B",
-    "ZC": "",
+    "ZC": "zet C",
     "ZD": "",
     "ZE": "",
     "ZF": "",
