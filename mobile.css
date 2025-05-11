@@ -363,6 +363,12 @@ pre {
     margin-right: 10px;
 }
 
+#progressDisplay {
+    color: white; /* Explicitly set the text color */
+    font-size: 18px; /* Adjust font size for better visibility */
+    text-align: center; /* Center the text */
+    margin-top: 10px; /* Add spacing */
+}
 
 .cubeSelectButtons {
     position: absolute;  /* Position it absolutely */

@@ -45,9 +45,14 @@
                         <p id="timer">0.00</p>
                     </div>
 
-                    <div id="algdisplayer">
+                    <!-- <div id="algdisplayer">
                         <p id="algdisp" class=algdisp>Solution</p>
+                    </div> -->
+
+                    <div id="progressDisplay">
+                        <p>Progress: 0/0</p>
                     </div>
+        
 
 
                 </div>
@@ -118,6 +123,8 @@
                 placeholder="Place one alg per line. Lines starting with # will be ignored"></textarea>
 
             <h2>Settings</h2>
+
+            <h4>Comm reps on this device: <div id="repetitionCounter">0</div></h5>
 
             <form action="javascript:void(0);">
                 <input id="enableTTS" type="checkbox">Enable TTS<br>
@@ -205,6 +212,7 @@
         </div>
     </div>
 
+    <audio id="completionJingle" src="linkedin_1.ogg" preload="auto"></audio>
 
     <script src="js/cube.js"></script>
     <script src="js/solve.js"></script>
