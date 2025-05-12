@@ -534,6 +534,7 @@ var deleteLast = document.getElementById("deleteLast");
 deleteLast.addEventListener("click", function () {
     timeArray.pop();
     algorithmHistory.pop();
+    decrementReps()
     updateTimeList();
     updateStats();
 });
@@ -909,7 +910,7 @@ function testAlg(algTest, addToHistory = true) {
     var scramble = document.getElementById("scramble");
 
     if (document.getElementById("showScramble").checked) {
-        scramble.innerHTML = "<span style=\"color: #90f182\">" + algTest.orientRandPart + "</span>" + " " + algTest.rawAlgs[0];
+        scramble.innerHTML = "<span>" + algTest.orientRandPart + "</span>" + " " + algTest.rawAlgs[0];
     } else {
         scramble.innerHTML = "&nbsp;";
     }
@@ -1057,7 +1058,7 @@ function displayAlgorithmFromHistory(index) {
     }
 
     updateTrainer(
-        "<span style=\"color: #90f182\">" + algTest.orientRandPart + "</span>" + " " + algTest.scramble,
+        "<span>" + algTest.orientRandPart + "</span>" + " " + algTest.scramble,
         algTest.solutions.join("<br><br>"),
         algTest.preorientation + algTest.scramble,
         timerText
@@ -1078,7 +1079,7 @@ function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//
     }
 
     if (showSolution) {
-        updateTrainer("<span style=\"color: #90f182\">" + lastTest.orientRandPart + "</span>" + " " + lastTest.scramble, lastTest.solutions.join("<br><br>"), null, null);
+        updateTrainer("<span>" + lastTest.orientRandPart + "</span>" + " " + lastTest.scramble, lastTest.solutions.join("<br><br>"), null, null);
     } else {
         updateTrainer(null, null, null, null);
     }
@@ -1213,6 +1214,12 @@ function stopTimer(logTime = true) {
 
 function incrementReps() {
     repetitionCounter++;
+    localStorage.setItem("repetitionCounter", repetitionCounter);
+    document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
+}
+
+function decrementReps() {
+    repetitionCounter--;
     localStorage.setItem("repetitionCounter", repetitionCounter);
     document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
 }
@@ -1464,7 +1471,6 @@ var historyIndex;
 
 function nextScramble(displayReady = true) {
     moveHistory.length = 0;
-    document.getElementById("scramble").style.color = "white";
     stopTimer(false);
     if (displayReady) {
         document.getElementById("timer").innerHTML = 'Ready';
@@ -2221,9 +2227,9 @@ function speakText(text, rate = 1.0, readComm = false) {
 
             // Preprocess the text to replace special characters with words
             const replacements = {
-                ":": " potem",
-                "'": " priim",
-                "/": " slesz"
+                ":": " POTEM",
+                "'": " PRIIM",
+                "/": " SLESZ"
             };
 
             // Dynamically construct the regex from the keys of the replacements map
@@ -2243,7 +2249,7 @@ function speakText(text, rate = 1.0, readComm = false) {
             // Trim double commas
             processedText = processedText.replace(/,,+/g, ","); // Replace multiple commas with a single comma
 
-            // Replace ", priim" with " prim"
+            // Replace ", priim" with " priim"
             processedText = processedText.replace(/, priim/g, " priim");
 
             // Ensure spaces are preserved between moves
@@ -2251,6 +2257,17 @@ function speakText(text, rate = 1.0, readComm = false) {
 
             // Remove any leading commas
             processedText = processedText.replace(/^, /, ""); // Remove leading commas
+
+            // Prepend "małe " before lowercase letters
+            processedText = processedText
+                .split("")
+                .map(char => {
+                    if (char >= "a" && char <= "z") {
+                        return "małe " + char;
+                    }
+                    return char;
+                })
+                .join("");
 
             // Update the text and speak
             utterance.text = processedText;
@@ -2364,7 +2381,7 @@ function retryCurrentAlgorithm() {
     document.getElementById("timer").innerHTML = "0.00";
 
     // Optionally, display the algorithm and cycle letters again
-    document.getElementById("scramble").innerHTML = `<span style="color: #90f182">${lastTest.orientRandPart}</span> ${lastTest.rawAlgs[0]}`;
+    document.getElementById("scramble").innerHTML = `<span>${lastTest.orientRandPart}</span> ${lastTest.rawAlgs[0]}`;
     document.getElementById("cycle").innerHTML = lastTest.cycleLetters;
 
     // Trigger TTS to read out the cycle letters
@@ -2532,7 +2549,7 @@ const LETTER_PAIR_TO_WORD = {
     "DR": "",
     "DS": "",
     "DT": "",
-    "DW": "",
+    "DW": "de wu",
     "DZ": "",
 
     "EA": "",
@@ -2906,7 +2923,7 @@ const LETTER_PAIR_TO_WORD = {
     "WA": "",
     "WB": "wu B",
     "WC": "wu C",
-    "WD": "",
+    "WD": "wu D",
     "WE": "",
     "WF": "",
     "WG": "",
