@@ -2328,7 +2328,7 @@ async function connectSmartCube() {
         if (conn) {
             // Disconnect the cube if already connected
             await conn.disconnect();
-            connectSmartCubeElement.textContent = 'Connect Smart Cube';
+            connectSmartCubeElement.textContent = 'Connect';
             alert(`Smart cube ${conn.deviceName} disconnected`);
             conn = null;
         } else {
@@ -2338,7 +2338,7 @@ async function connectSmartCube() {
                 alert(`Smart cube is not supported`);
             } else {
                 await conn.initAsync();
-                connectSmartCubeElement.textContent = 'Disconnect Smart Cube';
+                connectSmartCubeElement.textContent = 'Disconnect';
 
                 // Check the current progress
                 const progressText = document.getElementById("progressDisplay").innerText;
@@ -2358,7 +2358,7 @@ async function connectSmartCube() {
         }
     } catch (e) {
         console.error("Error connecting to smart cube:", e);
-        connectSmartCubeElement.textContent = 'Connect Smart Cube';
+        connectSmartCubeElement.textContent = 'Connect';
     }
 }
 
