@@ -115,13 +115,18 @@ tr {
 #right_popup {
     display: none;
     position: fixed;
-    top: 10%;
-    left: 5%;
-    right: 5%;
-    width: 90%;
-    height: 80vh;
+    top: 10%; /* Same as #left_popup */
+    left: 5%; /* Same as #left_popup */
+    right: 5%; /* Same as #left_popup */
+    bottom: 10%; /* Add this to limit the height */
+    width: 90%; /* Same as #left_popup */
+    height: auto; /* Let the height adjust dynamically */
+    max-height: 80%; /* Ensure it doesn't exceed 80% of the viewport height */
     z-index: 9999;
-    background-color: var(--secondary-color);
+    background-color: var(--secondary-color); /* Same as #left_popup */
+    overflow: auto; /* Enable scrolling if content overflows */
+    border-radius: 8px; /* Optional: Add rounded corners */
+    padding: 20px; /* Optional: Add padding for better spacing */
 }
 
 .column_left {
