@@ -2262,15 +2262,15 @@ function speakText(text, rate = 1.0, readComm = false) {
             processedText = processedText.replace(/^, /, ""); // Remove leading commas
 
             // Prepend "małe " before lowercase letters
-            processedText = processedText
-                .split("")
-                .map(char => {
-                    if (char >= "a" && char <= "z") {
-                        return "małe " + char;
-                    }
-                    return char;
-                })
-                .join("");
+            // processedText = processedText
+            //     .split("")
+            //     .map(char => {
+            //         if (char >= "a" && char <= "z") {
+            //             return "małe " + char;
+            //         }
+            //         return char;
+            //     })
+            //     .join("");
 
             // Update the text and speak
             utterance.text = processedText;
@@ -2351,6 +2351,7 @@ async function connectSmartCube() {
                     .map(Number);
 
                 if (currentProgress === 0) {
+                    createAlgList();
                     // Start a new session if progress is 0
                     nextScramble();
                 } else {
