@@ -266,3 +266,11 @@ div.hidden {
   filter: none; /* Remove the blur effect */
   letter-spacing: normal; /* Reset letter spacing */
 }
+
+#goodLabel {
+    color: green; /* Green color for "Good" */
+}
+
+#badLabel {
+    color: red; /* Red color for "Bad" */
+}

@@ -640,9 +640,11 @@ function doAlg(algorithm, updateTimer = false) {
     if (timerIsRunning && cube.isSolved(initialMask.value) && isUsingVirtualCube()) {
         if (updateTimer) {
             stopTimer();
+            handleGoodButton();
             nextScramble();
         }
         else {
+            handleGoodButton();
             stopTimer();
         }
     }
@@ -1665,11 +1667,11 @@ class SolveTime {
     toString(decimals = 2) {
         var timeString = this.time.toFixed(decimals);
         return `${timeString} ${this.cycleLetters}`;
-        }
+    }
 
     timeValue() {
         return this.time;
-        }
+    }
 }
 
 
@@ -2365,30 +2367,83 @@ function retryCurrentAlgorithm() {
     speakText(parseLettersForTTS(lastTest.cycleLetters.split("")));
 
     console.log("Retrying algorithm:", lastTest.rawAlgs[0]);
+    handleBadButton();
     startTimer();
 }
 
-// todo add support to this in a custom view?
-// function handleGoodButton() {
-//     console.log("Good button clicked!");
-//     // Add your logic here
-// }
+const cycleFeedbackMap = new Map(); // Map to store cycle letters and feedback (1 for good, 0 for bad)
 
-// function handleBadButton() {
-//     console.log("Bad button clicked!");
-//     // Add your logic here
-// }
+function handleGoodButton() {
+    const lastTest = algorithmHistory[algorithmHistory.length - 1];
+    if (!lastTest) {
+        console.warn("No cycle letters available to mark as good.");
+        return;
+    }
 
-// document.getElementById("goodButton").addEventListener("click", handleGoodButton);
-// document.getElementById("badButton").addEventListener("click", handleBadButton);
+    const cycleLetters = lastTest.cycleLetters;
+    if (!cycleFeedbackMap.has(cycleLetters)) {
+        cycleFeedbackMap.set(cycleLetters, 1); // Add cycle letters with value 1 (good)
+        console.log(`Marked "${cycleLetters}" as Good.`);
+        updateFeedbackResults(); // Update the results view
+    } else {
+        console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
+    }
+}
 
-// document.addEventListener("keydown", function (event) {
-//     if (event.key === "g" || event.key === "G") {
-//         handleGoodButton();
-//     } else if (event.key === "b" || event.key === "B") {
-//         handleBadButton();
-//     }
-// });
+function handleBadButton() {
+    const lastTest = algorithmHistory[algorithmHistory.length - 1];
+    if (!lastTest) {
+        console.warn("No cycle letters available to mark as bad.");
+        return;
+    }
+
+    const cycleLetters = lastTest.cycleLetters;
+    if (!cycleFeedbackMap.has(cycleLetters)) {
+        cycleFeedbackMap.set(cycleLetters, 0); // Add cycle letters with value 0 (bad)
+        console.log(`Marked "${cycleLetters}" as Bad.`);
+        updateFeedbackResults(); // Update the results view
+    } else {
+        console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
+    }
+}
+
+document.getElementById("goodButton").addEventListener("click", handleGoodButton);
+document.getElementById("badButton").addEventListener("click", handleBadButton);
+
+document.addEventListener("keydown", function (event) {
+    if (event.key === "g" || event.key === "1") {
+        handleGoodButton();
+    } else if (event.key === "b" || event.key === "2") {
+        handleBadButton();
+    } else if (event.key === "n" || event.key === "N" || event.key === "3") {
+        nextScramble();
+    }
+});
+
+function updateFeedbackResults() {
+    const goodList = document.getElementById("goodList");
+    const badList = document.getElementById("badList");
+
+    // Separate the cycle letters into good and bad lists
+    const goodCycles = [];
+    const badCycles = [];
+
+    cycleFeedbackMap.forEach((value, key) => {
+        if (value === 1) {
+            goodCycles.push(key);
+        } else if (value === 0) {
+            badCycles.push(key);
+        }
+    });
+
+    // Sort the lists alphabetically
+    goodCycles.sort();
+    badCycles.sort();
+
+    // Display the lists as comma-separated strings
+    goodList.textContent = goodCycles.join(", ");
+    badList.textContent = badCycles.join(", ");
+}
 
 function revealScramble() {
     const scrambleElement = document.getElementById("scramble");
