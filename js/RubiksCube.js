@@ -1040,8 +1040,6 @@ function displayAlgorithm(algTest, reTest = true) {
     }
 
     updateTrainer(algTest.scramble, algTest.solutions.join("<br><br>"), null, null);
-
-    scramble.style.color = '#e6e6e6';
 }
 
 function displayAlgorithmFromHistory(index) {
@@ -1064,7 +1062,6 @@ function displayAlgorithmFromHistory(index) {
         timerText
     );
 
-    scramble.style.color = '#e6e6e6';
 }
 
 function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//not a great name
@@ -1083,8 +1080,6 @@ function displayAlgorithmForPreviousTest(reTest = true, showSolution = true) {//
     } else {
         updateTrainer(null, null, null, null);
     }
-
-    scramble.style.color = '#e6e6e6';
 }
 
 let lastSelectedAlgorithm = null;
@@ -1177,13 +1172,12 @@ function startTimer() {
 }
 
 function stopTimer(logTime = true) {
-
     if (!timerIsRunning) {
         return;
     }
 
     if (document.getElementById("timer").style.display == 'none') {
-        //don't do anything if timer is hidden
+        // Don't do anything if the timer is hidden
         return;
     }
 
@@ -1197,7 +1191,8 @@ function stopTimer(logTime = true) {
 
     if (logTime) {
         var lastTest = algorithmHistory[algorithmHistory.length - 1];
-        var solveTime = new SolveTime(time, '');
+        var cycleLetters = lastTest ? lastTest.cycleLetters : ""; // Get the 3-cycle letters
+        var solveTime = new SolveTime(time, '', cycleLetters); // Include cycle letters
         lastTest.solveTime = solveTime;
         timeArray.push(solveTime);
         console.log(timeArray);
@@ -1229,14 +1224,15 @@ function updateTimer() {
 }
 
 function updateTimeList() {
-    var i;
     var timeList = document.getElementById("timeList");
     var scrollTimes = document.getElementById("scrollTimes");
     timeList.innerHTML = "&nbsp";
-    for (i = 0; i < timeArray.length; i++) {
-        timeList.innerHTML += timeArray[i].toString();
+
+    for (let i = 0; i < timeArray.length; i++) {
+        timeList.innerHTML += timeArray[i].toString(); // Includes cycle letters
         timeList.innerHTML += " ";
     }
+
     scrollTimes.scrollTop = scrollTimes.scrollHeight;
 }
 
@@ -1475,19 +1471,23 @@ var historyIndex;
 function nextScramble(displayReady = true) {
     moveHistory.length = 0;
     stopTimer(false);
+
     if (displayReady) {
         document.getElementById("timer").innerHTML = 'Ready';
-    };
+    }
+
+    // Hide the scramble
+    hideScramble();
+
     if (isUsingVirtualCube()) {
         testAlg(generateAlgTest());
         if (isIncludeRecognitionTime) {
-            //    console.log("start timer");
             startTimer();
         }
-    }
-    else {
+    } else {
         testAlg(generateAlgTest());
     }
+
     historyIndex = algorithmHistory.length - 1;
 }
 
@@ -1657,35 +1657,19 @@ try { //only for mobile
 
 
 class SolveTime {
-    constructor(time, penalty) {
+    constructor(time, cycleLetters = "") {
         this.time = time;
-        this.penalty = penalty;
+        this.cycleLetters = cycleLetters; // Add cycle letters
     }
 
     toString(decimals = 2) {
-        var timeString = this.time.toFixed(decimals)
-        switch (this.penalty) {
-            case '+2':
-                return (this.time + 2).toFixed(decimals) + '+';
-            case 'DNF':
-                return 'DNF' + "(" + timeString + ")";
-            default:
-                return timeString;
+        var timeString = this.time.toFixed(decimals);
+        return `${timeString} ${this.cycleLetters}`;
         }
-    }
 
     timeValue() {
-
-        switch (this.penalty) {
-            case '+2':
-                return this.time + 2;
-            case 'DNF':
-                return Infinity;
-            default:
-                return this.time;
+        return this.time;
         }
-    }
-
 }
 
 
@@ -2253,24 +2237,13 @@ function speakText(text, rate = 1.0, readComm = false) {
             processedText = processedText.replace(/,,+/g, ","); // Replace multiple commas with a single comma
 
             // Replace ", priim" with " priim"
-            processedText = processedText.replace(/, priim/g, " priim");
+            processedText = processedText.replace(/, PRIIM/g, " PRIIM");
 
             // Ensure spaces are preserved between moves
             processedText = processedText.replace(/, /g, ", ");
 
             // Remove any leading commas
             processedText = processedText.replace(/^, /, ""); // Remove leading commas
-
-            // Prepend "małe " before lowercase letters
-            // processedText = processedText
-            //     .split("")
-            //     .map(char => {
-            //         if (char >= "a" && char <= "z") {
-            //             return "małe " + char;
-            //         }
-            //         return char;
-            //     })
-            //     .join("");
 
             // Update the text and speak
             utterance.text = processedText;
@@ -2394,6 +2367,42 @@ function retryCurrentAlgorithm() {
     console.log("Retrying algorithm:", lastTest.rawAlgs[0]);
     startTimer();
 }
+
+// todo add support to this in a custom view?
+// function handleGoodButton() {
+//     console.log("Good button clicked!");
+//     // Add your logic here
+// }
+
+// function handleBadButton() {
+//     console.log("Bad button clicked!");
+//     // Add your logic here
+// }
+
+// document.getElementById("goodButton").addEventListener("click", handleGoodButton);
+// document.getElementById("badButton").addEventListener("click", handleBadButton);
+
+// document.addEventListener("keydown", function (event) {
+//     if (event.key === "g" || event.key === "G") {
+//         handleGoodButton();
+//     } else if (event.key === "b" || event.key === "B") {
+//         handleBadButton();
+//     }
+// });
+
+function revealScramble() {
+    const scrambleElement = document.getElementById("scramble");
+    scrambleElement.classList.remove("obfuscated");
+    scrambleElement.classList.add("revealed");
+}
+
+function hideScramble() {
+    const scrambleElement = document.getElementById("scramble");
+    scrambleElement.classList.remove("revealed");
+    scrambleElement.classList.add("obfuscated");
+}
+
+document.getElementById("scramble").addEventListener("click", revealScramble);
 
 // function setCustomLetterScheme(scheme) {
 //     if (scheme.length !== 54) {

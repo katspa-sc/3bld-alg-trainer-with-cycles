@@ -11,17 +11,22 @@
     <div id="loader"></div>
     <div style="display:none;" id="page" class="animate-bottom">
 
-        <p id="scramble" class=scramble>Scramble</p>
+        <p id="scramble" class="scramble obfuscated" onclick="revealScramble()">Scramble</p>
         <p id="cycle" class=cycle>Cycle</p>
         <!-- <hr> -->
         <div class=column_left>
 
+            <!-- <div>
+                <button id="fetchAlgs">Fetch algs</button>
+            </div> -->
+
+            <button id="resetPracticeSession">Reset Practice Session</button>
+            <br></br>
+            
             Enter algs:
             <!-- <input id="userDefined" type="checkbox">Use user defined algset <button id="addSelected">Add currently selected algs</button><br> -->
             <textarea id="userDefinedAlgs" cols=50 rows=20
                 placeholder="Place one alg per line. Lines starting with # will be ignored"></textarea>
-
-            <!-- <button id="connectSmartCube">Connect Smart Cube</button><br><br> -->
 
             <h2>Settings</h2>
             <div class="hidden">
@@ -110,6 +115,10 @@
             <div id="progressDisplay">
                 <p>Progress: 0/0</p>
             </div>
+            <div id="feedbackButtons">
+                <button id="goodButton" class="feedback-button" style="background-color: green;">Good</button>
+                <button id="badButton" class="feedback-button" style="background-color: red;">Bad</button>
+            </div>
 
             <!-- <div id="algdisplayer">
                 <p id="algdisp" class=algdisp>Solution</p>
@@ -118,7 +127,7 @@
             <div id="controls">
                 <button name="nextScrambleButton">Next Scramble</button>
                 <button name="showSolutionButton">Show Solution</button>
-                <button id="connectSmartCube" name="connectSmartCube">Connect Smart Cube</button>
+                <button id="connectSmartCube" name="connectSmartCube">Connect</button>
             </div>
         </div>
 

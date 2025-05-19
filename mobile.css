@@ -167,6 +167,21 @@ a:visited {
     color: darkslateblue
 }
 
+.scramble.obfuscated {
+    color: transparent; /* Hide the text */
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5), /* Add a glowing effect */
+                 0 0 15px rgba(255, 255, 255, 0.5); /* Repeat for stronger blur */
+    cursor: pointer; /* Indicate interactivity */
+    filter: blur(15px); /* Add a blur effect */
+    transition: filter 0.3s ease, text-shadow 0.3s ease; /* Smooth transition for the blur effect */
+    letter-spacing: 5px; /* Add spacing to make the text length harder to infer */
+}
+
+.scramble.revealed {
+    color: white; /* Show the text */
+    text-shadow: none;
+    filter: none; /* Remove the blur effect */
+}
 
 #loader {
     position: absolute;
