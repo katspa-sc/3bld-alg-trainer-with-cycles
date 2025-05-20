@@ -36,6 +36,7 @@ var shouldRecalculateStatistics = true;
 
 let utterance = null;
 let selectedVoice = null;
+let toggleFeedbackUsed = false; // Flag to track if the button has been used
 
 // Load available voices and select a specific one
 function loadVoices() {
@@ -1494,6 +1495,8 @@ function nextScramble(displayReady = true) {
     }
 
     historyIndex = algorithmHistory.length - 1;
+    // Reset the toggle feedback flag
+    toggleFeedbackUsed = false;
 }
 
 function handleLeftButton() {
@@ -2279,10 +2282,12 @@ function triggerSpecialAction(sequence) {
             break;
         case "F4":
             console.log("F4 detected! Retrying current alg");
+            handleBadButton();
             retryCurrentAlgorithm();
             break;
         case "L4":
             console.log("L4 detected! Running next alg");
+            handleBadButton();
             nextScramble();
             break;
         default:
@@ -2369,7 +2374,6 @@ function retryCurrentAlgorithm() {
     speakText(parseLettersForTTS(lastTest.cycleLetters.split("")));
 
     console.log("Retrying algorithm:", lastTest.rawAlgs[0]);
-    handleBadButton();
     startTimer();
 }
 
@@ -2480,6 +2484,58 @@ function updateLastCycleInfo() {
         lastScrambleElement.textContent = "None";
     }
 }
+
+function copyFeedbackToClipboard() {
+    const goodList = document.getElementById("goodList").textContent;
+    const badList = document.getElementById("badList").textContent;
+
+    // Format the content to include labels
+    const feedbackText = `Good: ${goodList}\nBad: ${badList}`;
+
+    // Copy the content to the clipboard
+    navigator.clipboard.writeText(feedbackText).then(() => {
+        console.log("Feedback copied to clipboard!");
+        alert("Feedback copied to clipboard!");
+    }).catch(err => {
+        console.error("Failed to copy feedback to clipboard:", err);
+        alert("Failed to copy feedback to clipboard.");
+    });
+}
+
+document.getElementById("copyFeedbackButton").addEventListener("click", copyFeedbackToClipboard);
+
+function toggleLastFeedback() {
+    if (toggleFeedbackUsed) {
+        console.warn("Toggle feedback button has already been used for this scramble.");
+        return;
+    }
+
+    const lastCycleLettersElement = document.getElementById("lastCycleLetters");
+    const cycleLetters = lastCycleLettersElement.textContent;
+
+    if (!cycleLetters || cycleLetters === "None") {
+        console.warn("No cycle letters available to toggle feedback.");
+        return;
+    }
+
+    if (!cycleFeedbackMap.has(cycleLetters)) {
+        console.warn(`"${cycleLetters}" is not in the feedback map.`);
+        return;
+    }
+
+    // Toggle the feedback value (0 -> 1, 1 -> 0)
+    const currentValue = cycleFeedbackMap.get(cycleLetters);
+    const newValue = currentValue === 1 ? 0 : 1;
+    cycleFeedbackMap.set(cycleLetters, newValue);
+
+    console.log(`Toggled "${cycleLetters}" feedback to ${newValue === 1 ? "Good" : "Bad"}.`);
+    updateFeedbackResults(); // Update the results view
+
+    // Set the flag to prevent further toggling for this scramble
+    toggleFeedbackUsed = true;
+}
+
+document.getElementById("toggleFeedbackButton").addEventListener("click", toggleLastFeedback);
 
 // function setCustomLetterScheme(scheme) {
 //     if (scheme.length !== 54) {

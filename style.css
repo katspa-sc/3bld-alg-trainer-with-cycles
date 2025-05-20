@@ -274,3 +274,23 @@ div.hidden {
 #badLabel {
     color: red; /* Red color for "Bad" */
 }
+
+#lastScramble {
+  font-size: 2em;
+  color: white;
+}
+
+#toggleFeedbackButton {
+  background-color: #4570de; /* Default background color */
+  border: none;
+  color: white;
+  padding: 15px 32px; /* Same padding as controls */
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 18px; /* Same font size as controls */
+  margin: 5px; /* Add spacing between buttons */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer;
+  transition: transform 0.2s ease; /* Add a hover effect */
+}
