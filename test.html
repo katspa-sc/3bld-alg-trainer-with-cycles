@@ -142,8 +142,6 @@
                 <p class="feedback-last-comm" id="lastScramble">None</p>
             </div>
 
-            <button class="feedback-bad" id="toggleFeedbackButton">Mark last as bad</button>
-
             <br></br>
 
             <div id="feedbackResults">
@@ -152,6 +150,9 @@
                 <br>
                 <span id="badLabel" style="color: red;">Bad:</span>
                 <span id="badList"></span>
+                <br>
+                <span id="changeLabel" style="color: darkviolet;">Change/Drill alg:</span>
+                <span id="changeList"></span>
             </div>
             <br></br>
             <button id="copyFeedbackButton">Copy lists</button>
@@ -194,7 +195,8 @@
         </div>
     </div>
 
-    <audio id="completionJingle" src="linkedin_1.ogg" preload="auto"></audio>
+    <audio id="completionJingle" src="molang_wow.wav" preload="auto"></audio>
+    <audio id="drillJingle" src="linkedin_1.ogg" preload="auto"></audio>
 
     <script src="js/cube.js"></script>
     <script src="js/solve.js"></script>

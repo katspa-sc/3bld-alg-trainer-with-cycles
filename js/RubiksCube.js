@@ -1113,7 +1113,7 @@ function randomFromList(set) {
         } else {
             // Play the jingle when the set is completed (not the first run)
             const jingle = document.getElementById("completionJingle");
-            jingle.volume = 0.6
+            jingle.volume = 1
             jingle.play();
 
             // // Delay the prompt until after the jingle starts playing
@@ -2203,6 +2203,12 @@ function checkForSpecialSequences() {
         console.log("Special sequence detected: F4");
         triggerSpecialAction("F4");
     }
+
+    // Add more sequences as needed
+    if (recentMoves.endsWith("R R R R ") || recentMoves.endsWith("R'R'R'R'")) {
+        console.log("Special sequence detected: R4");
+        triggerSpecialAction("R4");
+    }
 }
 
 function speakText(text, rate = 1.0, readComm = false) {
@@ -2300,6 +2306,13 @@ function triggerSpecialAction(sequence) {
             console.log("F4 detected! Retrying current alg");
             markCurrentCommAsBad();
             retryCurrentAlgorithm();
+            break;
+        case "R4":
+            console.log("F4 detected! Marking last comm as drill/change alg");
+            const jingle = document.getElementById("drillJingle");
+            jingle.volume = 0.6
+            jingle.play();
+            markLastCommAsChange();
             break;
         case "L4":
             console.log("L4 detected! Running next alg");
@@ -2428,6 +2441,28 @@ function markCurrentCommAsBad() {
         console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
     }
 }
+
+function markLastCommAsChange() {
+    const lastCycleLettersElement = document.getElementById("lastCycleLetters");
+    const cycleLetters = lastCycleLettersElement.textContent;
+
+    if (!cycleLetters || cycleLetters === "None") {
+        console.warn("No cycle letters available to mark as Change/Drill alg.");
+        return;
+    }
+
+    if (!cycleFeedbackMap.has(cycleLetters)) {
+        console.warn(`"${cycleLetters}" is not in the feedback map.`);
+        return;
+    }
+
+    // Change the feedback value to 2 (Change/Drill alg)
+    cycleFeedbackMap.set(cycleLetters, 2);
+
+    console.log(`Marked "${cycleLetters}" as Change/Drill alg.`);
+    updateFeedbackResults(); // Update the results view
+}
+
 document.getElementById("goodButton").addEventListener("click", markCurrentCommAsGood);
 document.getElementById("badButton").addEventListener("click", markCurrentCommAsBad);
 
@@ -2444,26 +2479,32 @@ document.addEventListener("keydown", function (event) {
 function updateFeedbackResults() {
     const goodList = document.getElementById("goodList");
     const badList = document.getElementById("badList");
+    const changeList = document.getElementById("changeList"); // New section for "Change/Drill alg"
 
-    // Separate the cycle letters into good and bad lists
+    // Separate the cycle letters into good, bad, and change lists
     const goodCycles = [];
     const badCycles = [];
+    const changeCycles = [];
 
     cycleFeedbackMap.forEach((value, key) => {
         if (value === 1) {
             goodCycles.push(key);
         } else if (value === 0) {
             badCycles.push(key);
+        } else if (value === 2) {
+            changeCycles.push(key);
         }
     });
 
     // Sort the lists using the custom comparator
     goodCycles.sort(customComparator);
     badCycles.sort(customComparator);
+    changeCycles.sort(customComparator);
 
     // Display the lists as comma-separated strings
     goodList.textContent = goodCycles.join(", ");
     badList.textContent = badCycles.join(", ");
+    changeList.textContent = changeCycles.join(", ");
 }
 
 function customComparator(a, b) {
@@ -2565,7 +2606,7 @@ function toggleLastFeedback() {
     toggleFeedbackUsed = true;
 }
 
-document.getElementById("toggleFeedbackButton").addEventListener("click", toggleLastFeedback);
+//document.getElementById("toggleFeedbackButton").addEventListener("click", toggleLastFeedback);
 
 // function setCustomLetterScheme(scheme) {
 //     if (scheme.length !== 54) {
