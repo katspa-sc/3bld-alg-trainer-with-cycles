@@ -1478,6 +1478,9 @@ function nextScramble(displayReady = true) {
         document.getElementById("timer").innerHTML = 'Ready';
     }
 
+    // Update the last cycle info before generating a new scramble
+    updateLastCycleInfo();
+
     // Hide the scramble
     hideScramble();
 
@@ -1492,7 +1495,6 @@ function nextScramble(displayReady = true) {
 
     historyIndex = algorithmHistory.length - 1;
 }
-
 
 function handleLeftButton() {
     if (algorithmHistory.length <= 1 || timerIsRunning) {
@@ -2406,7 +2408,6 @@ function handleBadButton() {
         console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
     }
 }
-
 document.getElementById("goodButton").addEventListener("click", handleGoodButton);
 document.getElementById("badButton").addEventListener("click", handleBadButton);
 
@@ -2458,6 +2459,27 @@ function hideScramble() {
 }
 
 document.getElementById("scramble").addEventListener("click", revealScramble);
+
+function updateLastCycleInfo() {
+    const lastTest = algorithmHistory[algorithmHistory.length - 1];
+    const lastCycleLettersElement = document.getElementById("lastCycleLetters");
+    const lastScrambleElement = document.getElementById("lastScramble");
+
+    if (lastTest) {
+        lastCycleLettersElement.textContent = lastTest.cycleLetters || "None";
+
+        try {
+            // Attempt to use the commutator notation from rawAlgs[0]
+            lastScrambleElement.textContent = lastTest.rawAlgs[0] || "None";
+        } catch (error) {
+            console.error("Error retrieving commutator notation:", error);
+            lastScrambleElement.textContent = "None"; // Fallback to "None"
+        }
+    } else {
+        lastCycleLettersElement.textContent = "None";
+        lastScrambleElement.textContent = "None";
+    }
+}
 
 // function setCustomLetterScheme(scheme) {
 //     if (scheme.length !== 54) {
