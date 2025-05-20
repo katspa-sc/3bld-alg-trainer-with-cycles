@@ -641,11 +641,11 @@ function doAlg(algorithm, updateTimer = false) {
     if (timerIsRunning && cube.isSolved(initialMask.value) && isUsingVirtualCube()) {
         if (updateTimer) {
             stopTimer();
-            handleGoodButton();
+            markCurrentCommAsGood();
             nextScramble();
         }
         else {
-            handleGoodButton();
+            markCurrentCommAsGood();
             stopTimer();
         }
     }
@@ -2181,6 +2181,11 @@ function checkForSpecialSequences() {
         triggerSpecialAction("D4");
     }
 
+    if (recentMoves.endsWith("B B B B ") || recentMoves.endsWith("B'B'B'B'")) {
+        console.log("Special sequence detected: B4");
+        triggerSpecialAction("B4");
+    }
+
     // Add more sequences as needed
     if (recentMoves.endsWith("L L L L ") || recentMoves.endsWith("L'L'L'L'")) {
         console.log("Special sequence detected: L4");
@@ -2279,15 +2284,20 @@ function triggerSpecialAction(sequence) {
             } else {
                 console.warn("No displayed scramble available to read out.");
             }
+            markCurrentCommAsBad();
+            break;
+        case "B4":
+            console.log("B4 detected! Marking last alg as bad");
+            toggleLastFeedback();
             break;
         case "F4":
             console.log("F4 detected! Retrying current alg");
-            handleBadButton();
+            markCurrentCommAsBad();
             retryCurrentAlgorithm();
             break;
         case "L4":
             console.log("L4 detected! Running next alg");
-            handleBadButton();
+            markCurrentCommAsBad();
             nextScramble();
             break;
         default:
@@ -2379,7 +2389,7 @@ function retryCurrentAlgorithm() {
 
 const cycleFeedbackMap = new Map(); // Map to store cycle letters and feedback (1 for good, 0 for bad)
 
-function handleGoodButton() {
+function markCurrentCommAsGood() {
     const lastTest = algorithmHistory[algorithmHistory.length - 1];
     if (!lastTest) {
         console.warn("No cycle letters available to mark as good.");
@@ -2396,7 +2406,7 @@ function handleGoodButton() {
     }
 }
 
-function handleBadButton() {
+function markCurrentCommAsBad() {
     const lastTest = algorithmHistory[algorithmHistory.length - 1];
     if (!lastTest) {
         console.warn("No cycle letters available to mark as bad.");
@@ -2412,14 +2422,14 @@ function handleBadButton() {
         console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
     }
 }
-document.getElementById("goodButton").addEventListener("click", handleGoodButton);
-document.getElementById("badButton").addEventListener("click", handleBadButton);
+document.getElementById("goodButton").addEventListener("click", markCurrentCommAsGood);
+document.getElementById("badButton").addEventListener("click", markCurrentCommAsBad);
 
 document.addEventListener("keydown", function (event) {
     if (event.key === "g" || event.key === "1") {
-        handleGoodButton();
+        markCurrentCommAsGood();
     } else if (event.key === "b" || event.key === "2") {
-        handleBadButton();
+        markCurrentCommAsBad();
     } else if (event.key === "n" || event.key === "N" || event.key === "3") {
         nextScramble();
     }
