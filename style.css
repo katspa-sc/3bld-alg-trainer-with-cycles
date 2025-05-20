@@ -275,12 +275,12 @@ div.hidden {
     color: red; /* Red color for "Bad" */
 }
 
-#lastScramble {
-  font-size: 2em;
-  color: white;
+.feedback-last-comm {
+  font-size: 3em;
+  color: rgb(233, 29, 252);
 }
 
-#toggleFeedbackButton {
+.feedback-bad {
   background-color: #4570de; /* Default background color */
   border: none;
   color: white;
