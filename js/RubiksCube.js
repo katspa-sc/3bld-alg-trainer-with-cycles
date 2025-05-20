@@ -2457,13 +2457,27 @@ function updateFeedbackResults() {
         }
     });
 
-    // Sort the lists alphabetically
-    goodCycles.sort();
-    badCycles.sort();
+    // Sort the lists using the custom comparator
+    goodCycles.sort(customComparator);
+    badCycles.sort(customComparator);
 
     // Display the lists as comma-separated strings
     goodList.textContent = goodCycles.join(", ");
     badList.textContent = badCycles.join(", ");
+}
+
+function customComparator(a, b) {
+    const letterOrder = "AOIEFGHJJKLMNBPQTSRCDWZ"; // Custom letter order
+    const getOrder = (letter) => letterOrder.indexOf(letter);
+
+    // Compare the first letters of the cycle pairs
+    const firstLetterComparison = getOrder(a[0]) - getOrder(b[0]);
+    if (firstLetterComparison !== 0) {
+        return firstLetterComparison;
+    }
+
+    // If the first letters are the same, compare the second letters
+    return getOrder(a[1]) - getOrder(b[1]);
 }
 
 function revealScramble() {
