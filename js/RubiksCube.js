@@ -2209,6 +2209,12 @@ function checkForSpecialSequences() {
         console.log("Special sequence detected: R4");
         triggerSpecialAction("R4");
     }
+
+    // Add more sequences as needed
+    if (recentMoves.endsWith("U U U U ") || recentMoves.endsWith("U'U'U'U'")) {
+        console.log("Special sequence detected: U4");
+        triggerSpecialAction("U4");
+    }
 }
 
 function speakText(text, rate = 1.0, readComm = false) {
@@ -2309,15 +2315,22 @@ function triggerSpecialAction(sequence) {
             break;
         case "R4":
             console.log("F4 detected! Marking last comm as drill/change alg");
-            const jingle = document.getElementById("drillJingle");
-            jingle.volume = 0.6
-            jingle.play();
+            let jingleDrill = document.getElementById("drillJingle");
+            jingleDrill.volume = 0.6
+            jingleDrill.play();
             markLastCommAsChange();
             break;
         case "L4":
             console.log("L4 detected! Running next alg");
             markCurrentCommAsBad();
             nextScramble();
+            break;
+        case "U4":
+            console.log("U4 detected! Marking last alg as good");
+            let jingleGood = document.getElementById("goodJingle");
+            jingleGood.volume = 0.6
+            jingleGood.play();
+            markLastCommAsGood();
             break;
         default:
             console.log(`No action defined for sequence: ${sequence}`);
@@ -2562,7 +2575,7 @@ function copyFeedbackToClipboard() {
     const changeDrillList = document.getElementById("changeList").textContent;
 
     // Format the content to include labels
-    const feedbackText = `Good: ${goodList}\n\nC/D: ${changeDrillList}\n\nBad: ${badList}`;
+    const feedbackText = `Good:\n${goodList}\n\nChange/drill:\n${changeDrillList}\n\nBad:\n${badList}`;
 
     // Copy the content to the clipboard
     navigator.clipboard.writeText(feedbackText).then(() => {
@@ -2594,6 +2607,27 @@ function markLastCommAsBad() {
     cycleFeedbackMap.set(cycleLetters, 0);
 
     console.log(`Marked "${cycleLetters}" as Bad.`);
+    updateFeedbackResults(); // Update the results view
+}
+
+function markLastCommAsGood() {
+    const lastCycleLettersElement = document.getElementById("lastCycleLetters");
+    const cycleLetters = lastCycleLettersElement.textContent;
+
+    if (!cycleLetters || cycleLetters === "None") {
+        console.warn("No cycle letters available to mark as Good.");
+        return;
+    }
+
+    if (!cycleFeedbackMap.has(cycleLetters)) {
+        console.warn(`"${cycleLetters}" is not in the feedback map.`);
+        return;
+    }
+
+    // Set the feedback value to 1 (Good)
+    cycleFeedbackMap.set(cycleLetters, 1);
+
+    console.log(`Marked "${cycleLetters}" as Good.`);
     updateFeedbackResults(); // Update the results view
 }
 
