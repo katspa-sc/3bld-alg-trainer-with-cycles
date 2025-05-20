@@ -2300,7 +2300,7 @@ function triggerSpecialAction(sequence) {
             break;
         case "B4":
             console.log("B4 detected! Marking last alg as bad");
-            toggleLastFeedback();
+            markLastCommAsBad();
             break;
         case "F4":
             console.log("F4 detected! Retrying current alg");
@@ -2559,9 +2559,10 @@ function updateLastCycleInfo() {
 function copyFeedbackToClipboard() {
     const goodList = document.getElementById("goodList").textContent;
     const badList = document.getElementById("badList").textContent;
+    const changeDrillList = document.getElementById("changeList").textContent;
 
     // Format the content to include labels
-    const feedbackText = `Good: ${goodList}\n\nBad: ${badList}`;
+    const feedbackText = `Good: ${goodList}\n\nC/D: ${changeDrillList}\n\nBad: ${badList}`;
 
     // Copy the content to the clipboard
     navigator.clipboard.writeText(feedbackText).then(() => {
@@ -2575,17 +2576,12 @@ function copyFeedbackToClipboard() {
 
 document.getElementById("copyFeedbackButton").addEventListener("click", copyFeedbackToClipboard);
 
-function toggleLastFeedback() {
-    if (toggleFeedbackUsed) {
-        console.warn("Toggle feedback button has already been used for this scramble.");
-        return;
-    }
-
+function markLastCommAsBad() {
     const lastCycleLettersElement = document.getElementById("lastCycleLetters");
     const cycleLetters = lastCycleLettersElement.textContent;
 
     if (!cycleLetters || cycleLetters === "None") {
-        console.warn("No cycle letters available to toggle feedback.");
+        console.warn("No cycle letters available to mark as Bad.");
         return;
     }
 
@@ -2594,16 +2590,11 @@ function toggleLastFeedback() {
         return;
     }
 
-    // Toggle the feedback value (0 -> 1, 1 -> 0)
-    const currentValue = cycleFeedbackMap.get(cycleLetters);
-    const newValue = currentValue === 1 ? 0 : 1;
-    cycleFeedbackMap.set(cycleLetters, newValue);
+    // Set the feedback value to 0 (Bad)
+    cycleFeedbackMap.set(cycleLetters, 0);
 
-    console.log(`Toggled "${cycleLetters}" feedback to ${newValue === 1 ? "Good" : "Bad"}.`);
+    console.log(`Marked "${cycleLetters}" as Bad.`);
     updateFeedbackResults(); // Update the results view
-
-    // Set the flag to prevent further toggling for this scramble
-    toggleFeedbackUsed = true;
 }
 
 //document.getElementById("toggleFeedbackButton").addEventListener("click", toggleLastFeedback);
