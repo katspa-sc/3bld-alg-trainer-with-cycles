@@ -2520,7 +2520,7 @@ function copyFeedbackToClipboard() {
     const badList = document.getElementById("badList").textContent;
 
     // Format the content to include labels
-    const feedbackText = `Good: ${goodList}\nBad: ${badList}`;
+    const feedbackText = `Good: ${goodList}\n\nBad: ${badList}`;
 
     // Copy the content to the clipboard
     navigator.clipboard.writeText(feedbackText).then(() => {
