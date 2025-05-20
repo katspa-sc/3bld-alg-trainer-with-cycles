@@ -1,3 +1,8 @@
+html, body {
+    max-height: 100vh; /* Limit the height to the viewport height */
+    overflow-y: auto; /* Enable scrolling if content exceeds the height */
+}
+
 body {
   background: #282c34;
   font-family: Arial;
@@ -280,7 +285,7 @@ div.hidden {
 }
 
 .feedback-bad {
-  background-color: #4570de; /* Default background color */
+  background-color: #5a129a; /* Default background color */
   border: none;
   color: white;
   padding: 15px 32px; /* Same padding as controls */

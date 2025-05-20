@@ -273,6 +273,12 @@ connectSmartCubeElement.addEventListener('click', async () => {
     await connectSmartCube();
 });
 
+// todo actually reset
+var resetSessionElement = document.getElementById("resetSession");
+resetSessionElement.addEventListener('click', async () => {
+    await connectSmartCube();
+});
+
 
 // buttons
 
