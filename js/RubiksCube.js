@@ -2211,9 +2211,9 @@ function checkForSpecialSequences() {
     }
 
     // Add more sequences as needed
-    if (recentMoves.endsWith("U U U U U U U U") || recentMoves.endsWith("U'U'U'U'U'U'U'U'")) {
-        console.log("Special sequence detected: U4");
-        triggerSpecialAction("U8");
+    if (recentMoves.endsWith("U U U U U U U U ") || recentMoves.endsWith("U'U'U'U'U'U'U'U'")) {
+        console.log("Special sequence detected: U6");
+        triggerSpecialAction("U6");
     }
 }
 
@@ -2325,8 +2325,8 @@ function triggerSpecialAction(sequence) {
             markCurrentCommAsBad();
             nextScramble();
             break;
-        case "U8":
-            console.log("U8 detected! Marking last alg as good");
+        case "U6":
+            console.log("U6 detected! Marking last alg as good");
             let jingleGood = document.getElementById("goodJingle");
             jingleGood.volume = 0.6
             jingleGood.play();
