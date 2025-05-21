@@ -2619,7 +2619,7 @@ function copyFeedbackToClipboard() {
     // Copy the content to the clipboard
     navigator.clipboard.writeText(feedbackText).then(() => {
         console.log("Feedback copied to clipboard!");
-        alert("Feedback copied to clipboard!");
+        //alert("Feedback copied to clipboard!");
     }).catch(err => {
         console.error("Failed to copy feedback to clipboard:", err);
         alert("Failed to copy feedback to clipboard.");
