@@ -2432,6 +2432,7 @@ function markCurrentCommAsGood() {
     if (!cycleFeedbackMap.has(cycleLetters)) {
         cycleFeedbackMap.set(cycleLetters, 1); // Add cycle letters with value 1 (good)
         console.log(`Marked "${cycleLetters}" as Good.`);
+        updateLastCycleInfo(); // Update the last cycle letters
         updateFeedbackResults(); // Update the results view
     } else {
         console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
@@ -2449,6 +2450,7 @@ function markCurrentCommAsBad() {
     if (!cycleFeedbackMap.has(cycleLetters)) {
         cycleFeedbackMap.set(cycleLetters, 0); // Add cycle letters with value 0 (bad)
         console.log(`Marked "${cycleLetters}" as Bad.`);
+        updateLastCycleInfo(); // Update the last cycle letters
         updateFeedbackResults(); // Update the results view
     } else {
         console.warn(`"${cycleLetters}" is already marked as ${cycleFeedbackMap.get(cycleLetters) === 1 ? "Good" : "Bad"}.`);
@@ -2490,9 +2492,12 @@ document.addEventListener("keydown", function (event) {
 });
 
 function updateFeedbackResults() {
-    const goodList = document.getElementById("goodList");
-    const badList = document.getElementById("badList");
-    const changeList = document.getElementById("changeList"); // New section for "Change/Drill alg"
+    const goodListElement = document.getElementById("goodList");
+    const badListElement = document.getElementById("badList");
+    const changeListElement = document.getElementById("changeList");
+
+    const lastCycleLettersElement = document.getElementById("lastCycleLetters");
+    const lastCycleLetters = lastCycleLettersElement.textContent;
 
     // Separate the cycle letters into good, bad, and change lists
     const goodCycles = [];
@@ -2514,10 +2519,22 @@ function updateFeedbackResults() {
     badCycles.sort(customComparator);
     changeCycles.sort(customComparator);
 
-    // Display the lists as comma-separated strings
-    goodList.textContent = goodCycles.join(", ");
-    badList.textContent = badCycles.join(", ");
-    changeList.textContent = changeCycles.join(", ");
+    // Format the lists and highlight the last cycle letters
+    goodListElement.innerHTML = formatListWithHighlight(goodCycles, lastCycleLetters);
+    badListElement.innerHTML = formatListWithHighlight(badCycles, lastCycleLetters);
+    changeListElement.innerHTML = formatListWithHighlight(changeCycles, lastCycleLetters);
+}
+
+// Helper function to format the list and highlight the last cycle letters
+function formatListWithHighlight(list, highlightItem) {
+    return list
+        .map(item => {
+            if (item === highlightItem) {
+                return `<span style="font-weight: bold; text-decoration: underline; color: yellow;">${item}</span>`;
+            }
+            return item;
+        })
+        .join(", ");
 }
 
 function customComparator(a, b) {
