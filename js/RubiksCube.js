@@ -2670,6 +2670,12 @@ function markLastCommAsGood() {
     updateFeedbackResults(); // Update the results view
 }
 
+document.getElementById("clearUserAlgsButton").addEventListener("click", function () {
+    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
+    userDefinedAlgs.value = ""; // Clear the textarea
+    console.log("User-defined algs cleared.");
+});
+
 //document.getElementById("toggleFeedbackButton").addEventListener("click", toggleLastFeedback);
 
 // function setCustomLetterScheme(scheme) {
