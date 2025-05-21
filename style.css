@@ -37,6 +37,7 @@ hr {
 }
 
 p.scramble {
+  font-size: 40px;
   vertical-align: middle; 
   text-align: center;
 }
@@ -284,17 +285,21 @@ div.hidden {
   font-size: 2.5em;
 }
 
-.feedback-bad {
-  background-color: #5a129a; /* Default background color */
+.biggerButton {
+  background-color: #0f7cea; /* Default background color */
   border: none;
   color: white;
-  padding: 15px 32px; /* Same padding as controls */
+  padding: 20px 40px; /* Same padding as controls */
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 18px; /* Same font size as controls */
-  margin: 5px; /* Add spacing between buttons */
-  border-radius: 5px; /* Rounded corners */
+  margin: 0px; /* Add spacing between buttons */
+  border-radius: 1px; /* Rounded corners */
   cursor: pointer;
   transition: transform 0.2s ease; /* Add a hover effect */
+}
+
+.transparentBackground {
+  background-color: #00000000 !important; /* Default background color */
 }

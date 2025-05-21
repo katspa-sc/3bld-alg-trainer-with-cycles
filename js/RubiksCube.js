@@ -1353,7 +1353,7 @@ function findMistakesInUserAlgs(userAlgs) {
                 cube.resetCube();
 
                 if (cycleMapping) {
-                    console.log("Alg is not a commutator, but is still a valid 3 cycle:", cycleMapping);
+                    //console.log("Alg is not a commutator, but is still a valid 3 cycle:", cycleMapping);
                     newList.push(alg);
                     newListDisplay.push(algWithParenthesis);
                 } else {
@@ -2570,12 +2570,34 @@ function updateLastCycleInfo() {
 }
 
 function copyFeedbackToClipboard() {
-    const goodList = document.getElementById("goodList").textContent;
-    const badList = document.getElementById("badList").textContent;
-    const changeDrillList = document.getElementById("changeList").textContent;
+    const goodList = document.getElementById("goodList").textContent.split(", ");
+    const badList = document.getElementById("badList").textContent.split(", ");
+    const changeDrillList = document.getElementById("changeList").textContent.split(", ");
 
-    // Format the content to include labels
-    const feedbackText = `Good:\n${goodList}\n\nChange/drill:\n${changeDrillList}\n\nBad:\n${badList}`;
+    // Helper function to group elements by their starting letter
+    function groupByStartingLetter(list) {
+        const grouped = {};
+        list.forEach(item => {
+            const firstLetter = item[0];
+            if (!grouped[firstLetter]) {
+                grouped[firstLetter] = [];
+            }
+            grouped[firstLetter].push(item);
+        });
+
+        // Format the grouped elements into lines
+        return Object.values(grouped)
+            .map(group => group.join(" "))
+            .join("\n");
+    }
+
+    // Format each list
+    const formattedGoodList = groupByStartingLetter(goodList);
+    const formattedBadList = groupByStartingLetter(badList);
+    const formattedChangeDrillList = groupByStartingLetter(changeDrillList);
+
+    // Combine the formatted lists with labels
+    const feedbackText = `Good:\n${formattedGoodList}\n\nChange/Drill:\n${formattedChangeDrillList}\n\nBad:\n${formattedBadList}`;
 
     // Copy the content to the clipboard
     navigator.clipboard.writeText(feedbackText).then(() => {
