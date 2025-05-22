@@ -2771,7 +2771,7 @@ const single_letter_map = {
     "C": "c",
     "D": "d",
     "E": "e",
-    "F": "e",
+    "F": "f",
     "G": "gie",
     "H": "h",
     "I": "i",
