@@ -761,7 +761,12 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     const rearrangedCycle = [...cycleMapping.slice(bufferIndex), ...cycleMapping.slice(0, bufferIndex)];
 
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
-    const letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
+    let letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
+
+    // TODO remove this Temporary feature: Replace 'O' with '_' if it's a corners 3-cycle
+    if (orozcoCheckbox.checked && letters.includes('O')) {
+        letters = letters.map(letter => (letter === 'O' ? '_' : letter));
+    }
 
     speakText(parseLettersForTTS(letters));
     const cycleLetters = letters.join('');
@@ -2239,7 +2244,34 @@ function speakText(text, rate = 1.0, readComm = false) {
         const language = localStorage.getItem("ttsLanguage") || "pl-PL";
         utterance.lang = language;
 
-        if (readComm) {
+        // Check if Orozco mode is enabled
+        if (orozcoCheckbox.checked) {
+            // Process text if it contains an underscore and is 3 characters long
+            if (text.includes("_") && text.length === 3) {
+                const [first, second] = text.split(" ");
+                if (first === "_") {
+                    const mappedSecond = second
+                        .split("") // Split into characters
+                        .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
+                        .join(" "); // Join back into a string
+                    utterance.text = `drugie ${mappedSecond}`;
+                } else if (second === "_") {
+                    const mappedFirst = first
+                        .split("") // Split into characters
+                        .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
+                        .join(" "); // Join back into a string
+                    utterance.text = `${mappedFirst} pierwsze`;
+                } else {
+                    utterance.text = text; // Fallback to the original text
+                }
+            } else {
+                // Map all characters in the text using the single_letter_map
+                utterance.text = text
+                    .split("") // Split into characters
+                    .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
+                    .join(" "); // Join back into a string
+            }
+        } else if (readComm) {
             utterance.rate = rate;
 
             // Preprocess the text to replace special characters with words
@@ -2676,75 +2708,88 @@ document.getElementById("clearUserAlgsButton").addEventListener("click", functio
     console.log("User-defined algs cleared.");
 });
 
-//document.getElementById("toggleFeedbackButton").addEventListener("click", toggleLastFeedback);
+const orozcoCheckbox = document.getElementById("orozcoCheckbox");
 
-// function setCustomLetterScheme(scheme) {
-//     if (scheme.length !== 54) {
-//         alert("The letter scheme must b exactly 54 characters long.");
-//         return false;
-//     }
+// Load the saved state from localStorage
+const savedOrozcoState = localStorage.getItem("orozcoMode") === "true";
+orozcoCheckbox.checked = savedOrozcoState;
 
-//     const newMap = {};
-//     for (let i = 0; i < 54; i++) {
-//         newMap[i] = scheme[i];
-//     }
+// Add an event listener to update localStorage when the checkbox is toggled
+orozcoCheckbox.addEventListener("change", function () {
+    localStorage.setItem("orozcoMode", orozcoCheckbox.checked);
+    console.log(`Orozco mode is now ${orozcoCheckbox.checked ? "enabled" : "disabled"}`);
+});
 
-//     // Update the global POSITION_TO_LETTER_MAP
-//     Object.assign(POSITION_TO_LETTER_MAP, newMap);
+document.getElementById("orozcoButton").addEventListener("click", function () {
+    const orozcoAlgs = [
+        "R' B' R: U', R D R'",
+        "R F' R': R' D R, U",
+        "R: U, R D R'",
+        "R': R' D' R, U'",
+        "R' D R, U",
+        "U', R D' R'",
+        "R: U2, R D R'",
+        "D': R' D R, U",
+        "D: R' D' R, U",
+        "U', R D R'",
+        "R' D' R, U",
+        "R': R' D' R, U2",
+        "D': U', R D R'",
+        "D: U', R D' R'",
+        "R F': R' U' R, D",
+        "R' D R U' R D' R', U",
+        "U', R D' R' U R' D R",
+        "R' B: D', R U R'",
+        "R' B' R: R D R', U'",
+        "R F' R': U, R' D R",
+        "R: R D R', U",
+        "R': U', R' D' R",
+        "U, R' D R",
+        "R D' R', U'",
+        "R: R D R', U2",
+        "D': U, R' D R",
+        "D: U, R' D' R",
+        "R D R', U'",
+        "U, R' D' R",
+        "R': U2, R' D' R",
+        "D': R D R', U'",
+        "D: R D' R', U'",
+        "R F': D, R' U' R",
+        "U, R' D R U' R D' R'",
+        "R D' R' U R' D R, U'",
+        "R' B: R U R', D'"
+    ];
 
-//     // Save to localStorage for persistence
-//     localStorage.setItem("customLetterScheme", scheme);
+    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
+    userDefinedAlgs.value = orozcoAlgs.join("\n"); // Fill the textarea with the algs, each on a new line
+    console.log("User-defined algs filled with Orozco list.");
+});
 
-//    // alert("Custom letter scheme saved successfully!");
-//     return true;
-// }
-
-// document.addEventListener("DOMContentLoaded", function () {
-//     const savedScheme = localStorage.getItem("customLetterScheme");
-//     if (savedScheme) {
-//         setCustomLetterScheme(savedScheme);
-//         document.getElementById("letterScheme").value = savedScheme;
-//     }
-// });
-
-// document.getElementById("saveLetterScheme").addEventListener("click", function () {
-//     const scheme = document.getElementById("letterScheme").value.trim();
-//     if (setCustomLetterScheme(scheme)) {
-//         alert("Custom letter scheme saved successfully!");
-//     }
-// });
-
-// document.getElementById("resetLetterScheme").addEventListener("click", function () {
-//     localStorage.removeItem("customLetterScheme");
-//     Object.assign(POSITION_TO_LETTER_MAP, {
-//         0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
-//         9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
-//         18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
-//         27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
-//         36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
-//         45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
-//     });
-//     document.getElementById("letterScheme").value = "";
-//     alert("Letter scheme reset to default.");
-// });
-
-// document.addEventListener("DOMContentLoaded", function () {
-//     const savedLanguage = localStorage.getItem("ttsLanguage");
-//     if (savedLanguage) {
-//         document.getElementById("ttsLanguage").value = savedLanguage;
-//     }
-// });
-
-// document.getElementById("saveTTSLanguage").addEventListener("click", function () {
-//     const language = document.getElementById("ttsLanguage").value.trim();
-//     if (language) {
-//         localStorage.setItem("ttsLanguage", language);
-//         alert("TTS language saved successfully!");
-//     } else {
-//         alert("Please enter a valid language code (e.g., n-US, pl-PL).");
-//     }
-// });
-
+const single_letter_map = {
+    "A": "a",
+    "B": "b",
+    "C": "c",
+    "D": "d",
+    "E": "e",
+    "F": "e",
+    "G": "gie",
+    "H": "h",
+    "I": "i",
+    "J": "jot",
+    "K": "k",
+    "L": "el",
+    "M": "m",
+    "N": "n",
+    "O": "o",
+    "P": "p",
+    "Q": "ku",
+    "R": "er",
+    "S": "es",
+    "T": "te",
+    "U": "u",
+    "W": "wu",
+    "Z": "zet"
+};
 
 const LETTER_PAIR_TO_WORD = {
     'AA': 'a a',
@@ -3232,3 +3277,72 @@ const LETTER_PAIR_TO_WORD = {
     'ZW': 'zet wu',
     'ZZ': 'zet zet'
 }
+
+// custom scheme and tts support
+
+// function setCustomLetterScheme(scheme) {
+//     if (scheme.length !== 54) {
+//         alert("The letter scheme must b exactly 54 characters long.");
+//         return false;
+//     }
+
+//     const newMap = {};
+//     for (let i = 0; i < 54; i++) {
+//         newMap[i] = scheme[i];
+//     }
+
+//     // Update the global POSITION_TO_LETTER_MAP
+//     Object.assign(POSITION_TO_LETTER_MAP, newMap);
+
+//     // Save to localStorage for persistence
+//     localStorage.setItem("customLetterScheme", scheme);
+
+//    // alert("Custom letter scheme saved successfully!");
+//     return true;
+// }
+
+// document.addEventListener("DOMContentLoaded", function () {
+//     const savedScheme = localStorage.getItem("customLetterScheme");
+//     if (savedScheme) {
+//         setCustomLetterScheme(savedScheme);
+//         document.getElementById("letterScheme").value = savedScheme;
+//     }
+// });
+
+// document.getElementById("saveLetterScheme").addEventListener("click", function () {
+//     const scheme = document.getElementById("letterScheme").value.trim();
+//     if (setCustomLetterScheme(scheme)) {
+//         alert("Custom letter scheme saved successfully!");
+//     }
+// });
+
+// document.getElementById("resetLetterScheme").addEventListener("click", function () {
+//     localStorage.removeItem("customLetterScheme");
+//     Object.assign(POSITION_TO_LETTER_MAP, {
+//         0: 'A', 1: 'A', 2: 'O', 3: 'I', 4: 'UC', 5: 'O', 6: 'I', 7: 'Y', 8: 'Y',
+//         9: 'M', 10: 'M', 11: 'N', 12: 'P', 13: 'RC', 14: 'N', 15: 'P', 16: 'B', 17: 'B',
+//         18: 'J', 19: 'U', 20: 'U', 21: 'L', 22: 'FC', 23: 'J', 24: 'L', 25: 'K', 26: 'K',
+//         27: 'C', 28: 'C', 29: 'D', 30: 'Z', 31: 'DC', 32: 'D', 33: 'Z', 34: 'W', 35: 'W',
+//         36: 'E', 37: 'E', 38: 'F', 39: 'H', 40: 'LC', 41: 'F', 42: 'H', 43: 'G', 44: 'G',
+//         45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
+//     });
+//     document.getElementById("letterScheme").value = "";
+//     alert("Letter scheme reset to default.");
+// });
+
+// document.addEventListener("DOMContentLoaded", function () {
+//     const savedLanguage = localStorage.getItem("ttsLanguage");
+//     if (savedLanguage) {
+//         document.getElementById("ttsLanguage").value = savedLanguage;
+//     }
+// });
+
+// document.getElementById("saveTTSLanguage").addEventListener("click", function () {
+//     const language = document.getElementById("ttsLanguage").value.trim();
+//     if (language) {
+//         localStorage.setItem("ttsLanguage", language);
+//         alert("TTS language saved successfully!");
+//     } else {
+//         alert("Please enter a valid language code (e.g., n-US, pl-PL).");
+//     }
+// })
