@@ -1113,7 +1113,7 @@ function randomFromList(set) {
         } else {
             // Play the jingle when the set is completed (not the first run)
             const jingle = document.getElementById("completionJingle");
-            jingle.volume = 1
+            jingle.volume = 0.5
             jingle.play();
 
             // // Delay the prompt until after the jingle starts playing
