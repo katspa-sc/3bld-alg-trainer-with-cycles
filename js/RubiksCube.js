@@ -1494,7 +1494,7 @@ function nextScramble(displayReady = true) {
     updateLastCycleInfo();
 
     // Hide the scramble
-   // hideScramble();
+    hideScramble();
 
     if (isUsingVirtualCube()) {
         testAlg(generateAlgTest());
@@ -2244,6 +2244,17 @@ function speakText(text, rate = 1.0, readComm = false) {
         const language = localStorage.getItem("ttsLanguage") || "pl-PL";
         utterance.lang = language;
 
+        // Preprocess the text to add hyphens after letters without a prime sign
+        const processedText = text
+            .split(" ") // Split into individual moves
+            .map(move => {
+                if (move.endsWith("'") || move.endsWith("2")) {
+                    return move; // Keep moves with a prime or "2" unchanged
+                }
+                return `${move}-`; // Add a hyphen after moves without a prime or "2"
+            })
+            .join(" "); // Join back into a string with spaces
+
         // Check if Orozco mode is enabled
         if (orozcoCheckbox.checked) {
             // Process text if it contains an underscore and is 3 characters long
@@ -2262,11 +2273,11 @@ function speakText(text, rate = 1.0, readComm = false) {
                         .join(" "); // Join back into a string
                     utterance.text = `${mappedFirst} pierwsze`;
                 } else {
-                    utterance.text = text; // Fallback to the original text
+                    utterance.text = processedText; // Fallback to the processed text
                 }
             } else {
                 // Map all characters in the text using the single_letter_map
-                utterance.text = text
+                utterance.text = processedText
                     .split("") // Split into characters
                     .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
                     .join(" "); // Join back into a string
@@ -2310,7 +2321,7 @@ function speakText(text, rate = 1.0, readComm = false) {
             // Update the text and speak
             utterance.text = processedText;
         } else {
-            utterance.text = text;
+            utterance.text = processedText; // Use the processed text
         }
 
         window.speechSynthesis.speak(utterance);
@@ -2591,9 +2602,30 @@ function revealScramble() {
 
 function hideScramble() {
     const scrambleElement = document.getElementById("scramble");
-    scrambleElement.classList.remove("revealed");
-    scrambleElement.classList.add("obfuscated");
+    const obfuscateScrambleCheckbox = document.getElementById("obfuscateScrambleCheckbox");
+
+    // Only obfuscate the scramble if the checkbox is checked
+    if (obfuscateScrambleCheckbox.checked) {
+        scrambleElement.classList.remove("revealed");
+        scrambleElement.classList.add("obfuscated");
+        console.log("Scramble obfuscated.");
+    } else {
+        revealScramble();
+        console.log("Scramble shown by default.");
+    }
 }
+
+const obfuscateScrambleCheckbox = document.getElementById("obfuscateScrambleCheckbox");
+
+// Load the saved state from localStorage
+const savedObfuscateState = localStorage.getItem("obfuscateScramble") === "true";
+obfuscateScrambleCheckbox.checked = savedObfuscateState;
+
+// Add an event listener to update localStorage when the checkbox is toggled
+obfuscateScrambleCheckbox.addEventListener("change", function () {
+    localStorage.setItem("obfuscateScramble", obfuscateScrambleCheckbox.checked);
+    console.log(`Obfuscate Scramble is now ${obfuscateScrambleCheckbox.checked ? "enabled" : "disabled"}`);
+});
 
 document.getElementById("scramble").addEventListener("click", revealScramble);
 
