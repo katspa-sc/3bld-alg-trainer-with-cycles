@@ -1494,7 +1494,7 @@ function nextScramble(displayReady = true) {
     updateLastCycleInfo();
 
     // Hide the scramble
-    hideScramble();
+   // hideScramble();
 
     if (isUsingVirtualCube()) {
         testAlg(generateAlgTest());
