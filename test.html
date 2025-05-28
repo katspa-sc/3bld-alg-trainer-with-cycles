@@ -22,8 +22,8 @@
             <button id="clearUserAlgsButton" class="biggerButton transparentBackground">Clear algs</button>
             <button id="fetchAlgsButton">Fetch algs</button>
 
-            <select id="letterSelector">
-                <option value="">Select a letter</option>
+            <select id="letterSelector" style="width: 100px; height: 40px; font-size: 18px;">
+                <option value="">Set</option>
                 <option value="A">A</option>
                 <option value="O">O</option>
                 <option value="I">I</option>
@@ -47,8 +47,9 @@
                 <option value="Z">Z</option>
             </select>
 
+            <div id="missingCommsLabel" style="margin-top: 10px; font-size: 16px;"> Missing comms:</div>
             <br></br>
-            Enter algs:
+
             <!-- <input id="userDefined" type="checkbox">Use user defined algset <button id="addSelected">Add currently selected algs</button><br> -->
             <textarea id="userDefinedAlgs" cols=50 rows=20
                 placeholder="Place one alg per line. Lines starting with # will be ignored"></textarea>

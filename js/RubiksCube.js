@@ -2779,6 +2779,47 @@ async function fetchAlgs() {
 // Add an event listener to the button to fetch algorithms
 document.getElementById("fetchAlgsButton").addEventListener("click", fetchAlgs);
 
+const ALL_LETTERS = "AOIEFGHJJKLNBPQTSRCDWZ".split(""); // Array of all letters
+
+// Predefined excluded trios
+const EXCLUDED_TRIOS = [
+    ["A", "E", "R"], // Trio 1
+    ["O", "Q", "N"], // Trio 2
+    ["I", "J", "F"], // Trio 3
+    ["C", "G", "L"], // Trio 4
+    ["D", "K", "P"], // Trio 5
+    ["W", "B", "T"], // Trio 6
+    ["Z", "S", "H"], // Trio 7
+    // Add more trios as needed
+];
+
+function findMissingCombinations(selectedLetter, algs) {
+    // Generate all possible pairs for the selected letter
+    const allCombinations = ALL_LETTERS.map(letter => `${selectedLetter}${letter}`)
+        .concat(ALL_LETTERS.map(letter => `${letter}${selectedLetter}`)) // Include both positions
+        .filter(combination => combination[0] !== combination[1]) // Skip pairs where both letters are the same
+        .filter(combination => !isExcludedCombination(combination)); // Skip excluded combinations
+
+    // Extract existing combinations from the fetched algs
+    const existingCombinations = algs.map(pair => pair.key);
+
+    // Find missing combinations
+    const missingCombinations = allCombinations.filter(combination => !existingCombinations.includes(combination));
+
+    return missingCombinations;
+}
+
+function isExcludedCombination(combination) {
+    // Check if the combination belongs to any excluded trio
+    for (const trio of EXCLUDED_TRIOS) {
+        const [letter1, letter2] = combination.split("");
+        if (trio.includes(letter1) && trio.includes(letter2)) {
+            return true; // Exclude the combination
+        }
+    }
+    return false; // Include the combination
+}
+
 async function filterAlgsByLetter(selectedLetter) {
     if (!selectedLetter) {
         console.warn("No letter selected.");
@@ -2800,14 +2841,31 @@ async function filterAlgsByLetter(selectedLetter) {
     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
     userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
     console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
+
+    // Check for missing combinations if the filtered values are less than 36
+    const missingCommsLabel = document.getElementById("missingCommsLabel");
+    if (filteredValues.length < 36) {
+        const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
+        console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
+
+        if (missingCombinations.length > 0) {
+            // Update the dynamic label with missing combinations
+            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
+        } else {
+            // Clear the label if there are no missing combinations
+            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+        }
+    } else {
+        // Clear the label if there are no missing combinations
+        missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+    }
 }
 
 // Add an event listener to the dropdown selector
 document.getElementById("letterSelector").addEventListener("change", async function () {
     const selectedLetter = this.value; // Get the selected letter
-    await filterAlgsByLetter(selectedLetter); // Call the new method
+    await filterAlgsByLetter(selectedLetter); // Call the filtering method
 });
-
 document.getElementById("orozcoButton").addEventListener("click", function () {
     const orozcoAlgs = [
         "R' B' R: U', R D R'",
