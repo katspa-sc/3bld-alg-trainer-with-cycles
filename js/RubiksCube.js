@@ -2752,6 +2752,62 @@ orozcoCheckbox.addEventListener("change", function () {
     console.log(`Orozco mode is now ${orozcoCheckbox.checked ? "enabled" : "disabled"}`);
 });
 
+const PROXY_URL = 'https://commexportproxy-5k4sdulwx-katspas-projects.vercel.app/api/algs';
+let fetchedAlgs = []; // Array to store fetched algorithms
+
+async function fetchAlgs() {
+  try {
+    const res = await fetch(PROXY_URL);
+    const text = await res.text();
+
+    // Parse TSV and extract the first and second columns
+    fetchedAlgs = text
+      .split("\n") // Split into rows
+      .map(row => row.split("\t")) // Split each row into columns
+      .filter(columns => columns.length >= 2) // Ensure there are at least two columns
+      .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) // Map as key-value pairs and trim whitespace
+      .filter(pair => pair.key !== "" && pair.value !== "\r"); // Prune invalid pairs
+
+    console.log("Fetched algorithms:", fetchedAlgs);
+    alert("Algorithms fetched successfully!");
+  } catch (err) {
+    console.error("Failed to fetch algorithms:", err);
+    alert("Failed to fetch algorithms.");
+  }
+}
+
+// Add an event listener to the button to fetch algorithms
+document.getElementById("fetchAlgsButton").addEventListener("click", fetchAlgs);
+
+async function filterAlgsByLetter(selectedLetter) {
+    if (!selectedLetter) {
+        console.warn("No letter selected.");
+        return;
+    }
+
+    // Fetch algs if the array is empty
+    if (fetchedAlgs.length === 0) {
+        console.log("Fetching algorithms as fetchedAlgs is empty...");
+        await fetchAlgs();
+    }
+
+    // Filter the fetchedAlgs array for keys that match the selected letter
+    const filteredValues = fetchedAlgs
+        .filter(pair => pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter))
+        .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
+
+    // Paste the filtered values into the input box
+    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
+    userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
+    console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
+}
+
+// Add an event listener to the dropdown selector
+document.getElementById("letterSelector").addEventListener("change", async function () {
+    const selectedLetter = this.value; // Get the selected letter
+    await filterAlgsByLetter(selectedLetter); // Call the new method
+});
+
 document.getElementById("orozcoButton").addEventListener("click", function () {
     const orozcoAlgs = [
         "R' B' R: U', R D R'",
