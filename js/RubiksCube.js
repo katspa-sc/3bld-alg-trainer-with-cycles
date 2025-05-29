@@ -2222,6 +2222,55 @@ function checkForSpecialSequences() {
     }
 }
 
+function determineReadingMode(text) {
+    if (orozcoCheckbox.checked) {
+        return processOrozcoMode(text);
+    } else {
+        return processRegularMode(text);
+    }
+}
+
+function processOrozcoMode(text) {
+    // Process text for Orozco mode
+    if (text.includes("_") && text.length === 3) {
+        const [first, second] = text.split(" ");
+        if (first === "_") {
+            const mappedSecond = second
+                .split("") // Split into characters
+                .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
+                .join(" "); // Join back into a string
+            return `drugie ${mappedSecond}`;
+        } else if (second === "_") {
+            const mappedFirst = first
+                .split("") // Split into characters
+                .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
+                .join(" "); // Join back into a string
+            return `${mappedFirst} pierwsze`;
+        } else {
+            return text; // Fallback to the original text
+        }
+    } else {
+        // Map all characters in the text using the single_letter_map
+        return text
+            .split("") // Split into characters
+            .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
+            .join(" "); // Join back into a string
+    }
+}
+
+function processRegularMode(text) {
+    // Preprocess the text to add hyphens after letters without a prime sign
+    return text
+        .split(" ") // Split into individual moves
+        .map(move => {
+            if (move.endsWith("'") || move.endsWith("2")) {
+                return move; // Keep moves with a prime or "2" unchanged
+            }
+            return `${move},`; // Add a hyphen after moves without a prime or "2"
+        })
+        .join(" "); // Join back into a string with spaces
+}
+
 function speakText(text, rate = 1.0, readComm = false) {
     const enableTTS = localStorage.getItem("enableTTS") === "true";
 
@@ -2244,89 +2293,56 @@ function speakText(text, rate = 1.0, readComm = false) {
         const language = localStorage.getItem("ttsLanguage") || "pl-PL";
         utterance.lang = language;
 
-        // Preprocess the text to add hyphens after letters without a prime sign
-        const processedText = text
-            .split(" ") // Split into individual moves
-            .map(move => {
-                if (move.endsWith("'") || move.endsWith("2")) {
-                    return move; // Keep moves with a prime or "2" unchanged
-                }
-                return `${move}-`; // Add a hyphen after moves without a prime or "2"
-            })
-            .join(" "); // Join back into a string with spaces
+        // Process the text using the extracted method
+        const processedText = processTextForTTS(text, readComm);
 
-        // Check if Orozco mode is enabled
-        if (orozcoCheckbox.checked) {
-            // Process text if it contains an underscore and is 3 characters long
-            if (text.includes("_") && text.length === 3) {
-                const [first, second] = text.split(" ");
-                if (first === "_") {
-                    const mappedSecond = second
-                        .split("") // Split into characters
-                        .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
-                        .join(" "); // Join back into a string
-                    utterance.text = `drugie ${mappedSecond}`;
-                } else if (second === "_") {
-                    const mappedFirst = first
-                        .split("") // Split into characters
-                        .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
-                        .join(" "); // Join back into a string
-                    utterance.text = `${mappedFirst} pierwsze`;
-                } else {
-                    utterance.text = processedText; // Fallback to the processed text
-                }
-            } else {
-                // Map all characters in the text using the single_letter_map
-                utterance.text = processedText
-                    .split("") // Split into characters
-                    .map(char => single_letter_map[char] || char) // Map each character or leave it unchanged
-                    .join(" "); // Join back into a string
-            }
-        } else if (readComm) {
-            utterance.rate = rate;
-
-            // Preprocess the text to replace special characters with words
-            const replacements = {
-                ":": " POTEM",
-                "'": " PRIIM",
-                "/": " SLESZ"
-            };
-
-            // Dynamically construct the regex from the keys of the replacements map
-            const regex = new RegExp(`[${Object.keys(replacements).join("")}]`, "g");
-
-            // Replace all matches using the replacements map and add a comma after each replacement
-            let processedText = text.replace(regex, match => replacements[match] + ",");
-
-            // Add "setap" at the front if there is at least one occurrence of ":"
-            if (text.includes(":")) {
-                processedText = "setap " + processedText;
-            }
-
-            // Split moves with a comma and ensure spaces are preserved
-            processedText = processedText.split(" ").join(", ");
-
-            // Trim double commas
-            processedText = processedText.replace(/,,+/g, ","); // Replace multiple commas with a single comma
-
-            // Replace ", priim" with " priim"
-            processedText = processedText.replace(/, PRIIM/g, " PRIIM");
-
-            // Ensure spaces are preserved between moves
-            processedText = processedText.replace(/, /g, ", ");
-
-            // Remove any leading commas
-            processedText = processedText.replace(/^, /, ""); // Remove leading commas
-
-            // Update the text and speak
-            utterance.text = processedText;
-        } else {
-            utterance.text = processedText; // Use the processed text
-        }
-
+        // Set the processed text and speak
+        utterance.text = processedText;
         window.speechSynthesis.speak(utterance);
     } else {
         console.warn('Text-to-Speech is not supported in this browser.');
+    }
+}
+
+function processTextForTTS(text, readComm = false) {
+    if (readComm) {
+        // Preprocess the text to replace special characters with words
+        const replacements = {
+            ":": " POTEM",
+            "'": " PRIIM",
+            "/": " SLESZ"
+        };
+
+        // Dynamically construct the regex from the keys of the replacements map
+        const regex = new RegExp(`[${Object.keys(replacements).join("")}]`, "g");
+
+        // Replace all matches using the replacements map and add a comma after each replacement
+        let processedText = text.replace(regex, match => replacements[match] + ",");
+
+        // Add "setap" at the front if there is at least one occurrence of ":"
+        if (text.includes(":")) {
+            processedText = "setap " + processedText;
+        }
+
+        // Split moves with a comma and ensure spaces are preserved
+        processedText = processedText.split(" ").join(", ");
+
+        // Trim double commas
+        processedText = processedText.replace(/,,+/g, ","); // Replace multiple commas with a single comma
+
+        // Replace ", priim" with " priim"
+        processedText = processedText.replace(/, PRIIM/g, " PRIIM");
+
+        // Ensure spaces are preserved between moves
+        processedText = processedText.replace(/, /g, ", ");
+
+        // Remove any leading commas
+        processedText = processedText.replace(/^, /, ""); // Remove leading commas
+
+        return processedText;
+    } else {
+        // Determine the reading mode and process the text
+        return determineReadingMode(text);
     }
 }
 
@@ -2755,29 +2771,118 @@ orozcoCheckbox.addEventListener("change", function () {
 const PROXY_URL = 'https://commexportproxy-5k4sdulwx-katspas-projects.vercel.app/api/algs';
 let fetchedAlgs = []; // Array to store fetched algorithms
 
-async function fetchAlgs() {
-  try {
-    const res = await fetch(PROXY_URL);
-    const text = await res.text();
+// Label to display the last fetch date
+const lastFetchLabel = document.getElementById("lastFetchLabel");
 
-    // Parse TSV and extract the first and second columns
-    fetchedAlgs = text
-      .split("\n") // Split into rows
-      .map(row => row.split("\t")) // Split each row into columns
-      .filter(columns => columns.length >= 2) // Ensure there are at least two columns
-      .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) // Map as key-value pairs and trim whitespace
-      .filter(pair => pair.key !== "" && pair.value !== "\r"); // Prune invalid pairs
+// Load cached algorithms and fetch date from localStorage
+function loadCachedAlgs() {
+    const cachedAlgs = localStorage.getItem("fetchedAlgs");
+    const lastFetchDate = localStorage.getItem("lastFetchDate");
 
-    console.log("Fetched algorithms:", fetchedAlgs);
-    alert("Algorithms fetched successfully!");
-  } catch (err) {
-    console.error("Failed to fetch algorithms:", err);
-    alert("Failed to fetch algorithms.");
-  }
+    if (cachedAlgs && lastFetchDate) {
+        fetchedAlgs = JSON.parse(cachedAlgs);
+        lastFetchLabel.innerHTML = `<span style="color: green;">Last Fetch: ${lastFetchDate}</span>`;
+    } else {
+        lastFetchLabel.innerHTML = `<span style="color: red;">NO ALGS</span>`;
+    }
 }
 
-// Add an event listener to the button to fetch algorithms
+// Save fetched algorithms and fetch date to localStorage
+function saveFetchedAlgs(algs) {
+    const currentDate = new Date().toLocaleString(); // Get current date and time
+    localStorage.setItem("fetchedAlgs", JSON.stringify(algs));
+    localStorage.setItem("lastFetchDate", currentDate);
+    lastFetchLabel.innerHTML = `<span style="color: green;">Last Fetch: ${currentDate}</span>`;
+}
+
+async function fetchAlgs() {
+    try {
+        const res = await fetch(PROXY_URL);
+        const text = await res.text();
+
+        // Parse TSV and extract the first and second columns
+        fetchedAlgs = text
+            .split("\n") // Split into rows
+            .map(row => row.split("\t")) // Split each row into columns
+            .filter(columns => columns.length >= 2) // Ensure there are at least two columns
+            .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) // Map as key-value pairs and trim whitespace
+            .filter(pair => pair.key !== "" && pair.value !== "\r"); // Prune invalid pairs
+
+        console.log("Fetched algorithms:", fetchedAlgs);
+        saveFetchedAlgs(fetchedAlgs); // Save to localStorage
+        alert("Algorithms fetched successfully!");
+    } catch (err) {
+        console.error("Failed to fetch algorithms:", err);
+        alert("Failed to fetch algorithms.");
+    }
+}
+
+// Filter algorithms by letter without re-fetching
+async function filterAlgsByLetter(selectedLetter) {
+    if (!selectedLetter) {
+        console.warn("No letter selected.");
+        return;
+    }
+
+    // Load cached algorithms if not already loaded
+    if (fetchedAlgs.length === 0) {
+        loadCachedAlgs();
+    }
+
+    if (fetchedAlgs.length === 0) {
+        console.warn("No cached algorithms found. Fetching algorithms...");
+        await fetchAlgs();
+    }
+
+    // Filter the fetchedAlgs array for keys that match the selected letter
+    const filteredValues = fetchedAlgs
+        .filter(pair => pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter))
+        .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
+
+    // Paste the filtered values into the input box
+    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
+    userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
+    console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
+
+    // Check for missing combinations if the filtered values are less than 36
+    const missingCommsLabel = document.getElementById("missingCommsLabel");
+    if (filteredValues.length < 36) {
+        const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
+        console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
+
+        if (missingCombinations.length > 0) {
+            // Update the dynamic label with missing combinations
+            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
+        } else {
+            // Clear the label if there are no missing combinations
+            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+        }
+    } else {
+        // Clear the label if there are no missing combinations
+        missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+    }
+}
+
+// Load cached algorithms on page load
+document.addEventListener("DOMContentLoaded", loadCachedAlgs);
+
+// Add an event listener to the fetch button
 document.getElementById("fetchAlgsButton").addEventListener("click", fetchAlgs);
+
+document.getElementById("letterSelector").addEventListener("click", function () {
+    const selectionGrid = document.getElementById("selectionGrid");
+    selectionGrid.style.display = selectionGrid.style.display === "none" ? "block" : "none";
+});
+
+document.querySelectorAll(".gridButton").forEach(button => {
+    button.addEventListener("click", function () {
+        const selectedLetter = this.dataset.letter; // Get the letter from the button's data attribute
+        console.log(`Selected letter: ${selectedLetter}`);
+        document.getElementById("selectionGrid").style.display = "none"; // Hide the grid
+        filterAlgsByLetter(selectedLetter); // Call the filtering method
+    });
+});
+
 
 const ALL_LETTERS = "AOIEFGHJJKLNBPQTSRCDWZ".split(""); // Array of all letters
 
