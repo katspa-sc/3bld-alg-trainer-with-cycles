@@ -2869,6 +2869,13 @@ document.addEventListener("DOMContentLoaded", loadCachedAlgs);
 // Add an event listener to the fetch button
 document.getElementById("fetchAlgsButton").addEventListener("click", fetchAlgs);
 
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Ensure the grid is hidden on page load
+    const selectionGrid = document.getElementById("selectionGrid");
+    selectionGrid.style.display = "none"; // Explicitly set the initial display property
+});
+
 document.getElementById("letterSelector").addEventListener("click", function () {
     const selectionGrid = document.getElementById("selectionGrid");
     selectionGrid.style.display = selectionGrid.style.display === "none" ? "block" : "none";
@@ -2971,6 +2978,7 @@ document.getElementById("letterSelector").addEventListener("change", async funct
     const selectedLetter = this.value; // Get the selected letter
     await filterAlgsByLetter(selectedLetter); // Call the filtering method
 });
+
 document.getElementById("orozcoButton").addEventListener("click", function () {
     const orozcoAlgs = [
         "R' B' R: U', R D R'",
