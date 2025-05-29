@@ -2781,9 +2781,9 @@ function loadCachedAlgs() {
 
     if (cachedAlgs && lastFetchDate) {
         fetchedAlgs = JSON.parse(cachedAlgs);
-        lastFetchLabel.innerHTML = `<span style="color: green;">Last Fetch: ${lastFetchDate}</span>`;
+        lastFetchLabel.innerHTML = `<span style="color: #00FF00;">Last Fetch: ${lastFetchDate}</span>`;
     } else {
-        lastFetchLabel.innerHTML = `<span style="color: red;">NO ALGS</span>`;
+        lastFetchLabel.innerHTML = `<span style="color: red; font-size: 30px;">NO ALGS</span>`;
     }
 }
 
@@ -2792,7 +2792,7 @@ function saveFetchedAlgs(algs) {
     const currentDate = new Date().toLocaleString(); // Get current date and time
     localStorage.setItem("fetchedAlgs", JSON.stringify(algs));
     localStorage.setItem("lastFetchDate", currentDate);
-    lastFetchLabel.innerHTML = `<span style="color: green;">Last Fetch: ${currentDate}</span>`;
+    lastFetchLabel.innerHTML = `<span style="color: #00FF00;">Last Fetch: ${currentDate}</span>`;
 }
 
 async function fetchAlgs() {
