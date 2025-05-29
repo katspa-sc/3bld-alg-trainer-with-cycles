@@ -2781,7 +2781,7 @@ function loadCachedAlgs() {
 
     if (cachedAlgs && lastFetchDate) {
         fetchedAlgs = JSON.parse(cachedAlgs);
-        lastFetchLabel.innerHTML = `<span style="color: #00FF00;">Last Fetch: ${lastFetchDate}</span>`;
+        lastFetchLabel.innerHTML = `<span style="color: #00FF00; font-size: 20px;">Last Fetch: ${lastFetchDate}</span>`;
     } else {
         lastFetchLabel.innerHTML = `<span style="color: red; font-size: 30px;">NO ALGS</span>`;
     }
@@ -2792,7 +2792,7 @@ function saveFetchedAlgs(algs) {
     const currentDate = new Date().toLocaleString(); // Get current date and time
     localStorage.setItem("fetchedAlgs", JSON.stringify(algs));
     localStorage.setItem("lastFetchDate", currentDate);
-    lastFetchLabel.innerHTML = `<span style="color: #00FF00;">Last Fetch: ${currentDate}</span>`;
+    lastFetchLabel.innerHTML = `<span style="color: #00FF00; font-size: 20px">Last Fetch: ${currentDate}</span>`;
 }
 
 async function fetchAlgs() {
@@ -2810,7 +2810,7 @@ async function fetchAlgs() {
 
         console.log("Fetched algorithms:", fetchedAlgs);
         saveFetchedAlgs(fetchedAlgs); // Save to localStorage
-        alert("Algorithms fetched successfully!");
+       // alert("Algorithms fetched successfully!");
     } catch (err) {
         console.error("Failed to fetch algorithms:", err);
         alert("Failed to fetch algorithms.");

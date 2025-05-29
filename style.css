@@ -222,7 +222,13 @@ form input, form label, form button {
 }
 
 #userDefinedAlgs {
-  resize: vertical; /* Allow only vertical resizing */
+  width: 70%; /* Set the width to fill the container */
+  height: 200px; /* Adjust the height to make it larger */
+  font-size: 14px; /* Increase font size for better readability */
+  padding: 10px; /* Add padding inside the box */
+  border: 1px solid #ccc; /* Add a border for better visibility */
+  border-radius: 5px; /* Add rounded corners */
+  resize: vertical; /* Allow vertical resizing by the user */
 }
 
 .container {
@@ -317,8 +323,8 @@ div.hidden {
 
 /* Style for the button to open the grid */
 .large-button {
-    width: 150px;
-    height: 60px;
+    width: 130px;
+    height: 50px;
     font-size: 24px;
     border-radius: 5px;
     margin-right: 20px
