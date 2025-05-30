@@ -2953,8 +2953,6 @@ function updateUserDefinedAlgs() {
     }
 }
 
-
-
 const ALL_LETTERS = "AOIEFGHJJKLMNBPQTSRCDWZ".split(""); // Array of all letters
 
 // Predefined excluded trios
@@ -3041,6 +3039,30 @@ async function filterAlgsByLetter(selectedLetter) {
 document.getElementById("letterSelector").addEventListener("change", async function () {
     const selectedLetter = this.value; // Get the selected letter
     await filterAlgsByLetter(selectedLetter); // Call the filtering method
+});
+
+document.getElementById("resetSessionButton").addEventListener("click", function () {
+    // Reset the practice state
+    remainingAlgs = []; // Clear the remaining algorithms
+    isFirstRun = true; // Reset the first run flag
+    repetitionCounter = 0; // Reset the repetition counter
+    localStorage.setItem("repetitionCounter", repetitionCounter); // Save the reset state
+    document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`; // Update the UI
+
+    // Clear the progress display
+    document.getElementById("progressDisplay").innerText = "Progress: 0/0";
+
+    // Create a new list of algorithms from userDefinedAlgs
+    const algList = createAlgList();
+    if (algList.length === 0) {
+        alert("Please enter some algorithms into the User Defined Algs box.");
+        return;
+    }
+
+    // Start a new session
+    remainingAlgs = [...algList]; // Populate the remaining algorithms
+    nextScramble(); // Start the first scramble
+    console.log("Session reset. Starting a new practice session.");
 });
 
 document.getElementById("orozcoButton").addEventListener("click", function () {

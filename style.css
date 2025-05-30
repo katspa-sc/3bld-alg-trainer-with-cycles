@@ -323,11 +323,11 @@ div.hidden {
 
 /* Style for the button to open the grid */
 .large-button {
-    width: 130px;
+    width: 80px;
     height: 50px;
-    font-size: 24px;
+    font-size: 18px;
     border-radius: 5px;
-    margin-right: 20px
+    margin-right: 8x
 }
 
 /* Style for the selection grid */
