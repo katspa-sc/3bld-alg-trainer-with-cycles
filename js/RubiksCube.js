@@ -2881,17 +2881,81 @@ document.getElementById("letterSelector").addEventListener("click", function () 
     selectionGrid.style.display = selectionGrid.style.display === "none" ? "block" : "none";
 });
 
+// Object to store the state of each set (toggled on/off)
+const selectedSets = {};
+
+// Initialize the grid buttons with toggle functionality
 document.querySelectorAll(".gridButton").forEach(button => {
+    const setName = button.dataset.letter; // Get the set name from the button's data attribute
+
+    // Initialize the state for each set
+    selectedSets[setName] = false;
+
+    // Add a click event listener to toggle the state
     button.addEventListener("click", function () {
-        const selectedLetter = this.dataset.letter; // Get the letter from the button's data attribute
-        console.log(`Selected letter: ${selectedLetter}`);
-        document.getElementById("selectionGrid").style.display = "none"; // Hide the grid
-        filterAlgsByLetter(selectedLetter); // Call the filtering method
+        selectedSets[setName] = !selectedSets[setName]; // Toggle the state
+        button.classList.toggle("toggled", selectedSets[setName]); // Add/remove a visual indicator (e.g., a CSS class)
+
+        updateUserDefinedAlgs(); // Update the textbox with combined algorithms
     });
 });
 
+const LETTER_COLORS = {
+    "A": { background: "#EFEFEF", text: "black" }, // White
+    "O": { background: "#EFEFEF", text: "black" }, // White
+    "I": { background: "#EFEFEF", text: "black" }, // White
+    "E": { background: "#FF9900", text: "black" }, // Orange
+    "F": { background: "#FF9900", text: "black" }, // Orange
+    "G": { background: "#FF9900", text: "black" }, // Orange
+    "H": { background: "#FF9900", text: "black" }, // Orange
+    "J": { background: "#00FF00", text: "black" }, // Green
+    "K": { background: "#00FF00", text: "black" }, // Green
+    "L": { background: "#00FF00", text: "black" }, // Green
+    "N": { background: "#EA4335", text: "black" }, // Red
+    "B": { background: "#EA4335", text: "black" }, // Red
+    "P": { background: "#EA4335", text: "black" }, // Red
+    "Q": { background: "#4285F4", text: "white" }, // Blue
+    "R": { background: "#4285F4", text: "white" }, // Blue
+    "S": { background: "#4285F4", text: "white" }, // Blue
+    "T": { background: "#4285F4", text: "white" }, // Blue
+    "C": { background: "#FFD700", text: "black" }, // Yellow
+    "D": { background: "#FFD700", text: "black" }, // Yellow
+    "W": { background: "#FFD700", text: "black" }, // Yellow
+    "Z": { background: "#FFD700", text: "black" }  // Yellow
+};
 
-const ALL_LETTERS = "AOIEFGHJJKLNBPQTSRCDWZ".split(""); // Array of all letters
+function updateUserDefinedAlgs() {
+    const selectedSetNames = Object.keys(selectedSets)
+        .filter(setName => selectedSets[setName]); // Get all toggled sets
+
+    const combinedAlgs = selectedSetNames.flatMap(setName => {
+        // Filter algorithms for the selected set
+        return fetchedAlgs
+            .filter(pair => pair.key.startsWith(setName) || pair.key.endsWith(setName))
+            .map(pair => pair.value.trim());
+    });
+
+    // Update the userDefinedAlgs textbox
+    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
+    userDefinedAlgs.value = combinedAlgs.join("\n"); // Combine all algorithms into a single string
+
+    // Update the label based on the number of selected sets
+    const missingCommsLabel = document.getElementById("missingCommsLabel");
+    if (selectedSetNames.length > 0) {
+        const coloredLetters = selectedSetNames.map(setName => {
+            const { background, text } = LETTER_COLORS[setName] || { background: "grey", text: "white" }; // Default to grey if not found
+            return `<span style="color: ${text}; background-color: ${background}; padding: 2px 5px; border-radius: 3px;">${setName}</span>`;
+        });
+
+        missingCommsLabel.innerHTML = `<span style="color: white;">Selected Sets:</span> ${coloredLetters.join(", ")}`;
+    } else {
+        missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+    }
+}
+
+
+
+const ALL_LETTERS = "AOIEFGHJJKLMNBPQTSRCDWZ".split(""); // Array of all letters
 
 // Predefined excluded trios
 const EXCLUDED_TRIOS = [
