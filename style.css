@@ -323,11 +323,25 @@ div.hidden {
 
 /* Style for the button to open the grid */
 .large-button {
-    width: 80px;
-    height: 50px;
-    font-size: 18px;
-    border-radius: 5px;
-    margin-right: 8x
+  width: 80px;
+  height: 50px;
+  font-size: 18px;
+  border-radius: 5px;
+  margin-right: 8px;
+  background-color: #4570de; /* Default background color */
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth transition for feedback */
+}
+
+.large-button:hover {
+  background-color: #3658b0; /* Slightly darker color on hover */
+}
+
+.large-button:active {
+  background-color: #2a4a8a; /* Even darker color when pressed */
+  transform: scale(0.95); /* Slightly shrink the button for a pressed effect */
 }
 
 /* Style for the selection grid */
