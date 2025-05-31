@@ -2797,8 +2797,10 @@ function saveFetchedAlgs(algs) {
 
 async function fetchAlgs() {
     try {
+        console.log("Fetching algorithms from proxy...");
         const res = await fetch(PROXY_URL);
         const text = await res.text();
+        console.log("Algorithms fetched successfully. Parsing data...");
 
         // Parse TSV and extract the first and second columns
         fetchedAlgs = text
@@ -2956,7 +2958,7 @@ function updateUserDefinedAlgs() {
     }
 }
 
-const ALL_LETTERS = "AOIEFGHJJKLMNBPQTSRCDWZ".split(""); // Array of all letters
+const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); // Array of all letters
 
 // Predefined excluded trios
 const EXCLUDED_TRIOS = [
@@ -3116,7 +3118,7 @@ function showPairSelectionGrid(setName) {
     // Initialize state for the selected letter if not already done
     if (!pairSelectionState[setName]) {
         pairSelectionState[setName] = {};
-        pairs.forEach(pair => pairSelectionState[setName][pair] = false); // Default to untoggled
+        pairs.forEach(pair => pairSelectionState[setName][pair] = true); // Default to toggled (selected)
     }
 
     // Create buttons for each pair
@@ -3124,11 +3126,22 @@ function showPairSelectionGrid(setName) {
         const button = document.createElement("button");
         button.className = "pairButton";
         button.textContent = pair;
-        button.classList.toggle("toggled", pairSelectionState[setName][pair]); // Apply toggled state
 
+        // Determine which letter to use for coloring
+        const colorLetter = pair[0] === setName ? pair[1] : pair[0];
+        const { background, text } = LETTER_COLORS[colorLetter] || { background: "grey", text: "white" }; // Default to grey if not found
+
+        // Apply colors
+        button.style.backgroundColor = background;
+        button.style.color = text;
+
+        // Apply the untoggled state
+        button.classList.toggle("untoggled", !pairSelectionState[setName][pair]);
+
+        // Add click event listener to toggle the state
         button.addEventListener("click", () => {
             pairSelectionState[setName][pair] = !pairSelectionState[setName][pair]; // Toggle state
-            button.classList.toggle("toggled", pairSelectionState[setName][pair]); // Update appearance
+            button.classList.toggle("untoggled", !pairSelectionState[setName][pair]); // Update appearance
         });
 
         pairGrid.appendChild(button);

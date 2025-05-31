@@ -498,23 +498,27 @@ div.hidden {
     gap: 10px; /* Add spacing between buttons */
 }
 
-/* Style for individual pair buttons */
 .pairButton {
-    width: 80px;
-    height: 50px;
-    font-size: 16px;
-    margin: 5px;
-    background-color: #4570de;
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.2s ease;
+  width: 80px;
+  height: 50px;
+  font-size: 16px;
+  margin: 5px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
 }
 
-.pairButton.toggled {
-    background-color: #00FF00; /* Green for toggled state */
-    color: black;
+/* Default styling based on LETTER_COLORS */
+.pairButton {
+  background-color: inherit; /* Default background color */
+  color: inherit; /* Default text color */
+}
+
+/* Style for untoggled buttons */
+.pairButton.untoggled {
+  background-color: grey !important; /* Grey background for untoggled state */
+  color: white !important; /* White text for untoggled state */
 }
 
 /* Style for the "Apply Selection" button */
