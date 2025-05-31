@@ -2931,7 +2931,10 @@ function updateUserDefinedAlgs() {
     const combinedAlgs = selectedSetNames.flatMap(setName => {
         // Filter algorithms for the selected set
         return fetchedAlgs
-            .filter(pair => pair.key.startsWith(setName) || pair.key.endsWith(setName))
+            .filter(pair => {
+                const isPairSelected = pairSelectionState[setName]?.[pair.key] ?? true; // Check if the pair is selected
+                return isPairSelected && (pair.key.startsWith(setName) || pair.key.endsWith(setName));
+            })
             .map(pair => pair.value.trim());
     });
 
@@ -3067,6 +3070,82 @@ document.getElementById("resetSessionButton").addEventListener("click", function
 
 document.getElementById("connectSmartCubeReplica").addEventListener("click", function () {
     document.getElementById("connectSmartCube").click(); // Simulate a click on the original button
+});
+
+// Object to store the state of individual pairs for each letter
+const pairSelectionState = {};
+
+// Add right-click event listener to grid buttons
+document.querySelectorAll(".gridButton").forEach(button => {
+    const setName = button.dataset.letter; // Get the set name from the button's data attribute
+
+    button.addEventListener("contextmenu", function (event) {
+        event.preventDefault(); // Prevent the default context menu
+
+        // Show the pair selection grid
+        showPairSelectionGrid(setName);
+    });
+
+    button.addEventListener("touchstart", function (event) {
+        // Handle long press for mobile
+        let timeout = setTimeout(() => {
+            showPairSelectionGrid(setName);
+        }, 500); // Long press duration
+
+        button.addEventListener("touchend", () => clearTimeout(timeout), { once: true });
+    });
+});
+
+// Function to show the pair selection grid
+function showPairSelectionGrid(setName) {
+    const pairSelectionGrid = document.getElementById("pairSelectionGrid");
+    const pairGrid = document.getElementById("pairGrid");
+    const pairSelectionTitle = document.getElementById("pairSelectionTitle");
+
+    // Update the title
+    pairSelectionTitle.textContent = `Select Pairs for Letter ${setName}`;
+
+    // Clear the grid
+    pairGrid.innerHTML = "";
+
+    // Generate all pairs for the selected letter
+    const pairs = ALL_LETTERS.map(letter => `${setName}${letter}`)
+        .concat(ALL_LETTERS.map(letter => `${letter}${setName}`)) // Include both positions
+        .filter(pair => pair[0] !== pair[1]); // Skip pairs where both letters are the same
+
+    // Initialize state for the selected letter if not already done
+    if (!pairSelectionState[setName]) {
+        pairSelectionState[setName] = {};
+        pairs.forEach(pair => pairSelectionState[setName][pair] = false); // Default to untoggled
+    }
+
+    // Create buttons for each pair
+    pairs.forEach(pair => {
+        const button = document.createElement("button");
+        button.className = "pairButton";
+        button.textContent = pair;
+        button.classList.toggle("toggled", pairSelectionState[setName][pair]); // Apply toggled state
+
+        button.addEventListener("click", () => {
+            pairSelectionState[setName][pair] = !pairSelectionState[setName][pair]; // Toggle state
+            button.classList.toggle("toggled", pairSelectionState[setName][pair]); // Update appearance
+        });
+
+        pairGrid.appendChild(button);
+    });
+
+    // Show the grid
+    pairSelectionGrid.style.display = "block";
+}
+
+// Add event listener to the "Apply Selection" button
+document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
+    const pairSelectionGrid = document.getElementById("pairSelectionGrid");
+
+    // Hide the grid
+    pairSelectionGrid.style.display = "none";
+
+    console.log("Updated pair selection state:", pairSelectionState);
 });
 
 document.getElementById("orozcoButton").addEventListener("click", function () {
