@@ -3101,19 +3101,22 @@ document.querySelectorAll(".gridButton").forEach(button => {
 // Function to show the pair selection grid
 function showPairSelectionGrid(setName) {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
-    const pairGrid = document.getElementById("pairGrid");
+    const leftPairGrid = document.getElementById("leftPairGrid");
+    const rightPairGrid = document.getElementById("rightPairGrid");
     const pairSelectionTitle = document.getElementById("pairSelectionTitle");
 
     // Update the title
     pairSelectionTitle.textContent = `Select Pairs for Letter ${setName}`;
 
-    // Clear the grid
-    pairGrid.innerHTML = "";
+    // Clear the grids
+    leftPairGrid.innerHTML = "";
+    rightPairGrid.innerHTML = "";
 
     // Generate all pairs for the selected letter
     const pairs = ALL_LETTERS.map(letter => `${setName}${letter}`)
         .concat(ALL_LETTERS.map(letter => `${letter}${setName}`)) // Include both positions
-        .filter(pair => pair[0] !== pair[1]); // Skip pairs where both letters are the same
+        .filter(pair => pair[0] !== pair[1]) // Skip pairs where both letters are the same
+        .sort(customComparator); // Sort using the custom comparator
 
     // Initialize state for the selected letter if not already done
     if (!pairSelectionState[setName]) {
@@ -3121,30 +3124,61 @@ function showPairSelectionGrid(setName) {
         pairs.forEach(pair => pairSelectionState[setName][pair] = true); // Default to toggled (selected)
     }
 
-    // Create buttons for each pair
+    // Group stickers by color
+    const colorGroups = {};
     pairs.forEach(pair => {
-        const button = document.createElement("button");
-        button.className = "pairButton";
-        button.textContent = pair;
-
-        // Determine which letter to use for coloring
         const colorLetter = pair[0] === setName ? pair[1] : pair[0];
-        const { background, text } = LETTER_COLORS[colorLetter] || { background: "grey", text: "white" }; // Default to grey if not found
+        const { background } = LETTER_COLORS[colorLetter] || { background: "grey" }; // Default to grey if not found
+        if (!colorGroups[background]) {
+            colorGroups[background] = [];
+        }
+        colorGroups[background].push(pair);
+    });
 
-        // Apply colors
-        button.style.backgroundColor = background;
-        button.style.color = text;
+    // Create rows for each color group
+    Object.keys(colorGroups).forEach(color => {
+        const leftRow = document.createElement("div");
+        const rightRow = document.createElement("div");
+        leftRow.className = "grid-row";
+        rightRow.className = "grid-row";
 
-        // Apply the untoggled state
-        button.classList.toggle("untoggled", !pairSelectionState[setName][pair]);
+        colorGroups[color].forEach(pair => {
+            const button = document.createElement("button");
+            button.className = "pairButton";
+            button.textContent = pair;
 
-        // Add click event listener to toggle the state
-        button.addEventListener("click", () => {
-            pairSelectionState[setName][pair] = !pairSelectionState[setName][pair]; // Toggle state
-            button.classList.toggle("untoggled", !pairSelectionState[setName][pair]); // Update appearance
+            // Determine which letter to use for coloring
+            const colorLetter = pair[0] === setName ? pair[1] : pair[0];
+            const { background, text } = LETTER_COLORS[colorLetter] || { background: "grey", text: "white" }; // Default to grey if not found
+
+            // Apply colors
+            button.style.backgroundColor = background;
+            button.style.color = text;
+
+            // Apply the untoggled state
+            button.classList.toggle("untoggled", !pairSelectionState[setName][pair]);
+
+            // Add click event listener to toggle the state
+            button.addEventListener("click", () => {
+                pairSelectionState[setName][pair] = !pairSelectionState[setName][pair]; // Toggle state
+                button.classList.toggle("untoggled", !pairSelectionState[setName][pair]); // Update appearance
+            });
+
+            // Append the button to the appropriate row
+            if (pair[0] === setName) {
+                leftRow.appendChild(button);
+            } else {
+                rightRow.appendChild(button);
+            }
         });
 
-        pairGrid.appendChild(button);
+        // Append rows to the appropriate columns
+        if (leftRow.children.length > 0) {
+            leftPairGrid.appendChild(leftRow);
+        }
+        if (rightRow.children.length > 0) {
+            rightPairGrid.appendChild(rightRow);
+        }
     });
 
     // Show the grid

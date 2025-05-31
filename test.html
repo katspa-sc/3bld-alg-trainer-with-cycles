@@ -69,9 +69,13 @@
             </div> 
 
             <!-- Hidden grid for toggling individual pairs -->
-            <div id="pairSelectionGrid" class="selection-grid" style="display: none;">
+                        <div id="pairSelectionGrid" class="selection-grid" style="display: none;">
                 <h3 id="pairSelectionTitle" style="color: white; text-align: center;">Select Pairs for Letter</h3>
-                <div id="pairGrid" class="grid-row"></div>
+                <div class="pair-grid-container">
+                    <div id="leftPairGrid" class="grid-column"></div>
+                    <div class="separator" style="width: 2px; background-color: white;"></div>
+                    <div id="rightPairGrid" class="grid-column"></div>
+                </div>
                 <button id="applyPairSelectionButton" class="large-button" style="margin-top: 20px;">Apply Selection</button>
             </div>
 
