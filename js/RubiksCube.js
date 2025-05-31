@@ -2972,6 +2972,7 @@ function updateUserDefinedAlgs() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    loadStickerState(); // Load sticker state
     loadSelectedSets(); // Load selected sets
     loadPairSelectionState(); // Load pair selection state
 });
@@ -3139,11 +3140,12 @@ function showPairSelectionGrid(setName) {
         .filter(pair => pair[0] !== pair[1]) // Skip pairs where both letters are the same
         .sort(customComparator); // Sort using the custom comparator
 
-    // Initialize state for the selected letter if not already done
-    if (!pairSelectionState[setName]) {
-        pairSelectionState[setName] = {};
-        pairs.forEach(pair => pairSelectionState[setName][pair] = true); // Default to toggled (selected)
-    }
+    // Initialize state for each sticker if not already done
+    pairs.forEach(pair => {
+        if (!(pair in stickerState)) {
+            stickerState[pair] = true; // Default to toggled (selected)
+        }
+    });
 
     // Group stickers by color
     const colorGroups = {};
@@ -3177,12 +3179,13 @@ function showPairSelectionGrid(setName) {
             button.style.color = text;
 
             // Apply the untoggled state
-            button.classList.toggle("untoggled", !pairSelectionState[setName][pair]);
+            button.classList.toggle("untoggled", !stickerState[pair]);
 
             // Add click event listener to toggle the state
             button.addEventListener("click", () => {
-                pairSelectionState[setName][pair] = !pairSelectionState[setName][pair]; // Toggle state
-                button.classList.toggle("untoggled", !pairSelectionState[setName][pair]); // Update appearance
+                stickerState[pair] = !stickerState[pair]; // Toggle state
+                button.classList.toggle("untoggled", !stickerState[pair]); // Update appearance
+                saveStickerState(); // Save the state to localStorage
             });
 
             // Append the button to the appropriate row
@@ -3246,6 +3249,19 @@ function loadPairSelectionState() {
     if (savedState) {
         Object.assign(pairSelectionState, JSON.parse(savedState));
         console.log("Pair selection state loaded:", pairSelectionState);
+    }
+}
+
+function saveStickerState() {
+    localStorage.setItem("stickerState", JSON.stringify(stickerState));
+    console.log("Sticker state saved:", stickerState);
+}
+
+function loadStickerState() {
+    const savedState = localStorage.getItem("stickerState");
+    if (savedState) {
+        Object.assign(stickerState, JSON.parse(savedState));
+        console.log("Sticker state loaded:", stickerState);
     }
 }
 
