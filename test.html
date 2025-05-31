@@ -20,12 +20,10 @@
                 <button id="fetchAlgs">Fetch algs</button>
             </div> -->
             <div id="lastFetchLabel" style="margin-top: 10px; font-size: 16px;"></div>
-            <button id="fetchAlgsButton" class="large-button">Fetch algs</button>
 
-            <button id="resetSessionButton" class="large-button">Start session</button>
-
-                        <!-- Button to open the selection grid -->
-                        <button id="letterSelector" class="large-button">Select sets</button>
+            <button id="fetchAlgsButton" class="large-button fetch-algs-button">Fetch algs</button>
+            <button id="resetSessionButton" class="large-button start-session-button">Start session</button>
+            <button id="letterSelector" class="large-button select-sets-button">Select sets</button>
 
             <!-- Hidden grid for letter selection -->
             <div id="selectionGrid" class="selection-grid">
@@ -78,6 +76,8 @@
                 placeholder="Place one alg per line. Lines starting with # will be ignored"></textarea>
             <button id="orozcoButton">Orozco</button>
             <button id="clearUserAlgsButton">Clear algs</button>
+            
+            <button id="connectSmartCubeReplica" class="large-button">Connect</button>
 
             <h2>Settings</h2>
             <div class="hidden">

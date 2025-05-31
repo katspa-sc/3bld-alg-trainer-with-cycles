@@ -423,3 +423,45 @@ div.hidden {
   background-color: #FFD700;
   color: black;
 }
+
+/* Style for Fetch Algs button */
+.fetch-algs-button {
+    background-color: #9C27B0; /* Purple */
+    color: black;
+}
+
+.fetch-algs-button:hover {
+    background-color: #7B1FA2; /* Slightly darker purple on hover */
+}
+
+.fetch-algs-button:active {
+    background-color: #6A1B9A; /* Even darker purple when pressed */
+}
+
+/* Style for Start Session button */
+.start-session-button {
+    background-color: #FF9800; /* Orange */
+    color: black;
+}
+
+.start-session-button:hover {
+    background-color: #FB8C00; /* Slightly darker orange on hover */
+}
+
+.start-session-button:active {
+    background-color: #F57C00; /* Even darker orange when pressed */
+}
+
+/* Style for Select Sets button */
+.select-sets-button {
+    background-color: #03A9F4; /* Light Blue */
+    color: black;
+}
+
+.select-sets-button:hover {
+    background-color: #0288D1; /* Slightly darker blue on hover */
+}
+
+.select-sets-button:active {
+    background-color: #0277BD; /* Even darker blue when pressed */
+}

@@ -3065,6 +3065,10 @@ document.getElementById("resetSessionButton").addEventListener("click", function
     console.log("Session reset. Starting a new practice session.");
 });
 
+document.getElementById("connectSmartCubeReplica").addEventListener("click", function () {
+    document.getElementById("connectSmartCube").click(); // Simulate a click on the original button
+});
+
 document.getElementById("orozcoButton").addEventListener("click", function () {
     const orozcoAlgs = [
         "R' B' R: U', R D R'",
