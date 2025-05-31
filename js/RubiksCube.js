@@ -2669,7 +2669,28 @@ obfuscateScrambleCheckbox.addEventListener("change", function () {
     console.log(`Obfuscate Scramble is now ${obfuscateScrambleCheckbox.checked ? "enabled" : "disabled"}`);
 });
 
-document.getElementById("scramble").addEventListener("click", revealScramble);
+document.getElementById("scramble").addEventListener("click", function () {
+    const obfuscateScrambleCheckbox = document.getElementById("obfuscateScrambleCheckbox");
+
+    if (obfuscateScrambleCheckbox.checked) {
+        // If obfuscate scramble is enabled, reveal the scramble
+        revealScramble();
+    } else {
+        // If obfuscate scramble is not enabled, copy the scramble to clipboard
+        const scrambleText = this.textContent.trim();
+        if (scrambleText) {
+            navigator.clipboard.writeText(scrambleText).then(() => {
+                console.log("Scramble copied to clipboard:", scrambleText);
+              //  alert("Scramble copied to clipboard!");
+            }).catch(err => {
+                console.error("Failed to copy scramble to clipboard:", err);
+             //   alert("Failed to copy scramble to clipboard.");
+            });
+        } else {
+            console.warn("No scramble text available to copy.");
+        }
+    }
+});
 
 function updateLastCycleInfo() {
     const lastTest = algorithmHistory[algorithmHistory.length - 1];
