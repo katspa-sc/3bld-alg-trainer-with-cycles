@@ -559,3 +559,15 @@ div.hidden {
 #applyPairSelectionButton:hover {
     background-color: #0288D1; /* Slightly darker blue on hover */
 }
+
+/* Style for untoggled set buttons */
+.gridButton.untoggled {
+    background-color: grey !important; /* Grey for untoggled state */
+    color: white !important;
+}
+
+/* Default styling for toggled set buttons */
+.gridButton {
+    background-color: inherit; /* Use the color from LETTER_COLORS */
+    color: inherit;
+}

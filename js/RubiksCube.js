@@ -16,6 +16,30 @@ const POSITION_TO_LETTER_MAP = {
     45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
 };
 
+const LETTER_COLORS = {
+    "A": { background: "#EFEFEF", text: "black" }, // White
+    "O": { background: "#EFEFEF", text: "black" }, // White
+    "I": { background: "#EFEFEF", text: "black" }, // White
+    "E": { background: "#FF9900", text: "black" }, // Orange
+    "F": { background: "#FF9900", text: "black" }, // Orange
+    "G": { background: "#FF9900", text: "black" }, // Orange
+    "H": { background: "#FF9900", text: "black" }, // Orange
+    "J": { background: "#00FF00", text: "black" }, // Green
+    "K": { background: "#00FF00", text: "black" }, // Green
+    "L": { background: "#00FF00", text: "black" }, // Green
+    "N": { background: "#EA4335", text: "black" }, // Red
+    "B": { background: "#EA4335", text: "black" }, // Red
+    "P": { background: "#EA4335", text: "black" }, // Red
+    "Q": { background: "#4285F4", text: "white" }, // Blue
+    "R": { background: "#4285F4", text: "white" }, // Blue
+    "S": { background: "#4285F4", text: "white" }, // Blue
+    "T": { background: "#4285F4", text: "white" }, // Blue
+    "C": { background: "#FFD700", text: "black" }, // Yellow
+    "D": { background: "#FFD700", text: "black" }, // Yellow
+    "W": { background: "#FFD700", text: "black" }, // Yellow
+    "Z": { background: "#FFD700", text: "black" }  // Yellow
+};
+
 const moveHistory = [];
 const MAX_HISTORY_LENGTH = 10; // Limit the history to the last 10 moves
 
@@ -2891,40 +2915,24 @@ document.querySelectorAll(".gridButton").forEach(button => {
     const setName = button.dataset.letter; // Get the set name from the button's data attribute
 
     // Initialize the state for each set
-    selectedSets[setName] = false;
+    selectedSets[setName] = true; // Default to toggled (selected)
+
+    // Apply colors based on the LETTER_COLORS map
+    const { background, text } = LETTER_COLORS[setName] || { background: "grey", text: "white" }; // Default to grey if not found
+    button.style.backgroundColor = background;
+    button.style.color = text;
 
     // Add a click event listener to toggle the state
     button.addEventListener("click", function () {
         selectedSets[setName] = !selectedSets[setName]; // Toggle the state
-        button.classList.toggle("toggled", selectedSets[setName]); // Add/remove a visual indicator (e.g., a CSS class)
+        button.classList.toggle("untoggled", !selectedSets[setName]); // Add/remove the "untoggled" class
 
         updateUserDefinedAlgs(); // Update the textbox with combined algorithms
     });
-});
 
-const LETTER_COLORS = {
-    "A": { background: "#EFEFEF", text: "black" }, // White
-    "O": { background: "#EFEFEF", text: "black" }, // White
-    "I": { background: "#EFEFEF", text: "black" }, // White
-    "E": { background: "#FF9900", text: "black" }, // Orange
-    "F": { background: "#FF9900", text: "black" }, // Orange
-    "G": { background: "#FF9900", text: "black" }, // Orange
-    "H": { background: "#FF9900", text: "black" }, // Orange
-    "J": { background: "#00FF00", text: "black" }, // Green
-    "K": { background: "#00FF00", text: "black" }, // Green
-    "L": { background: "#00FF00", text: "black" }, // Green
-    "N": { background: "#EA4335", text: "black" }, // Red
-    "B": { background: "#EA4335", text: "black" }, // Red
-    "P": { background: "#EA4335", text: "black" }, // Red
-    "Q": { background: "#4285F4", text: "white" }, // Blue
-    "R": { background: "#4285F4", text: "white" }, // Blue
-    "S": { background: "#4285F4", text: "white" }, // Blue
-    "T": { background: "#4285F4", text: "white" }, // Blue
-    "C": { background: "#FFD700", text: "black" }, // Yellow
-    "D": { background: "#FFD700", text: "black" }, // Yellow
-    "W": { background: "#FFD700", text: "black" }, // Yellow
-    "Z": { background: "#FFD700", text: "black" }  // Yellow
-};
+    // Apply the initial state visually
+    button.classList.toggle("untoggled", !selectedSets[setName]);
+});
 
 function updateUserDefinedAlgs() {
     const selectedSetNames = Object.keys(selectedSets)
@@ -2940,9 +2948,12 @@ function updateUserDefinedAlgs() {
             .map(pair => pair.value.trim());
     });
 
+    // Remove duplicates using a Set
+    const uniqueAlgs = Array.from(new Set(combinedAlgs));
+
     // Update the userDefinedAlgs textbox
     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-    userDefinedAlgs.value = combinedAlgs.join("\n"); // Combine all algorithms into a single string
+    userDefinedAlgs.value = uniqueAlgs.join("\n"); // Combine all algorithms into a single string
 
     // Update the label based on the number of selected sets
     const missingCommsLabel = document.getElementById("missingCommsLabel");
