@@ -40,6 +40,8 @@ const LETTER_COLORS = {
     "Z": { background: "#FFD700", text: "black" }  // Yellow
 };
 
+const stickerState = {}; // Shared state for all stickers
+
 const moveHistory = [];
 const MAX_HISTORY_LENGTH = 10; // Limit the history to the last 10 moves
 
@@ -2926,7 +2928,7 @@ document.querySelectorAll(".gridButton").forEach(button => {
     button.addEventListener("click", function () {
         selectedSets[setName] = !selectedSets[setName]; // Toggle the state
         button.classList.toggle("untoggled", !selectedSets[setName]); // Add/remove the "untoggled" class
-
+        saveSelectedSets();
         updateUserDefinedAlgs(); // Update the textbox with combined algorithms
     });
 
@@ -2968,6 +2970,11 @@ function updateUserDefinedAlgs() {
         missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
     }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    loadSelectedSets(); // Load selected sets
+    loadPairSelectionState(); // Load pair selection state
+});
 
 const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); // Array of all letters
 
@@ -3058,6 +3065,9 @@ document.getElementById("letterSelector").addEventListener("change", async funct
 });
 
 document.getElementById("resetSessionButton").addEventListener("click", function () {
+    // Update the userDefinedAlgs textbox based on the current selection
+    updateUserDefinedAlgs();
+
     // Reset the practice state
     remainingAlgs = []; // Clear the remaining algorithms
     isFirstRun = true; // Reset the first run flag
@@ -3199,12 +3209,45 @@ function showPairSelectionGrid(setName) {
 // Add event listener to the "Apply Selection" button
 document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
-
-    // Hide the grid
     pairSelectionGrid.style.display = "none";
-
+    savePairSelectionState(); // Save the state
     console.log("Updated pair selection state:", pairSelectionState);
 });
+
+function saveSelectedSets() {
+    localStorage.setItem("selectedSets", JSON.stringify(selectedSets));
+    console.log("Selected sets saved:", selectedSets);
+}
+
+function loadSelectedSets() {
+    const savedSets = localStorage.getItem("selectedSets");
+    if (savedSets) {
+        Object.assign(selectedSets, JSON.parse(savedSets));
+        console.log("Selected sets loaded:", selectedSets);
+
+        // Update the visual state of the buttons
+        document.querySelectorAll(".gridButton").forEach(button => {
+            const setName = button.dataset.letter;
+            button.classList.toggle("untoggled", !selectedSets[setName]);
+        });
+
+        // Update the label and user-defined algorithms
+        updateUserDefinedAlgs();
+    }
+}
+
+function savePairSelectionState() {
+    localStorage.setItem("pairSelectionState", JSON.stringify(pairSelectionState));
+    console.log("Pair selection state saved:", pairSelectionState);
+}
+
+function loadPairSelectionState() {
+    const savedState = localStorage.getItem("pairSelectionState");
+    if (savedState) {
+        Object.assign(pairSelectionState, JSON.parse(savedState));
+        console.log("Pair selection state loaded:", pairSelectionState);
+    }
+}
 
 document.getElementById("orozcoButton").addEventListener("click", function () {
     const orozcoAlgs = [
