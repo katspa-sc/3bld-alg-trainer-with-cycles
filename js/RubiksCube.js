@@ -2905,23 +2905,23 @@ async function filterAlgsByLetter(selectedLetter) {
     userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
     console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
 
-    // Check for missing combinations if the filtered values are less than 36
-    const missingCommsLabel = document.getElementById("missingCommsLabel");
-    if (filteredValues.length < 36) {
-        const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
-        console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
+    // // Check for missing combinations if the filtered values are less than 36
+    // const missingCommsLabel = document.getElementById("missingCommsLabel");
+    // if (filteredValues.length < 36) {
+    //     const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
+    //     console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
 
-        if (missingCombinations.length > 0) {
-            // Update the dynamic label with missing combinations
-            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
-        } else {
-            // Clear the label if there are no missing combinations
-            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-        }
-    } else {
-        // Clear the label if there are no missing combinations
-        missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-    }
+    //     if (missingCombinations.length > 0) {
+    //         // Update the dynamic label with missing combinations
+    //         missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
+    //     } else {
+    //         // Clear the label if there are no missing combinations
+    //         missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+    //     }
+    // } else {
+    //     // Clear the label if there are no missing combinations
+    //     missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+    // }
 }
 
 // Load cached algorithms on page load
@@ -2939,6 +2939,45 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.getElementById("letterSelector").addEventListener("click", function () {
     const selectionGrid = document.getElementById("selectionGrid");
+
+    // Ensure the grid is cleared of previous buttons
+    const existingCloseButton = selectionGrid.querySelector(".close-button");
+    if (!existingCloseButton) {
+        // Add the red "X" button
+        const closeButton = document.createElement("button");
+        closeButton.textContent = "X";
+        closeButton.className = "close-button"; // Use the CSS class
+        closeButton.addEventListener("click", () => {
+            selectionGrid.style.display = "none"; // Close the grid without saving
+        });
+        selectionGrid.appendChild(closeButton);
+    }
+
+    const existingToggleButton = selectionGrid.querySelector(".toggle-button");
+    if (!existingToggleButton) {
+        // Add the toggle button
+        const toggleButton = document.createElement("button");
+        toggleButton.textContent = "Toggle All Sets";
+        toggleButton.className = "toggle-button"; // Use the CSS class
+        toggleButton.addEventListener("click", () => {
+            const allToggled = Object.values(selectedSets).every(state => state);
+            Object.keys(selectedSets).forEach(setName => {
+                selectedSets[setName] = !allToggled; // Toggle all sets
+            });
+
+            // Update the visual state of the buttons
+            document.querySelectorAll(".gridButton").forEach(button => {
+                const setName = button.dataset.letter;
+                button.classList.toggle("untoggled", !selectedSets[setName]);
+            });
+
+            saveSelectedSets();
+            updateUserDefinedAlgs(); // Update the textbox with combined algorithms
+        });
+        selectionGrid.appendChild(toggleButton);
+    }
+
+    // Toggle the visibility of the grid
     selectionGrid.style.display = selectionGrid.style.display === "none" ? "block" : "none";
 });
 
@@ -2999,9 +3038,9 @@ function updateUserDefinedAlgs() {
             return `<span style="color: ${text}; background-color: ${background}; padding: 2px 5px; border-radius: 3px;">${setName}</span>`;
         });
 
-        missingCommsLabel.innerHTML = `<span style="color: white;">Selected Sets:</span> ${coloredLetters.join(", ")}`;
+        missingCommsLabel.innerHTML = `<span style="color: white;">Selected sets:</span> ${coloredLetters.join(", ")}`;
     } else {
-        missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+        missingCommsLabel.innerHTML = `<span style="color: white;">Selected sets:</span>`;
     }
 }
 
@@ -3170,6 +3209,41 @@ function showPairSelectionGrid(setName) {
     leftPairGrid.innerHTML = "";
     rightPairGrid.innerHTML = "";
 
+    // Add the red "X" button
+    const existingCloseButton = pairSelectionGrid.querySelector(".close-button");
+    if (!existingCloseButton) {
+        const closeButton = document.createElement("button");
+        closeButton.textContent = "X";
+        closeButton.className = "close-button"; // Use the CSS class
+        closeButton.addEventListener("click", () => {
+            pairSelectionGrid.style.display = "none"; // Close the grid without saving
+        });
+        pairSelectionGrid.appendChild(closeButton);
+    }
+
+    // Add the toggle button
+    const existingToggleButton = pairSelectionGrid.querySelector(".toggle-button");
+    if (!existingToggleButton) {
+        const toggleButton = document.createElement("button");
+        toggleButton.textContent = "Toggle All Stickers";
+        toggleButton.className = "toggle-button"; // Use the CSS class
+        toggleButton.addEventListener("click", () => {
+            const allToggled = Object.values(stickerState).every(state => state);
+            Object.keys(stickerState).forEach(pair => {
+                stickerState[pair] = !allToggled; // Toggle all stickers
+            });
+
+            // Update the visual state of the buttons
+            document.querySelectorAll(".pairButton").forEach(button => {
+                const pair = button.textContent;
+                button.classList.toggle("untoggled", !stickerState[pair]);
+            });
+
+            saveStickerState();
+        });
+        pairSelectionGrid.appendChild(toggleButton);
+    }
+
     // Generate all pairs for the selected letter
     const pairs = ALL_LETTERS.map(letter => `${setName}${letter}`)
         .concat(ALL_LETTERS.map(letter => `${letter}${setName}`)) // Include both positions
@@ -3248,9 +3322,12 @@ function showPairSelectionGrid(setName) {
 // Add event listener to the "Apply Selection" button
 document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
-    pairSelectionGrid.style.display = "none";
+    pairSelectionGrid.style.display = "none"; // Hide the grid
     savePairSelectionState(); // Save the state
     console.log("Updated pair selection state:", pairSelectionState);
+
+    // Update the user-defined algorithms based on the new sticker state
+    updateUserDefinedAlgs();
 });
 
 function saveSelectedSets() {

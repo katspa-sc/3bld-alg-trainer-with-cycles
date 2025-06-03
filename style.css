@@ -348,7 +348,7 @@ div.hidden {
 .selection-grid {
     display: none;
     position: absolute;
-    top: 30%;
+    top: 20%;
     background-color: #333; /* Darker background color */
     border: 2px solid black;
     padding: 20px;
@@ -365,12 +365,13 @@ div.hidden {
 
 /* Style for the grid buttons */
 .large-grid-button {
-    width: 75px; /* 25% smaller width */
-    height: 75px; /* 25% smaller height */
+    width: 55px; /* 25% smaller width */
+    height: 55px; /* 25% smaller height */
     font-size: 18px; /* Adjust font size proportionally */
     cursor: pointer;
     text-align: center;
     border: 1px solid black;
+    border: 5%;
     background-color: #f0f0f0;
     transition: background-color 0.3s;
 }
@@ -454,7 +455,7 @@ div.hidden {
 
 /* Style for Select Sets button */
 .select-sets-button {
-    background-color: #03A9F4; /* Light Blue */
+    background-color: #4bbc00; /* Light Blue */
     color: black;
 }
 
@@ -477,10 +478,10 @@ div.hidden {
     padding: 20px;
     z-index: 100;
     border-radius: 8px;
-    width: 90%;
-    max-width: 800px;
-    height: 70%;
-    overflow-y: auto;
+    width: 100%;
+    max-width: 600px;
+    height: 71%;
+    overflow: hidden;
 }
 
 /* Style for the title */
@@ -521,14 +522,14 @@ div.hidden {
 
 /* Style for individual stickers */
 .pairButton {
-    width: 60px; /* Reduce width */
-    height: 40px; /* Reduce height */
-    font-size: 14px; /* Reduce font size */
-    margin: 3px; /* Reduce margin */
+    width: 50px; /* Make width larger */
+    height: 50px; /* Match height to width for square buttons */
+    font-size: 16px; /* Increase font size for better readability */
+    margin: 1px; /* Add spacing between buttons */
     border: none;
     cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.2s ease;
+    border-radius: 5px; /* Slightly rounded corners */
+    transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth transitions for hover effects */
 }
 
 /* Default styling based on LETTER_COLORS */
@@ -539,9 +540,10 @@ div.hidden {
 
 /* Style for untoggled stickers */
 .pairButton.untoggled {
-    background-color: grey !important;
+    background-color: grey !important; /* Grey for untoggled state */
     color: white !important;
 }
+
 /* Style for the "Apply Selection" button */
 #applyPairSelectionButton {
     margin-top: 20px;
@@ -570,4 +572,35 @@ div.hidden {
 .gridButton {
     background-color: inherit; /* Use the color from LETTER_COLORS */
     color: inherit;
+}
+
+/* Styles for the red "X" close button */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 30px;
+    text-align: center;
+}
+
+/* Styles for the toggle button */
+.toggle-button {
+    position: absolute;
+    bottom: 10px;
+    left: 10px; /* Opposite to the close button */
+    background-color: #007BFF; /* Blue color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 14px;
 }
