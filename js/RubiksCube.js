@@ -40,7 +40,16 @@ const LETTER_COLORS = {
     "Z": { background: "#FFD700", text: "black" }  // Yellow
 };
 
-const stickerState = {}; // Shared state for all stickers
+const currentPage = window.location.pathname.split("/").pop(); // Get the current HTML file name
+let PROXY_URL;
+
+if (currentPage === "corner.html") {
+    PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=corners';
+} else if (currentPage === "edge.html") {
+    PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=edges';
+}
+
+console.log(`PROXY_URL set to: ${PROXY_URL}`);
 
 const moveHistory = [];
 const MAX_HISTORY_LENGTH = 10; // Limit the history to the last 10 moves
@@ -2815,7 +2824,6 @@ orozcoCheckbox.addEventListener("change", function () {
     console.log(`Orozco mode is now ${orozcoCheckbox.checked ? "enabled" : "disabled"}`);
 });
 
-const PROXY_URL = 'https://commexportproxy-5k4sdulwx-katspas-projects.vercel.app/api/algs';
 let fetchedAlgs = []; // Array to store fetched algorithms
 
 // Label to display the last fetch date
@@ -3116,6 +3124,8 @@ document.getElementById("resetSessionButton").addEventListener("click", function
 document.getElementById("connectSmartCubeReplica").addEventListener("click", function () {
     document.getElementById("connectSmartCube").click(); // Simulate a click on the original button
 });
+
+const stickerState = {}; // Shared state for all stickers
 
 // Object to store the state of individual pairs for each letter
 const pairSelectionState = {};
