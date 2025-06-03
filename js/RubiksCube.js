@@ -2985,33 +2985,40 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 const selectedSets = {};
 
 // Initialize the grid buttons with toggle functionality
-document.querySelectorAll(".gridButton").forEach(button => {
-    const setName = button.dataset.letter; // Get the set name from the button's data attribute
+function handleGridButtonClick(button, setName) {
+    selectedSets[setName] = !selectedSets[setName]; // Toggle the state
+    button.classList.toggle("untoggled", !selectedSets[setName]); // Update appearance
 
-    // Add a click event listener for mobile and desktop
-    button.addEventListener("click", function () {
-        showPairSelectionGrid(setName); // Open the sticker selection grid
+    saveSelectedSets(); // Save the state to localStorage
+    updateUserDefinedAlgs(); // Update the textbox with combined algorithms
+
+    // Open the pair selection grid only if the set is being toggled on
+    if (selectedSets[setName]) {
+        showPairSelectionGrid(setName);
+    }
+}
+
+// Initialize the grid buttons with toggle functionality
+function initializeGridButtons() {
+    document.querySelectorAll(".gridButton").forEach(button => {
+        const setName = button.dataset.letter; // Get the set name from the button's data attribute
+
+        button.addEventListener("click", function () {
+            handleGridButtonClick(button, setName);
+        });
+
+        // Apply colors based on the LETTER_COLORS map
+        const { background, text } = LETTER_COLORS[setName] || { background: "grey", text: "white" }; // Default to grey if not found
+        button.style.backgroundColor = background;
+        button.style.color = text;
+
+        // Apply the initial state visually
+        button.classList.toggle("untoggled", !selectedSets[setName]);
     });
+}
 
-    // Initialize the state for each set
-    selectedSets[setName] = true; // Default to toggled (selected)
-
-    // Apply colors based on the LETTER_COLORS map
-    const { background, text } = LETTER_COLORS[setName] || { background: "grey", text: "white" }; // Default to grey if not found
-    button.style.backgroundColor = background;
-    button.style.color = text;
-
-    // Add a click event listener to toggle the state
-    button.addEventListener("click", function () {
-        selectedSets[setName] = !selectedSets[setName]; // Toggle the state
-        button.classList.toggle("untoggled", !selectedSets[setName]); // Add/remove the "untoggled" class
-        saveSelectedSets();
-        updateUserDefinedAlgs(); // Update the textbox with combined algorithms
-    });
-
-    // Apply the initial state visually
-    button.classList.toggle("untoggled", !selectedSets[setName]);
-});
+// Call the method to initialize the grid buttons
+initializeGridButtons();
 
 function updateUserDefinedAlgs() {
     const selectedSetNames = Object.keys(selectedSets)
@@ -3226,11 +3233,6 @@ function showPairSelectionGrid(setName) {
         pairSelectionGrid.appendChild(closeButton);
     }
 
-        // Trigger "Apply Selection" when the close button is clicked
-        document.querySelector(".close-button").addEventListener("click", function () {
-        pressApplySelectionButton();
-        });
-
     // Add the toggle button
     const existingToggleButton = pairSelectionGrid.querySelector(".toggle-button");
     if (!existingToggleButton) {
@@ -3305,7 +3307,38 @@ function showPairSelectionGrid(setName) {
             button.addEventListener("click", () => {
                 stickerState[pair] = !stickerState[pair]; // Toggle state
                 button.classList.toggle("untoggled", !stickerState[pair]); // Update appearance
+
+                // Toggle the reverse sticker
+                const reversePair = `${pair[1]}${pair[0]}`;
+                if (reversePair in stickerState) {
+                    stickerState[reversePair] = stickerState[pair]; // Match the state of the reverse pair
+                    const reverseButton = Array.from(document.querySelectorAll(".pairButton"))
+                        .find(btn => btn.textContent === reversePair);
+                    if (reverseButton) {
+                        reverseButton.classList.toggle("untoggled", !stickerState[reversePair]); // Update appearance
+                    }
+                }
+
                 saveStickerState(); // Save the state to localStorage
+            });
+
+            // Add right-click event listener to toggle only the clicked sticker
+            button.addEventListener("contextmenu", (event) => {
+                event.preventDefault(); // Prevent the default context menu
+                stickerState[pair] = !stickerState[pair]; // Toggle only the clicked sticker
+                button.classList.toggle("untoggled", !stickerState[pair]); // Update appearance
+                saveStickerState(); // Save the state to localStorage
+            });
+
+            // Add long press event listener for mobile
+            button.addEventListener("touchstart", (event) => {
+                let timeout = setTimeout(() => {
+                    stickerState[pair] = !stickerState[pair]; // Toggle only the clicked sticker
+                    button.classList.toggle("untoggled", !stickerState[pair]); // Update appearance
+                    saveStickerState(); // Save the state to localStorage
+                }, 500); // Long press duration
+
+                button.addEventListener("touchend", () => clearTimeout(timeout), { once: true });
             });
 
             // Append the button to the appropriate row
