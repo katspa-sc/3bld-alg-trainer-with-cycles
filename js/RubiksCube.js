@@ -2881,19 +2881,23 @@ async function filterAlgsByLetter(selectedLetter) {
         return;
     }
 
-    // Load cached algorithms if not already loaded
+    // Fetch algs if the array is empty
     if (fetchedAlgs.length === 0) {
-        loadCachedAlgs();
-    }
-
-    if (fetchedAlgs.length === 0) {
-        console.warn("No cached algorithms found. Fetching algorithms...");
+        console.log("Fetching algorithms as fetchedAlgs is empty...");
         await fetchAlgs();
     }
 
     // Filter the fetchedAlgs array for keys that match the selected letter
     const filteredValues = fetchedAlgs
-        .filter(pair => pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter))
+        .filter(pair => {
+            // Check if the pair starts or ends with the selected letter
+            const matchesLetter = pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter);
+
+            // Check if the pair is toggled on in stickerState
+            const isStickerSelected = stickerState[pair.key] ?? true; // Default to true if not explicitly set
+
+            return matchesLetter && isStickerSelected;
+        })
         .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
 
     // Paste the filtered values into the input box
@@ -2974,7 +2978,8 @@ function updateUserDefinedAlgs() {
         return fetchedAlgs
             .filter(pair => {
                 const isPairSelected = pairSelectionState[setName]?.[pair.key] ?? true; // Check if the pair is selected
-                return isPairSelected && (pair.key.startsWith(setName) || pair.key.endsWith(setName));
+                const isStickerSelected = stickerState[pair.key] ?? true; // Check if the sticker is selected
+                return isPairSelected && isStickerSelected && (pair.key.startsWith(setName) || pair.key.endsWith(setName));
             })
             .map(pair => pair.value.trim());
     });
