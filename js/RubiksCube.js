@@ -2946,7 +2946,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         // Add the red "X" button
         const closeButton = document.createElement("button");
         closeButton.textContent = "X";
-        closeButton.className = "close-button"; // Use the CSS class
+        closeButton.className = "close-button close-set"; // Use the CSS class
         closeButton.addEventListener("click", () => {
             selectionGrid.style.display = "none"; // Close the grid without saving
         });
@@ -2987,6 +2987,11 @@ const selectedSets = {};
 // Initialize the grid buttons with toggle functionality
 document.querySelectorAll(".gridButton").forEach(button => {
     const setName = button.dataset.letter; // Get the set name from the button's data attribute
+
+    // Add a click event listener for mobile and desktop
+    button.addEventListener("click", function () {
+        showPairSelectionGrid(setName); // Open the sticker selection grid
+    });
 
     // Initialize the state for each set
     selectedSets[setName] = true; // Default to toggled (selected)
@@ -3155,7 +3160,6 @@ document.getElementById("resetSessionButton").addEventListener("click", function
     // Create a new list of algorithms from userDefinedAlgs
     const algList = createAlgList();
     if (algList.length === 0) {
-        alert("Please enter some algorithms into the User Defined Algs box.");
         return;
     }
 
@@ -3215,18 +3219,24 @@ function showPairSelectionGrid(setName) {
         const closeButton = document.createElement("button");
         closeButton.textContent = "X";
         closeButton.className = "close-button"; // Use the CSS class
+        
         closeButton.addEventListener("click", () => {
             pairSelectionGrid.style.display = "none"; // Close the grid without saving
         });
         pairSelectionGrid.appendChild(closeButton);
     }
 
+        // Trigger "Apply Selection" when the close button is clicked
+        document.querySelector(".close-button").addEventListener("click", function () {
+        pressApplySelectionButton();
+        });
+
     // Add the toggle button
     const existingToggleButton = pairSelectionGrid.querySelector(".toggle-button");
     if (!existingToggleButton) {
         const toggleButton = document.createElement("button");
         toggleButton.textContent = "Toggle All Stickers";
-        toggleButton.className = "toggle-button"; // Use the CSS class
+        toggleButton.className = "toggle-button-pair"; // Use the CSS class
         toggleButton.addEventListener("click", () => {
             const allToggled = Object.values(stickerState).every(state => state);
             Object.keys(stickerState).forEach(pair => {
@@ -3377,6 +3387,25 @@ function loadStickerState() {
         console.log("Sticker state loaded:", stickerState);
     }
 }
+
+// Function to close the sticker selection grid
+// Close sticker selection grid by pressing "Apply Selection" button
+function pressApplySelectionButton() {
+    const applySelectionButton = document.getElementById("applyPairSelectionButton");
+    if (applySelectionButton) {
+        applySelectionButton.click(); // Simulate a click on the "Apply Selection" button
+    }
+}
+
+// Trigger "Apply Selection" when "Select Sets" is clicked
+document.getElementById("letterSelector").addEventListener("click", function () {
+    pressApplySelectionButton();
+});
+
+// Trigger "Apply Selection" when "Start Session" is clicked
+document.getElementById("resetSessionButton").addEventListener("click", function () {
+    pressApplySelectionButton();
+});
 
 document.getElementById("orozcoButton").addEventListener("click", function () {
     const orozcoAlgs = [

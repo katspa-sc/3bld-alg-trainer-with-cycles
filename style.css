@@ -446,7 +446,7 @@ div.hidden {
 }
 
 .start-session-button:hover {
-    background-color: #FB8C00; /* Slightly darker orange on hover */
+    background-color: #fff93d; /* Slightly darker orange on hover */
 }
 
 .start-session-button:active {
@@ -460,7 +460,7 @@ div.hidden {
 }
 
 .select-sets-button:hover {
-    background-color: #0288D1; /* Slightly darker blue on hover */
+    background-color: #bbff1e; /* Slightly darker blue on hover */
 }
 
 .select-sets-button:active {
@@ -578,11 +578,10 @@ div.hidden {
 .close-button {
     position: absolute;
     top: 10px;
-    right: 10px;
+    right: 5px;
     background-color: red;
     color: white;
     border: none;
-    border-radius: 50%;
     width: 45px;
     height: 45px;
     cursor: pointer;
@@ -593,14 +592,30 @@ div.hidden {
 
 /* Styles for the toggle button */
 .toggle-button {
-    position: absolute;
-    bottom: 10px;
-    left: 10px; /* Opposite to the close button */
-    background-color: #007BFF; /* Blue color */
+    position: absolute; /* Change to fixed positioning */
+    top: -10px; /* Place it at the top of the viewport */
+    left: 10px; /* Keep it near the left edge */
+    background-color: grey; /* Blue color */
     color: white;
     border: none;
     border-radius: 5px;
     padding: 5px 10px;
     cursor: pointer;
     font-size: 14px;
+    z-index: 101; /* Ensure it stays above other elements */
+}
+
+/* Styles for the toggle button */
+.toggle-button-pair {
+  position: absolute; /* Change to fixed positioning */
+  top: 10px; /* Place it at the top of the viewport */
+  left: 10px; /* Keep it near the left edge */
+  background-color: grey; /* Blue color */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 101; /* Ensure it stays above other elements */
 }
