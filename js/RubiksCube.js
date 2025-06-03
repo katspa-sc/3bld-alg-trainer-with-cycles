@@ -2992,9 +2992,15 @@ function handleGridButtonClick(button, setName) {
     saveSelectedSets(); // Save the state to localStorage
     updateUserDefinedAlgs(); // Update the textbox with combined algorithms
 
-    // Open the pair selection grid only if the set is being toggled on
     if (selectedSets[setName]) {
+        // Open the pair selection grid only if the set is being toggled on
         showPairSelectionGrid(setName);
+    } else {
+        // Close the sticker selection grid if the set is toggled off
+        const pairSelectionGrid = document.getElementById("pairSelectionGrid");
+        if (pairSelectionGrid.style.display === "block") {
+            pairSelectionGrid.style.display = "none";
+        }
     }
 }
 

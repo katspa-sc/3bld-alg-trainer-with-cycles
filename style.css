@@ -467,21 +467,33 @@ div.hidden {
     background-color: #0277BD; /* Even darker blue when pressed */
 }
 
-/* Style for the pair selection grid */
+/* Default styles for the pair selection grid */
 #pairSelectionGrid {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: fixed; /* Use fixed positioning to ensure it stays in place */
+    top: 100px; /* Adjust as needed */
+    right: 100px; /* Align it to the right edge of the screen */
+    width: 550px; /* Default width */
     background-color: #333;
-    border: 2px solid black;
+    color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
     padding: 20px;
     z-index: 100;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 600px;
-    height: 71%;
-    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Adjust position for smaller screens */
+@media (max-width: 768px) {
+    #pairSelectionGrid {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%; /* Full width for smaller screens */
+        height: 100%; /* Full height for smaller screens */
+        border-radius: 0; /* Remove border radius */
+        padding: 10px; /* Adjust padding */
+        overflow-y: auto; /* Enable scrolling if content overflows */
+    }
 }
 
 /* Style for the title */
