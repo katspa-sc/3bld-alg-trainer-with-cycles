@@ -16,6 +16,56 @@ const POSITION_TO_LETTER_MAP = {
     45: 'Q', 46: 'Q', 47: 'R', 48: 'T', 49: 'BC', 50: 'R', 51: 'T', 52: 'S', 53: 'S'
 };
 
+// Maps for edge and corner piece notation
+const EDGE_PIECE_MAP = {
+    "A": "UB",
+    "O": "UR",
+    "I": "UL",
+    "E": "LU",
+    "F": "LF",
+    "G": "LD",
+    "H": "LB",
+    "J": "FL",
+    "K": "FD",
+    "L": "FR",
+    "M": "RU",
+    "N": "RB",
+    "B": "RD",
+    "P": "RF",
+    "Q": "BU",
+    "R": "BL",
+    "S": "BD",
+    "T": "BR",
+    "C": "DF",
+    "D": "DR",
+    "W": "DB",
+    "Z": "DL",
+};
+
+const CORNER_PIECE_MAP = {
+    "A": "UBL",
+    "O": "UBR",
+    "I": "UFL",
+    "E": "LUB",
+    "F": "LUF",
+    "G": "LDF",
+    "H": "LDB",
+    "J": "FUL",
+    "K": "FDR",
+    "L": "FDL",
+    "N": "RUB",
+    "B": "RDB",
+    "P": "RDF",
+    "Q": "BUR",
+    "R": "BUL",
+    "S": "BDL",
+    "T": "BDR",
+    "C": "DFL",
+    "D": "DFR",
+    "W": "DBR",
+    "Z": "DBL",
+};
+
 const LETTER_COLORS = {
     "A": { background: "#EFEFEF", text: "black" }, // White
     "O": { background: "#EFEFEF", text: "black" }, // White
@@ -3444,6 +3494,58 @@ document.getElementById("letterSelector").addEventListener("click", function () 
 // Trigger "Apply Selection" when "Start Session" is clicked
 document.getElementById("resetSessionButton").addEventListener("click", function () {
     pressApplySelectionButton();
+});
+
+function determineCycleType() {
+    const currentPage = window.location.pathname.split("/").pop(); // Get the current HTML file name
+    if (currentPage === "corner.html") {
+        return "corner"; // Corner cycle
+    } else if (currentPage === "edge.html") {
+        return "edge"; // Edge cycle
+    } else {
+        console.warn("Unknown page type:", currentPage);
+        return null; // Invalid cycle type
+    }
+}
+
+function getPieceNotation(cycleLetters) {
+    const cycleType = determineCycleType(); // Determine the cycle type based on the current page
+    if (!cycleType) {
+        alert("Invalid cycle type. Please check the page.");
+        return null;
+    }
+
+    const buffer = cycleType === "edge" ? "UF" : "UFR"; // Use different buffers for edge and corner cycles
+    const pieceMap = cycleType === "edge" ? EDGE_PIECE_MAP : CORNER_PIECE_MAP; // Use the appropriate map
+
+    // Map each letter to its piece notation
+    const pieces = cycleLetters.split("").map(letter => pieceMap[letter]);
+
+    if (pieces.includes(undefined)) {
+        console.warn("Missing mapping for one or more letters:", cycleLetters);
+        return null; // Return null if any letter is missing in the map
+    }
+
+    // Combine the buffer and pieces into the final notation
+    return [buffer, ...pieces].join(" ");
+}
+
+// Add event listener to the cycle letters element
+document.getElementById("cycle").addEventListener("click", function () {
+    const cycleLetters = this.textContent.trim(); // Get the displayed cycle letters
+    const pieceNotation = getPieceNotation(cycleLetters); // Get the piece notation
+
+    if (!pieceNotation) {
+        alert("Missing piece notation for one or more letters.");
+        return;
+    }
+
+    // Copy the piece notation to the clipboard
+    navigator.clipboard.writeText(pieceNotation).then(() => {
+        console.log("Piece notation copied to clipboard:", pieceNotation);
+    }).catch(err => {
+        console.error("Failed to copy piece notation to clipboard:", err);
+    });
 });
 
 document.getElementById("orozcoButton").addEventListener("click", function () {
