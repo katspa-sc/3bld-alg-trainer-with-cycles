@@ -631,3 +631,20 @@ div.hidden {
   font-size: 14px;
   z-index: 101; /* Ensure it stays above other elements */
 }
+
+/* Styles for the reset button */
+.reset-button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #808080; /* Grey color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.reset-button:hover {
+    background-color: #FF0000; /* Red color on hover */
+}

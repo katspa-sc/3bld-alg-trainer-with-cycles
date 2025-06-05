@@ -3595,6 +3595,45 @@ document.getElementById("orozcoButton").addEventListener("click", function () {
     console.log("User-defined algs filled with Orozco list.");
 });
 
+// Add a new button to toggle all sets and reset all stickers
+document.addEventListener("DOMContentLoaded", function () {
+    const selectionGrid = document.getElementById("selectionGrid");
+
+    const existingResetButton = selectionGrid.querySelector(".reset-button");
+    if (!existingResetButton) {
+        const resetButton = document.createElement("button");
+        resetButton.textContent = "Reset All Sets and Stickers";
+        resetButton.className = "reset-button"; // Use the CSS class
+        resetButton.addEventListener("click", () => {
+            // Reset all sets to toggled state
+            Object.keys(selectedSets).forEach(setName => {
+                selectedSets[setName] = true; // Toggle all sets on
+            });
+
+            // Reset all stickers to toggled state
+            Object.keys(stickerState).forEach(pair => {
+                stickerState[pair] = true; // Toggle all stickers on
+            });
+
+            // Update the visual state of the buttons
+            document.querySelectorAll(".gridButton").forEach(button => {
+                const setName = button.dataset.letter;
+                button.classList.remove("untoggled"); // Ensure all sets are visually toggled on
+            });
+
+            // Save the updated states
+            saveSelectedSets();
+            saveStickerState();
+
+            // Update the user-defined algorithms
+            updateUserDefinedAlgs();
+
+            console.log("All sets and stickers reset to toggled state.");
+        });
+        selectionGrid.appendChild(resetButton);
+    }
+});
+
 const single_letter_map = {
     "A": "a",
     "B": "b",
