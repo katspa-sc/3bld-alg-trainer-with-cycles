@@ -1031,30 +1031,32 @@ function testAlg(algTest, addToHistory = true) {
 }
 
 function updateAlgsetStatistics(algList) {
-    var stats = {
+    const totalTime = timeArray.reduce((sum, solveTime) => sum + solveTime.timeValue(), 0).toFixed(2);
+
+    const stats = {
         "STM": averageMovecount(algList, "btm", false).toFixed(3),
         "SQTM": averageMovecount(algList, "bqtm", false).toFixed(3),
         "STM (including AUF)": averageMovecount(algList, "btm", true).toFixed(3),
         "SQTM (including AUF)": averageMovecount(algList, "bqtm", true).toFixed(3),
-        "Number of algs": algList.length
+        "Number of algs": algList.length,
+        "Total Time (seconds)": totalTime // Add total time to statistics
     };
 
-    var table = document.getElementById("algsetStatistics");
+    const table = document.getElementById("algsetStatistics");
     table.innerHTML = "";
-    var th = document.createElement("th");
+    const th = document.createElement("th");
     th.appendChild(document.createTextNode("Algset Statistics"));
     table.appendChild(th);
-    for (var key in stats) {
-        var tr = document.createElement("tr");
-        var description = document.createElement("td");
-        var value = document.createElement("td");
+    for (const key in stats) {
+        const tr = document.createElement("tr");
+        const description = document.createElement("td");
+        const value = document.createElement("td");
         description.appendChild(document.createTextNode(key));
         value.appendChild(document.createTextNode(stats[key]));
         tr.appendChild(description);
         tr.appendChild(value);
         table.appendChild(tr);
     }
-
 }
 
 function reTestAlg() {
@@ -2913,7 +2915,7 @@ async function fetchAlgs() {
             .map(row => row.split("\t")) // Split each row into columns
             .filter(columns => columns.length >= 2) // Ensure there are at least two columns
             .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) // Map as key-value pairs and trim whitespace
-            .filter(pair => pair.key !== "" && pair.value !== "\r"); // Prune invalid pairs
+            .filter(pair => pair.key !== "" && pair.value !== "" && pair.value !== "\r"); // Prune invalid pairs
 
         console.log("Fetched algorithms:", fetchedAlgs);
         saveFetchedAlgs(fetchedAlgs); // Save to localStorage
