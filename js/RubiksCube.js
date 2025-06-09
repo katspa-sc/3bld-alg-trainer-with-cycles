@@ -2737,18 +2737,20 @@ document.getElementById("scramble").addEventListener("click", function () {
         // If obfuscate scramble is enabled, reveal the scramble
         revealScramble();
     } else {
-        // If obfuscate scramble is not enabled, copy the scramble to clipboard
+        // If obfuscate scramble is not enabled, copy the scramble and sticker letters to clipboard
         const scrambleText = this.textContent.trim();
-        if (scrambleText) {
-            navigator.clipboard.writeText(scrambleText).then(() => {
-                console.log("Scramble copied to clipboard:", scrambleText);
-              //  alert("Scramble copied to clipboard!");
+        const cycleLetters = document.getElementById("cycle").textContent.trim(); // Get the cycle letters
+        const pieceNotation = getPieceNotation(cycleLetters); // Get the piece notation
+
+        if (scrambleText && pieceNotation) {
+            const combinedText = `${scrambleText} - ${pieceNotation}`; // Combine scramble and piece notation
+            navigator.clipboard.writeText(combinedText).then(() => {
+                console.log("Copied to clipboard:", combinedText);
             }).catch(err => {
-                console.error("Failed to copy scramble to clipboard:", err);
-             //   alert("Failed to copy scramble to clipboard.");
+                console.error("Failed to copy to clipboard:", err);
             });
         } else {
-            console.warn("No scramble text available to copy.");
+            console.warn("Missing scramble text or piece notation.");
         }
     }
 });
