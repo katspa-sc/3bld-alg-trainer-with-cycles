@@ -16,14 +16,18 @@
         <!-- TODO ADD CONDITIONAL OBFUSCATION -->
         <div class=column_left>
 
-            <!-- <div>
-                <button id="fetchAlgs">Fetch algs</button>
-            </div> -->
             <div id="lastFetchLabel" style="margin-top: 10px; font-size: 16px;"></div>
 
             <button id="fetchAlgsButton" class="large-button fetch-algs-button">Fetch algs</button>
             <button id="letterSelector" class="large-button select-sets-button">Select sets</button>
             <button id="resetSessionButton" class="large-button start-session-button">Start session</button>
+            
+            <div class="mode-toggle">
+                <label class="toggle-container">
+                    <input type="checkbox" id="modeToggle" />
+                    <span class="toggle-slider" id="modeToggleLabel">Corner</span>
+                </label>
+            </div>
 
             <!-- Hidden grid for letter selection -->
             <div id="selectionGrid" class="selection-grid">

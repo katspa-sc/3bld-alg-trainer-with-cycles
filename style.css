@@ -648,3 +648,46 @@ div.hidden {
 .reset-button:hover {
     background-color: #FF0000; /* Red color on hover */
 }
+/* Style for the toggle container */
+.toggle-container {
+    position: relative;
+    display: inline-block;
+    width: 120px; /* Adjust width as needed */
+    height: 40px; /* Adjust height as needed */
+}
+
+/* Hide the default checkbox */
+.toggle-container input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Style for the slider (background and text) */
+.toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #4285F4; /* Blue for "Corner" */
+    color: white;
+    text-align: center;
+    line-height: 40px; /* Match the height for vertical centering */
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 20px; /* Rounded corners for the toggle */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+/* Change background color and text when toggled */
+.toggle-container input[type="checkbox"]:checked + .toggle-slider {
+    background-color: #FF0000; /* Red for "Edge" */
+    transform: translateX(0); /* No movement needed */
+}
+
+/* Optional: Add a hover effect */
+.toggle-slider:hover {
+    filter: brightness(1.1); /* Slightly brighten on hover */
+}

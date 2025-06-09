@@ -90,17 +90,56 @@ const LETTER_COLORS = {
     "Z": { background: "#FFD700", text: "black" }  // Yellow
 };
 
-const currentPage = window.location.pathname.split("/").pop(); // Get the current HTML file name
-let PROXY_URL;
+var PROXY_URL = "";
 
-if (currentPage === "corner.html") {
-    PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=corners';
-} else if (currentPage === "edge.html") {
-    PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=edges';
+const modeToggle = document.getElementById("modeToggle");
+const modeToggleLabel = document.getElementById("modeToggleLabel");
+
+// Default to "Corner" mode if no mode is saved in localStorage
+const savedMode = localStorage.getItem("mode") || "corner";
+let currentMode = savedMode;
+
+// Set the initial state of the toggle and label
+modeToggle.checked = currentMode === "edge";
+modeToggleLabel.textContent = currentMode === "edge" ? "Edge" : "Corner";
+
+// Add an event listener to handle toggle changes
+modeToggle.addEventListener("change", function () {
+    currentMode = this.checked ? "edge" : "corner"; // Update the mode
+    localStorage.setItem("mode", currentMode); // Save the mode to localStorage
+    modeToggleLabel.textContent = currentMode === "edge" ? "Edge" : "Corner"; // Update the label text
+    console.log(`Mode switched to: ${currentMode}`);
+});
+
+// Update the PROXY_URL based on the current mode
+function updateProxyUrl() {
+    if (currentMode === "corner") {
+        PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=corners';
+    } else if (currentMode === "edge") {
+        PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=edges';
+    }
+    console.log(`PROXY_URL updated to: ${PROXY_URL}`);
 }
 
-console.log(`PROXY_URL set to: ${PROXY_URL}`);
+// Call this function on page load to set the initial URL
+updateProxyUrl();
 
+// Add an event listener to the toggle
+modeToggle.addEventListener("change", function () {
+    currentMode = this.checked ? "edge" : "corner"; // Update the mode based on the toggle state
+    localStorage.setItem("mode", currentMode); // Save the mode to localStorage
+    modeLabel.textContent = currentMode === "edge" ? "Edge Mode" : "Corner Mode"; // Update the label
+    updateProxyUrl(); // Update the URL for fetching algorithms
+    console.log(`Mode switched to: ${currentMode}`);
+});
+
+// Add an event listener to the toggle
+document.getElementById("modeToggle").addEventListener("change", function () {
+    currentMode = this.checked ? "edge" : "corner"; // Update the mode based on the toggle state
+    localStorage.setItem("mode", currentMode); // Save the mode to localStorage
+    updateProxyUrl(); // Update the URL for fetching algorithms
+    console.log(`Mode switched to: ${currentMode}`);
+});
 const moveHistory = [];
 const MAX_HISTORY_LENGTH = 10; // Limit the history to the last 10 moves
 
@@ -2921,7 +2960,6 @@ async function fetchAlgs() {
 
         console.log("Fetched algorithms:", fetchedAlgs);
         saveFetchedAlgs(fetchedAlgs); // Save to localStorage
-       // alert("Algorithms fetched successfully!");
     } catch (err) {
         console.error("Failed to fetch algorithms:", err);
         alert("Failed to fetch algorithms.");
@@ -3501,15 +3539,7 @@ document.getElementById("resetSessionButton").addEventListener("click", function
 });
 
 function determineCycleType() {
-    const currentPage = window.location.pathname.split("/").pop(); // Get the current HTML file name
-    if (currentPage === "corner.html") {
-        return "corner"; // Corner cycle
-    } else if (currentPage === "edge.html") {
-        return "edge"; // Edge cycle
-    } else {
-        console.warn("Unknown page type:", currentPage);
-        return null; // Invalid cycle type
-    }
+    return currentMode; // Return "corner" or "edge" based on the toggle state
 }
 
 function getPieceNotation(cycleLetters) {
