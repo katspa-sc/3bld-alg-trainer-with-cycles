@@ -90,6 +90,10 @@ const LETTER_COLORS = {
     "Z": { background: "#FFD700", text: "black" }  // Yellow
 };
 
+function getStorageKey(baseKey) {
+    return `${currentMode}_${baseKey}`; // Prefix the key with the current mode (e.g., "corner_fetchedAlgs")
+}
+
 var PROXY_URL = "";
 
 const modeToggle = document.getElementById("modeToggle");
@@ -108,6 +112,17 @@ modeToggle.addEventListener("change", function () {
     currentMode = this.checked ? "edge" : "corner"; // Update the mode
     localStorage.setItem("mode", currentMode); // Save the mode to localStorage
     modeToggleLabel.textContent = currentMode === "edge" ? "Edge" : "Corner"; // Update the label text
+    updateProxyUrl(); // Update the URL for fetching algorithms
+
+    // Load data for the selected mode
+    loadFetchedAlgs();
+    loadSelectedSets();
+    loadStickerState();
+    loadPairSelectionState();
+
+    // Update the userDefinedAlgs textbox based on the loaded data
+    updateUserDefinedAlgs();
+
     console.log(`Mode switched to: ${currentMode}`);
 });
 
@@ -124,22 +139,6 @@ function updateProxyUrl() {
 // Call this function on page load to set the initial URL
 updateProxyUrl();
 
-// Add an event listener to the toggle
-modeToggle.addEventListener("change", function () {
-    currentMode = this.checked ? "edge" : "corner"; // Update the mode based on the toggle state
-    localStorage.setItem("mode", currentMode); // Save the mode to localStorage
-    modeLabel.textContent = currentMode === "edge" ? "Edge Mode" : "Corner Mode"; // Update the label
-    updateProxyUrl(); // Update the URL for fetching algorithms
-    console.log(`Mode switched to: ${currentMode}`);
-});
-
-// Add an event listener to the toggle
-document.getElementById("modeToggle").addEventListener("change", function () {
-    currentMode = this.checked ? "edge" : "corner"; // Update the mode based on the toggle state
-    localStorage.setItem("mode", currentMode); // Save the mode to localStorage
-    updateProxyUrl(); // Update the URL for fetching algorithms
-    console.log(`Mode switched to: ${currentMode}`);
-});
 const moveHistory = [];
 const MAX_HISTORY_LENGTH = 10; // Limit the history to the last 10 moves
 
@@ -2935,12 +2934,25 @@ function loadCachedAlgs() {
     }
 }
 
-// Save fetched algorithms and fetch date to localStorage
 function saveFetchedAlgs(algs) {
     const currentDate = new Date().toLocaleString(); // Get current date and time
-    localStorage.setItem("fetchedAlgs", JSON.stringify(algs));
-    localStorage.setItem("lastFetchDate", currentDate);
+    localStorage.setItem(getStorageKey("fetchedAlgs"), JSON.stringify(algs));
+    localStorage.setItem(getStorageKey("lastFetchDate"), currentDate);
     lastFetchLabel.innerHTML = `<span style="color: #00FF00; font-size: 20px">Last Fetch: ${currentDate}</span>`;
+}
+
+function loadFetchedAlgs() {
+    const cachedAlgs = localStorage.getItem(getStorageKey("fetchedAlgs"));
+    const lastFetchDate = localStorage.getItem(getStorageKey("lastFetchDate"));
+
+    if (cachedAlgs && lastFetchDate) {
+        fetchedAlgs = JSON.parse(cachedAlgs);
+        lastFetchLabel.innerHTML = `<span style="color: #00FF00; font-size: 20px;">Last Fetch: ${lastFetchDate}</span>`;
+        console.log("Fetched algorithms loaded:", fetchedAlgs);
+    } else {
+        fetchedAlgs = [];
+        lastFetchLabel.innerHTML = `<span style="color: red; font-size: 30px;">NO ALGS</span>`;
+    }
 }
 
 async function fetchAlgs() {
@@ -3140,18 +3152,7 @@ function updateUserDefinedAlgs() {
     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
     userDefinedAlgs.value = uniqueAlgs.join("\n"); // Combine all algorithms into a single string
 
-    // Update the label based on the number of selected sets
-    const missingCommsLabel = document.getElementById("missingCommsLabel");
-    if (selectedSetNames.length > 0) {
-        const coloredLetters = selectedSetNames.map(setName => {
-            const { background, text } = LETTER_COLORS[setName] || { background: "grey", text: "white" }; // Default to grey if not found
-            return `<span style="color: ${text}; background-color: ${background}; padding: 2px 5px; border-radius: 3px;">${setName}</span>`;
-        });
-
-        missingCommsLabel.innerHTML = `<span style="color: white;">Selected sets:</span> ${coloredLetters.join(", ")}`;
-    } else {
-        missingCommsLabel.innerHTML = `<span style="color: white;">Selected sets:</span>`;
-    }
+    console.log("User-defined algorithms updated:", uniqueAlgs);
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -3472,52 +3473,61 @@ document.getElementById("applyPairSelectionButton").addEventListener("click", fu
 });
 
 function saveSelectedSets() {
-    localStorage.setItem("selectedSets", JSON.stringify(selectedSets));
-    console.log("Selected sets saved:", selectedSets);
+    localStorage.setItem(getStorageKey("selectedSets"), JSON.stringify(selectedSets));
+    console.log(`Selected sets saved for ${currentMode}:`, selectedSets);
 }
 
 function loadSelectedSets() {
-    const savedSets = localStorage.getItem("selectedSets");
+    const savedSets = localStorage.getItem(getStorageKey("selectedSets"));
     if (savedSets) {
         Object.assign(selectedSets, JSON.parse(savedSets));
-        console.log("Selected sets loaded:", selectedSets);
+        console.log(`Selected sets loaded for ${currentMode}:`, selectedSets);
 
-        // Update the visual state of the buttons
+        // Update the visual state of the grid buttons
         document.querySelectorAll(".gridButton").forEach(button => {
             const setName = button.dataset.letter;
             button.classList.toggle("untoggled", !selectedSets[setName]);
         });
+    } else {
+        // Reset selectedSets if no saved data exists for the current mode
+        Object.keys(selectedSets).forEach(setName => {
+            selectedSets[setName] = false;
+        });
+    }
+}
 
-        // Update the label and user-defined algorithms
-        updateUserDefinedAlgs();
+function saveStickerState() {
+    localStorage.setItem(getStorageKey("stickerState"), JSON.stringify(stickerState));
+    console.log("Sticker state saved:", stickerState);
+}
+
+function loadStickerState() {
+    const savedState = localStorage.getItem(getStorageKey("stickerState"));
+    if (savedState) {
+        Object.assign(stickerState, JSON.parse(savedState));
+        console.log("Sticker state loaded:", stickerState);
     }
 }
 
 function savePairSelectionState() {
-    localStorage.setItem("pairSelectionState", JSON.stringify(pairSelectionState));
+    localStorage.setItem(getStorageKey("pairSelectionState"), JSON.stringify(pairSelectionState));
     console.log("Pair selection state saved:", pairSelectionState);
 }
 
 function loadPairSelectionState() {
-    const savedState = localStorage.getItem("pairSelectionState");
+    const savedState = localStorage.getItem(getStorageKey("pairSelectionState"));
     if (savedState) {
         Object.assign(pairSelectionState, JSON.parse(savedState));
         console.log("Pair selection state loaded:", pairSelectionState);
     }
 }
 
-function saveStickerState() {
-    localStorage.setItem("stickerState", JSON.stringify(stickerState));
-    console.log("Sticker state saved:", stickerState);
-}
-
-function loadStickerState() {
-    const savedState = localStorage.getItem("stickerState");
-    if (savedState) {
-        Object.assign(stickerState, JSON.parse(savedState));
-        console.log("Sticker state loaded:", stickerState);
-    }
-}
+document.addEventListener("DOMContentLoaded", function () {
+    loadFetchedAlgs();
+    loadSelectedSets();
+    loadStickerState();
+    loadPairSelectionState();
+});
 
 // Function to close the sticker selection grid
 // Close sticker selection grid by pressing "Apply Selection" button
