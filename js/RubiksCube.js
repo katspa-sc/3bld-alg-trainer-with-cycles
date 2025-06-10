@@ -2771,6 +2771,23 @@ obfuscateScrambleCheckbox.addEventListener("change", function () {
     console.log(`Obfuscate Scramble is now ${obfuscateScrambleCheckbox.checked ? "enabled" : "disabled"}`);
 });
 
+function copyScrambleAndCycle(scrambleId, cycleId) {
+    const scrambleText = document.getElementById(scrambleId).textContent.trim();
+    const cycleLetters = document.getElementById(cycleId).textContent.trim(); // Get the cycle letters
+    const pieceNotation = getPieceNotation(cycleLetters); // Get the piece notation
+
+    if (scrambleText && pieceNotation) {
+        const combinedText = `${scrambleText} - ${pieceNotation}`; // Combine scramble and piece notation
+        navigator.clipboard.writeText(combinedText).then(() => {
+            console.log("Copied to clipboard:", combinedText);
+        }).catch(err => {
+            console.error("Failed to copy to clipboard:", err);
+        });
+    } else {
+        console.warn("Missing scramble text or piece notation.");
+    }
+}
+
 document.getElementById("scramble").addEventListener("click", function () {
     const obfuscateScrambleCheckbox = document.getElementById("obfuscateScrambleCheckbox");
 
@@ -2778,21 +2795,8 @@ document.getElementById("scramble").addEventListener("click", function () {
         // If obfuscate scramble is enabled, reveal the scramble
         revealScramble();
     } else {
-        // If obfuscate scramble is not enabled, copy the scramble and sticker letters to clipboard
-        const scrambleText = this.textContent.trim();
-        const cycleLetters = document.getElementById("cycle").textContent.trim(); // Get the cycle letters
-        const pieceNotation = getPieceNotation(cycleLetters); // Get the piece notation
-
-        if (scrambleText && pieceNotation) {
-            const combinedText = `${scrambleText} - ${pieceNotation}`; // Combine scramble and piece notation
-            navigator.clipboard.writeText(combinedText).then(() => {
-                console.log("Copied to clipboard:", combinedText);
-            }).catch(err => {
-                console.error("Failed to copy to clipboard:", err);
-            });
-        } else {
-            console.warn("Missing scramble text or piece notation.");
-        }
+        // Call the extracted function to copy the scramble and cycle letters
+        copyScrambleAndCycle("scramble", "cycle");
     }
 });
 
@@ -2802,10 +2806,22 @@ function updateLastCycleInfo() {
     const lastScrambleElement = document.getElementById("lastScramble");
 
     if (lastTest) {
-        lastCycleLettersElement.textContent = lastTest.cycleLetters || "None";
+        // Update cycle letters
+        const cycleLetters = lastTest.cycleLetters || "None";
+        lastCycleLettersElement.textContent = cycleLetters;
 
+        // Use getPieceNotation to get the formatted positions
+        const formattedPositions = getPieceNotation(cycleLetters);
+
+        if (!formattedPositions || formattedPositions.includes("Unknown")) {
+            console.warn("Missing mapping for one or more letters:", cycleLetters);
+            window.lastCyclePositions = "Unknown"; // Fallback to "Unknown"
+        } else {
+            window.lastCyclePositions = formattedPositions; // Store globally for reuse
+        }
+
+        // Update scramble
         try {
-            // Attempt to use the commutator notation from rawAlgs[0]
             lastScrambleElement.textContent = lastTest.rawAlgs[0] || "None";
         } catch (error) {
             console.error("Error retrieving commutator notation:", error);
@@ -2814,6 +2830,7 @@ function updateLastCycleInfo() {
     } else {
         lastCycleLettersElement.textContent = "None";
         lastScrambleElement.textContent = "None";
+        window.lastCyclePositions = null; // Clear stored positions
     }
 }
 
@@ -2869,22 +2886,17 @@ function copyToClipboard(elementId) {
 
 // Function to convert cycle letters to UFR/UF format and copy to clipboard
 function copyCyclePositions() {
-    const cycleLetters = document.getElementById("lastCycleLetters").innerText.trim();
-    if (!cycleLetters || cycleLetters === "None") {
-        console.warn("No cycle letters to convert.");
+    const cyclePositions = window.lastCyclePositions;
+
+    if (!cyclePositions || cyclePositions.includes("Unknown")) {
+        console.warn("Cycle positions are not available or contain unknown values.");
         return;
     }
 
-    const positions = cycleLetters.split("").map(letter => {
-        const position = POSITION_TO_LETTER_MAP[letter];
-        return position ? position : `Unknown(${letter})`;
-    });
-
-    const formattedPositions = positions.join(", ");
-    navigator.clipboard.writeText(formattedPositions).then(() => {
-        console.log(`Copied positions: ${formattedPositions}`);
+    navigator.clipboard.writeText(cyclePositions).then(() => {
+        console.log(`Copied positions: ${cyclePositions}`);
     }).catch(err => {
-        console.error('Failed to copy positions: ', err);
+        console.error("Failed to copy positions: ", err);
     });
 }
 

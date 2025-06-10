@@ -12,7 +12,7 @@
     <div id="loader"></div>
     <div style="display:none;" id="page" class="animate-bottom">
 
-        <p id="scramble" class="scramble" onclick="revealScramble(); copyToClipboard('scramble')">Scramble</p>
+        <p id="scramble" class="scramble" onclick="revealScramble(); copyScrambleAndCycle('scramble', 'cycle')">Scramble</p>
         <p id="cycle" class="cycle" onclick="copyCyclePositions()">Cycle</p>
         <!-- TODO ADD CONDITIONAL OBFUSCATION -->
         <div class=column_left>
@@ -216,7 +216,7 @@
 
             <div id="lastCycleInfo">
                 <p id="lastCycleLetters" onclick="copyCyclePositions()">None</p>
-                <p class="feedback-last-comm" id="lastScramble" onclick="copyToClipboard('lastScramble')">None</p>
+                <p class="feedback-last-comm" id="lastScramble" onclick="copyScrambleAndCycle('scramble', 'cycle')">None</p>
             </div>
 
             <div id="feedbackResults">
