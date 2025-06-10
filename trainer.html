@@ -7,12 +7,13 @@
     <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16" />
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
+
 <body>
     <div id="loader"></div>
     <div style="display:none;" id="page" class="animate-bottom">
 
-        <p id="scramble" class="scramble" onclick="revealScramble()">Scramble</p>
-        <p id="cycle" class=cycle>Cycle</p>
+        <p id="scramble" class="scramble" onclick="revealScramble(); copyToClipboard('scramble')">Scramble</p>
+        <p id="cycle" class="cycle" onclick="copyCyclePositions()">Cycle</p>
         <!-- TODO ADD CONDITIONAL OBFUSCATION -->
         <div class=column_left>
 
@@ -21,7 +22,7 @@
             <button id="fetchAlgsButton" class="large-button fetch-algs-button">Fetch algs</button>
             <button id="letterSelector" class="large-button select-sets-button">Select sets</button>
             <button id="resetSessionButton" class="large-button start-session-button">Start session</button>
-            
+
             <div class="mode-toggle">
                 <label class="toggle-container">
                     <input type="checkbox" id="modeToggle" />
@@ -70,17 +71,18 @@
                     <button class="gridButton large-grid-button yellow" data-letter="W">W</button>
                     <button class="gridButton large-grid-button yellow" data-letter="Z">Z</button>
                 </div>
-            </div> 
+            </div>
 
             <!-- Hidden grid for toggling individual pairs -->
-                        <div id="pairSelectionGrid" class="selection-grid" style="display: none;">
+            <div id="pairSelectionGrid" class="selection-grid" style="display: none;">
                 <h3 id="pairSelectionTitle" style="color: white; text-align: center;">Select Pairs for Letter</h3>
                 <div class="pair-grid-container">
                     <div id="leftPairGrid" class="grid-column"></div>
                     <div class="separator" style="width: 2px; background-color: white;"></div>
                     <div id="rightPairGrid" class="grid-column"></div>
                 </div>
-                <button id="applyPairSelectionButton" class="large-button" style="margin-top: 20px;">Apply Selection</button>
+                <button id="applyPairSelectionButton" class="large-button" style="margin-top: 20px;">Apply
+                    Selection</button>
             </div>
 
             <div id="missingCommsLabel" style="margin-top: 10px; font-size: 16px;"> Selected sets: </div>
@@ -91,7 +93,7 @@
                 placeholder="Place one alg per line. Lines starting with # will be ignored"></textarea>
             <button id="orozcoButton">Orozco</button>
             <button id="clearUserAlgsButton">Clear algs</button>
-            
+
             <button id="connectSmartCubeReplica" class="large-button">Connect</button>
 
             <h2>Settings</h2>
@@ -213,8 +215,8 @@
             <br></br>
 
             <div id="lastCycleInfo">
-                <p id="lastCycleLetters">None</p>
-                <p class="feedback-last-comm" id="lastScramble">None</p>
+                <p id="lastCycleLetters" onclick="copyCyclePositions()">None</p>
+                <p class="feedback-last-comm" id="lastScramble" onclick="copyToClipboard('lastScramble')">None</p>
             </div>
 
             <div id="feedbackResults">
@@ -242,8 +244,11 @@
                 <br><br>
                 <table id="algsetStatistics">
                 </table>
-                <h4>Comm reps on this device: </h5><h2><div id="repetitionCounter">0</div></h2>
-                <!-- <h2>Instructions</h2>
+                <h4>Comm reps on this device: </h5>
+                    <h2>
+                        <div id="repetitionCounter">0</div>
+                    </h2>
+                    <!-- <h2>Instructions</h2>
                 <b>Enter/Tab/Space</b>: New scramble.<br>
                 <b>Space</b>: Stop timer and show algorithm.<br>
                 <b>Left and right arrow keys</b>: View previously tested algs. <br>
@@ -259,10 +264,11 @@
                 or by messaging me on discord, Speedsolving.com or Reddit.
 
                 <br><br>-->
-                This project is open source! Feel free to view and modify the source code at <a
-                    href="https://github.com/tao-yu/Alg-Trainer">the Github repository</a> subject to the MIT licence.
-                Pull requests are welcomed, though it may be wise to message me about any changes you wish to make
-                before sending such requests. 
+                    This project is open source! Feel free to view and modify the source code at <a
+                        href="https://github.com/tao-yu/Alg-Trainer">the Github repository</a> subject to the MIT
+                    licence.
+                    Pull requests are welcomed, though it may be wise to message me about any changes you wish to make
+                    before sending such requests.
 
             </div>
         </div>

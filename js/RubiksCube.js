@@ -2384,16 +2384,19 @@ function processOrozcoMode(text) {
 }
 
 function processRegularMode(text) {
-    // Preprocess the text to add hyphens after letters without a prime sign
+    // Check if the user is on a mobile device
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+    // Preprocess the text to add separators based on the device type
     return text
         .split(" ") // Split into individual moves
         .map(move => {
             if (move.endsWith("'") || move.endsWith("2")) {
                 return move; // Keep moves with a prime or "2" unchanged
             }
-            return `${move},`; // Add a hyphen after moves without a prime or "2"
+            return isMobile ? move : `${move},`; // Add a comma for non-mobile devices
         })
-        .join(" "); // Join back into a string with spaces
+        .join(isMobile ? " " : " "); // Join with spaces for both, but commas are added for non-mobile
 }
 
 function speakText(text, rate = 1.0, readComm = false) {
@@ -2851,6 +2854,37 @@ function copyFeedbackToClipboard() {
     }).catch(err => {
         console.error("Failed to copy feedback to clipboard:", err);
         alert("Failed to copy feedback to clipboard.");
+    });
+}
+
+// Function to copy text to clipboard
+function copyToClipboard(elementId) {
+    const text = document.getElementById(elementId).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        console.log(`Copied: ${text}`);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+    });
+}
+
+// Function to convert cycle letters to UFR/UF format and copy to clipboard
+function copyCyclePositions() {
+    const cycleLetters = document.getElementById("lastCycleLetters").innerText.trim();
+    if (!cycleLetters || cycleLetters === "None") {
+        console.warn("No cycle letters to convert.");
+        return;
+    }
+
+    const positions = cycleLetters.split("").map(letter => {
+        const position = POSITION_TO_LETTER_MAP[letter];
+        return position ? position : `Unknown(${letter})`;
+    });
+
+    const formattedPositions = positions.join(", ");
+    navigator.clipboard.writeText(formattedPositions).then(() => {
+        console.log(`Copied positions: ${formattedPositions}`);
+    }).catch(err => {
+        console.error('Failed to copy positions: ', err);
     });
 }
 
