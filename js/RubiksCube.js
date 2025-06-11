@@ -3385,18 +3385,30 @@ function showPairSelectionGrid(setName) {
         toggleButton.textContent = "Toggle All Stickers";
         toggleButton.className = "toggle-button-pair"; // Use the CSS class
         toggleButton.addEventListener("click", () => {
-            const allToggled = Object.values(stickerState).every(state => state);
-            Object.keys(stickerState).forEach(pair => {
-                stickerState[pair] = !allToggled; // Toggle all stickers
+            // Get all pairs for the current set
+            const pairs = ALL_LETTERS.map(letter => `${setName}${letter}`)
+                .concat(ALL_LETTERS.map(letter => `${letter}${setName}`)) // Include both positions
+                .filter(pair => pair[0] !== pair[1]); // Skip pairs where both letters are the same
+
+            // Determine if all stickers are currently toggled on
+            const allToggled = pairs.every(pair => stickerState[pair] ?? true);
+
+            // Toggle the state of all stickers in the current set
+            pairs.forEach(pair => {
+                stickerState[pair] = !allToggled; // Toggle the state
             });
 
-            // Update the visual state of the buttons
-            document.querySelectorAll(".pairButton").forEach(button => {
+            // Update the visual state of the buttons in the pair selection grid
+            const pairButtons = document.querySelectorAll(".pairButton");
+            pairButtons.forEach(button => {
                 const pair = button.textContent;
-                button.classList.toggle("untoggled", !stickerState[pair]);
+                if (pairs.includes(pair)) {
+                    button.classList.toggle("untoggled", !stickerState[pair]); // Update the button's appearance
+                }
             });
 
-            saveStickerState();
+            saveStickerState(); // Save the updated sticker state
+            updateUserDefinedAlgs(); // Update the user-defined algorithms
         });
         pairSelectionGrid.appendChild(toggleButton);
     }
