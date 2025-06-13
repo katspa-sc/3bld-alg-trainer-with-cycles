@@ -118,7 +118,6 @@ modeToggle.addEventListener("change", function () {
     loadFetchedAlgs();
     loadSelectedSets();
     loadStickerState();
-    loadPairSelectionState();
 
     // Update the userDefinedAlgs textbox based on the loaded data
     updateUserDefinedAlgs();
@@ -2434,6 +2433,17 @@ function speakText(text, rate = 1.0, readComm = false) {
 
 function processTextForTTS(text, readComm = false) {
     if (readComm) {
+        // Handle the case where readComm is true
+        if (currentMode === "corner") {
+            // If the mode is "corner", only read up to the first occurrence of ":"
+            const colonIndex = text.indexOf(":");
+            if (colonIndex !== -1) {
+                text = text.substring(0, colonIndex).trim(); // Extract text before the colon
+            } else {
+                return "czysty comm albo najn mówer"; // Return default text if no colon is found
+            }
+        }
+
         // Preprocess the text to replace special characters with words
         const replacements = {
             ":": " POTEM",
@@ -2444,28 +2454,11 @@ function processTextForTTS(text, readComm = false) {
         // Dynamically construct the regex from the keys of the replacements map
         const regex = new RegExp(`[${Object.keys(replacements).join("")}]`, "g");
 
-        // Replace all matches using the replacements map and add a comma after each replacement
-        let processedText = text.replace(regex, match => replacements[match] + ",");
-
-        // Add "setap" at the front if there is at least one occurrence of ":"
-        if (text.includes(":")) {
-            processedText = "setap " + processedText;
-        }
-
-        // Split moves with a comma and ensure spaces are preserved
-        processedText = processedText.split(" ").join(", ");
-
-        // Trim double commas
-        processedText = processedText.replace(/,,+/g, ","); // Replace multiple commas with a single comma
-
-        // Replace ", priim" with " priim"
-        processedText = processedText.replace(/, PRIIM/g, " PRIIM");
+        // Replace all matches using the replacements map
+        let processedText = text.replace(regex, match => replacements[match]);
 
         // Ensure spaces are preserved between moves
-        processedText = processedText.replace(/, /g, ", ");
-
-        // Remove any leading commas
-        processedText = processedText.replace(/^, /, ""); // Remove leading commas
+        processedText = processedText.split(" ").join(" ");
 
         return processedText;
     } else {
@@ -3180,31 +3173,42 @@ function updateUserDefinedAlgs() {
     const selectedSetNames = Object.keys(selectedSets)
         .filter(setName => selectedSets[setName]); // Get all toggled sets
 
-    const combinedAlgs = selectedSetNames.flatMap(setName => {
-        // Filter algorithms for the selected set
-        return fetchedAlgs
-            .filter(pair => {
-                const isPairSelected = pairSelectionState[setName]?.[pair.key] ?? true; // Check if the pair is selected
-                const isStickerSelected = stickerState[pair.key] ?? true; // Check if the sticker is selected
-                return isPairSelected && isStickerSelected && (pair.key.startsWith(setName) || pair.key.endsWith(setName));
-            })
-            .map(pair => pair.value.trim());
-    });
-
-    // Remove duplicates using a Set
-    const uniqueAlgs = Array.from(new Set(combinedAlgs));
+    // Use the verbose filtering method
+    const uniqueAlgs = filterAlgorithmsVerbose(selectedSetNames, fetchedAlgs, stickerState, selectedSets);
 
     // Update the userDefinedAlgs textbox
     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
     userDefinedAlgs.value = uniqueAlgs.join("\n"); // Combine all algorithms into a single string
 
-    console.log("User-defined algorithms updated:", uniqueAlgs);
+    console.log("User-defined algorithms updated:", uniqueAlgs.length);
+}
+
+function filterAlgorithmsVerbose(selectedSetNames, fetchedAlgs, stickerState, selectedSets) {
+    console.log("Starting optimized filtering...");
+
+    // Create a Set for active sets for faster lookups
+    const activeSets = new Set(selectedSetNames);
+
+    // Filter algorithms in a single pass
+    const filteredAlgs = fetchedAlgs.filter(pair => {
+        const isStickerSelected = stickerState[pair.key] ?? true; // Check if the sticker is selected
+        const [firstLetter, secondLetter] = pair.key.split(""); // Split the pair into letters
+        const isSetActive = activeSets.has(firstLetter) || activeSets.has(secondLetter); // Check if either set is active
+
+        return isStickerSelected && isSetActive; // Include only if both conditions are met
+    });
+
+    // Extract unique algorithm values
+    const uniqueAlgs = [...new Set(filteredAlgs.map(pair => pair.value.trim()))];
+
+    console.log("Filtered and unique algorithms:", uniqueAlgs);
+
+    return uniqueAlgs;
 }
 
 document.addEventListener("DOMContentLoaded", function () {
     loadStickerState(); // Load sticker state
     loadSelectedSets(); // Load selected sets
-    loadPairSelectionState(); // Load pair selection state
 });
 
 const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); // Array of all letters
@@ -3219,7 +3223,7 @@ const EXCLUDED_TRIOS = [
     ["W", "B", "T"], // Trio 6
     ["Z", "S", "H"], // Trio 7
     // Add more trios as needed
-];
+]; 
 
 function findMissingCombinations(selectedLetter, algs) {
     // Generate all possible pairs for the selected letter
@@ -3327,9 +3331,6 @@ document.getElementById("connectSmartCubeReplica").addEventListener("click", fun
 
 const stickerState = {}; // Shared state for all stickers
 
-// Object to store the state of individual pairs for each letter
-const pairSelectionState = {};
-
 // Add right-click event listener to grid buttons
 document.querySelectorAll(".gridButton").forEach(button => {
     const setName = button.dataset.letter; // Get the set name from the button's data attribute
@@ -3365,58 +3366,11 @@ function showPairSelectionGrid(setName) {
     leftPairGrid.innerHTML = "";
     rightPairGrid.innerHTML = "";
 
-    // Add the red "X" button
-    const existingCloseButton = pairSelectionGrid.querySelector(".close-button");
-    if (!existingCloseButton) {
-        const closeButton = document.createElement("button");
-        closeButton.textContent = "X";
-        closeButton.className = "close-button"; // Use the CSS class
-        
-        closeButton.addEventListener("click", () => {
-            pairSelectionGrid.style.display = "none"; // Close the grid without saving
-        });
-        pairSelectionGrid.appendChild(closeButton);
-    }
-
-    // Add the toggle button
-    const existingToggleButton = pairSelectionGrid.querySelector(".toggle-button");
-    if (!existingToggleButton) {
-        const toggleButton = document.createElement("button");
-        toggleButton.textContent = "Toggle All Stickers";
-        toggleButton.className = "toggle-button-pair"; // Use the CSS class
-        toggleButton.addEventListener("click", () => {
-            // Get all pairs for the current set
-            const pairs = ALL_LETTERS.map(letter => `${setName}${letter}`)
-                .concat(ALL_LETTERS.map(letter => `${letter}${setName}`)) // Include both positions
-                .filter(pair => pair[0] !== pair[1]); // Skip pairs where both letters are the same
-
-            // Determine if all stickers are currently toggled on
-            const allToggled = pairs.every(pair => stickerState[pair] ?? true);
-
-            // Toggle the state of all stickers in the current set
-            pairs.forEach(pair => {
-                stickerState[pair] = !allToggled; // Toggle the state
-            });
-
-            // Update the visual state of the buttons in the pair selection grid
-            const pairButtons = document.querySelectorAll(".pairButton");
-            pairButtons.forEach(button => {
-                const pair = button.textContent;
-                if (pairs.includes(pair)) {
-                    button.classList.toggle("untoggled", !stickerState[pair]); // Update the button's appearance
-                }
-            });
-
-            saveStickerState(); // Save the updated sticker state
-            updateUserDefinedAlgs(); // Update the user-defined algorithms
-        });
-        pairSelectionGrid.appendChild(toggleButton);
-    }
-
     // Generate all pairs for the selected letter
     const pairs = ALL_LETTERS.map(letter => `${setName}${letter}`)
         .concat(ALL_LETTERS.map(letter => `${letter}${setName}`)) // Include both positions
         .filter(pair => pair[0] !== pair[1]) // Skip pairs where both letters are the same
+        .filter(pair => !isExcludedCombination(pair)) // Skip excluded combinations
         .sort(customComparator); // Sort using the custom comparator
 
     // Initialize state for each sticker if not already done
@@ -3462,40 +3416,23 @@ function showPairSelectionGrid(setName) {
 
             // Add click event listener to toggle the state
             button.addEventListener("click", () => {
-                stickerState[pair] = !stickerState[pair]; // Toggle state
-                button.classList.toggle("untoggled", !stickerState[pair]); // Update appearance
-
-                // Toggle the reverse sticker
+                // Toggle the state for both directions of the pair
                 const reversePair = `${pair[1]}${pair[0]}`;
-                if (reversePair in stickerState) {
-                    stickerState[reversePair] = stickerState[pair]; // Match the state of the reverse pair
-                    const reverseButton = Array.from(document.querySelectorAll(".pairButton"))
-                        .find(btn => btn.textContent === reversePair);
-                    if (reverseButton) {
-                        reverseButton.classList.toggle("untoggled", !stickerState[reversePair]); // Update appearance
-                    }
+                const newState = !stickerState[pair];
+                stickerState[pair] = newState;
+                stickerState[reversePair] = newState;
+
+                // Update the appearance of the button
+                button.classList.toggle("untoggled", !newState);
+
+                // Update the appearance of the reverse pair button if it exists
+                const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
+                if (reverseButton) {
+                    reverseButton.classList.toggle("untoggled", !newState);
                 }
 
                 saveStickerState(); // Save the state to localStorage
-            });
-
-            // Add right-click event listener to toggle only the clicked sticker
-            button.addEventListener("contextmenu", (event) => {
-                event.preventDefault(); // Prevent the default context menu
-                stickerState[pair] = !stickerState[pair]; // Toggle only the clicked sticker
-                button.classList.toggle("untoggled", !stickerState[pair]); // Update appearance
-                saveStickerState(); // Save the state to localStorage
-            });
-
-            // Add long press event listener for mobile
-            button.addEventListener("touchstart", (event) => {
-                let timeout = setTimeout(() => {
-                    stickerState[pair] = !stickerState[pair]; // Toggle only the clicked sticker
-                    button.classList.toggle("untoggled", !stickerState[pair]); // Update appearance
-                    saveStickerState(); // Save the state to localStorage
-                }, 500); // Long press duration
-
-                button.addEventListener("touchend", () => clearTimeout(timeout), { once: true });
+                updateUserDefinedAlgs(); // Update the user-defined algorithms
             });
 
             // Append the button to the appropriate row
@@ -3523,8 +3460,10 @@ function showPairSelectionGrid(setName) {
 document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
     pairSelectionGrid.style.display = "none"; // Hide the grid
-    savePairSelectionState(); // Save the state
-    console.log("Updated pair selection state:", pairSelectionState);
+
+    // Save the updated sticker state
+    saveStickerState();
+    console.log("Updated sticker state:", stickerState);
 
     // Update the user-defined algorithms based on the new sticker state
     updateUserDefinedAlgs();
@@ -3567,24 +3506,10 @@ function loadStickerState() {
     }
 }
 
-function savePairSelectionState() {
-    localStorage.setItem(getStorageKey("pairSelectionState"), JSON.stringify(pairSelectionState));
-    console.log("Pair selection state saved:", pairSelectionState);
-}
-
-function loadPairSelectionState() {
-    const savedState = localStorage.getItem(getStorageKey("pairSelectionState"));
-    if (savedState) {
-        Object.assign(pairSelectionState, JSON.parse(savedState));
-        console.log("Pair selection state loaded:", pairSelectionState);
-    }
-}
-
 document.addEventListener("DOMContentLoaded", function () {
     loadFetchedAlgs();
     loadSelectedSets();
     loadStickerState();
-    loadPairSelectionState();
 });
 
 // Function to close the sticker selection grid
@@ -4315,3 +4240,99 @@ const LETTER_PAIR_TO_WORD = {
 //         alert("Please enter a valid language code (e.g., n-US, pl-PL).");
 //     }
 // })
+
+async function fetchAndApplyPartialFilter() {
+    const partialProxyUrl = currentMode === "corner"
+        ? 'https://commexportproxy.vercel.app/api/algs?sheet=corners_partial'
+        : 'https://commexportproxy.vercel.app/api/algs?sheet=edges_partial';
+
+    try {
+        console.log("Fetching partial algorithm list...");
+
+        // Fetch the partial list
+        const partialList = await fetchAlgorithms(partialProxyUrl);
+
+        console.log("Partial list fetched:", partialList);
+
+        // Get all keys with non-empty values
+        const keysWithValues = partialList
+            .filter(pair => pair.value && pair.value.trim() !== "")
+            .map(pair => pair.key);
+
+        console.log("Keys with non-empty values:", keysWithValues);
+
+        // Set all stickers to false first
+        Object.keys(stickerState).forEach(key => {
+            stickerState[key] = false;
+        });
+
+        // Update the global sticker state for keys with non-empty values
+        keysWithValues.forEach(key => {
+            stickerState[key] = true;
+        });
+
+        console.log("Updated sticker state:", stickerState);
+
+        // Call the helper method to reload sets and stickers
+        updateSetAndStickerStatePartial();
+
+        alert("Sticker selection state updated based on the partial sheet.");
+    } catch (error) {
+        console.error("Error fetching or processing the partial algorithm list:", error);
+        alert("Failed to fetch or process the partial algorithm list.");
+    }
+}
+
+function updateSetAndStickerStatePartial() {
+    console.log("Updating set selection state based on sticker state...");
+
+    // Step 1: Turn off all sets
+    Object.keys(selectedSets).forEach(setName => {
+        selectedSets[setName] = false;
+    });
+
+    // Step 2: Iterate through the stickerState and turn on sets with active stickers
+    Object.keys(stickerState).forEach(pair => {
+        if (stickerState[pair]) { // If the sticker is active (true)
+            const [firstLetter, secondLetter] = pair.split(""); // Split the pair into individual letters
+
+            // Turn on the sets for both letters
+            selectedSets[firstLetter] = true;
+            selectedSets[secondLetter] = true;
+        }
+    });
+
+    // // Step 3: Update the visual state of the grid buttons
+    // document.querySelectorAll(".gridButton").forEach(button => {
+    //     const setName = button.dataset.letter;
+    //     button.classList.toggle("untoggled", !selectedSets[setName]); // Update appearance based on the set state
+    // });
+
+    // Step 4: Save the updated set state
+    saveSelectedSets();
+
+    console.log("Set selection state updated:", selectedSets);
+}
+
+async function fetchAlgorithms(proxyUrl) {
+    try {
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch algorithms from ${proxyUrl}`);
+        }
+        const text = await response.text();
+
+        // Parse TSV and extract key-value pairs
+        return text
+            .split("\n") // Split into rows
+            .map(row => row.split("\t")) // Split each row into columns
+            .filter(columns => columns.length >= 2) // Ensure there are at least two columns
+            .map(columns => ({ key: columns[0].trim(), value: columns[1].trim() })) // Map as key-value pairs
+            .filter(pair => pair.key !== "" && pair.value !== "" && pair.value !== "\r"); // Prune invalid pairs
+    } catch (error) {
+        console.error("Error fetching algorithms:", error);
+        return [];
+    }
+}
+
+document.getElementById("applyPartialFilterButton").addEventListener("click", fetchAndApplyPartialFilter);
