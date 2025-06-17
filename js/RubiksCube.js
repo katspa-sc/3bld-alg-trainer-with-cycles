@@ -90,6 +90,9 @@ const LETTER_COLORS = {
     "Z": { background: "#FFD700", text: "black" }  // Yellow
 };
 
+let previousScramble = "";
+let previousCycle = "";
+
 function getStorageKey(baseKey) {
     return `${currentMode}_${baseKey}`; // Prefix the key with the current mode (e.g., "corner_fetchedAlgs")
 }
@@ -1614,6 +1617,8 @@ function nextScramble(displayReady = true) {
         document.getElementById("timer").innerHTML = 'Ready';
     }
 
+
+
     // Update the last cycle info before generating a new scramble
     updateLastCycleInfo();
 
@@ -2764,9 +2769,19 @@ obfuscateScrambleCheckbox.addEventListener("change", function () {
     console.log(`Obfuscate Scramble is now ${obfuscateScrambleCheckbox.checked ? "enabled" : "disabled"}`);
 });
 
-function copyScrambleAndCycle(scrambleId, cycleId) {
-    const scrambleText = document.getElementById(scrambleId).textContent.trim();
-    const cycleLetters = document.getElementById(cycleId).textContent.trim(); // Get the cycle letters
+function copyScrambleAndCycle(scrambleId, cycleId, usePrevious = false) {
+    let scrambleText, cycleLetters;
+
+    if (usePrevious) {
+        // Use previous cycle and scramble data
+        scrambleText = previousScramble || "No previous scramble available";
+        cycleLetters = previousCycle || "No previous cycle available";
+    } else {
+        // Use current cycle and scramble data
+        scrambleText = document.getElementById(scrambleId).textContent.trim();
+        cycleLetters = document.getElementById(cycleId).textContent.trim();
+    }
+
     const pieceNotation = getPieceNotation(cycleLetters); // Get the piece notation
 
     if (scrambleText && pieceNotation) {
@@ -2820,10 +2835,18 @@ function updateLastCycleInfo() {
             console.error("Error retrieving commutator notation:", error);
             lastScrambleElement.textContent = "None"; // Fallback to "None"
         }
+
+        // **Update previous scramble and cycle variables**
+        previousScramble = lastScrambleElement.textContent.trim();
+        previousCycle = lastCycleLettersElement.textContent.trim();
     } else {
         lastCycleLettersElement.textContent = "None";
         lastScrambleElement.textContent = "None";
         window.lastCyclePositions = null; // Clear stored positions
+
+        // **Clear previous scramble and cycle variables**
+        previousScramble = "";
+        previousCycle = "";
     }
 }
 
@@ -2878,18 +2901,34 @@ function copyToClipboard(elementId) {
 }
 
 // Function to convert cycle letters to UFR/UF format and copy to clipboard
-function copyCyclePositions() {
-    const cyclePositions = window.lastCyclePositions;
+function copyCyclePositions(originId = "none") {
+    let cycleData;
 
-    if (!cyclePositions || cyclePositions.includes("Unknown")) {
-        console.warn("Cycle positions are not available or contain unknown values.");
+    // Determine the source of the invocation
+    if (originId === "lastCycleLetters" || originId === "lastScramble") {
+        // Use the previous cycle data
+        cycleData = previousCycle || "No previous cycle data available";
+    } else {
+        // Use the current cycle data
+        cycleData = document.getElementById("cycle").innerText.trim();
+    }
+
+    // Convert cycle letters to piece notation
+    const pieceNotation = getPieceNotation(cycleData);
+
+    if (!pieceNotation) {
+        console.warn("Failed to convert cycle letters to piece notation.");
         return;
     }
 
-    navigator.clipboard.writeText(cyclePositions).then(() => {
-        console.log(`Copied positions: ${cyclePositions}`);
+    // Add the "?how" prefix to the piece notation
+    const formattedData = `?how ${pieceNotation}`;
+
+    // Copy the formatted data to the clipboard
+    navigator.clipboard.writeText(formattedData).then(() => {
+        console.log("Cycle data copied to clipboard:", formattedData);
     }).catch(err => {
-        console.error("Failed to copy positions: ", err);
+        console.error("Failed to copy cycle data to clipboard:", err);
     });
 }
 
@@ -3567,8 +3606,10 @@ document.getElementById("cycle").addEventListener("click", function () {
         return;
     }
 
+    const formattedData = `?how ${pieceNotation}`;
+
     // Copy the piece notation to the clipboard
-    navigator.clipboard.writeText(pieceNotation).then(() => {
+    navigator.clipboard.writeText(formattedData).then(() => {
         console.log("Piece notation copied to clipboard:", pieceNotation);
     }).catch(err => {
         console.error("Failed to copy piece notation to clipboard:", err);
