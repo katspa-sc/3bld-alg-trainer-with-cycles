@@ -2449,9 +2449,9 @@ function processTextForTTS(text, readComm = false) {
 
         // Preprocess the text to replace special characters with words
         const replacements = {
-            ":": " POTEM",
-            "'": " PRIIM",
-            "/": " SLESZ"
+            ":": " potem",
+            "'": " priim",
+            "/": " slesz"
         };
 
         // Dynamically construct the regex from the keys of the replacements map
