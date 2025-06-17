@@ -2412,24 +2412,22 @@ function speakText(text, rate = 1.0, readComm = false) {
     }
 
     if ('speechSynthesis' in window) {
+        // Create the utterance instance only once
         if (!utterance) {
-            // Create the utterance instance only once
             utterance = new SpeechSynthesisUtterance();
-            utterance.rate = rate; // Adjust speed if needed
         }
 
         // Stop any ongoing speech before speaking new text
         window.speechSynthesis.cancel();
 
-        // Get the language from the text box or use a default
-        const language = localStorage.getItem("ttsLanguage") || "pl-PL";
-        utterance.lang = language;
+        // Set properties directly to avoid redundant operations
+        utterance.rate = rate; // Adjust speed
+        utterance.lang = localStorage.getItem("ttsLanguage") || "pl-PL"; // Get language or use default
 
         // Process the text using the extracted method
-        const processedText = processTextForTTS(text, readComm);
+        utterance.text = processTextForTTS(text, readComm);
 
-        // Set the processed text and speak
-        utterance.text = processedText;
+        // Speak the text immediately
         window.speechSynthesis.speak(utterance);
     } else {
         console.warn('Text-to-Speech is not supported in this browser.');
@@ -2445,7 +2443,7 @@ function processTextForTTS(text, readComm = false) {
             if (colonIndex !== -1) {
                 text = text.substring(0, colonIndex).trim(); // Extract text before the colon
             } else {
-                return "czysty comm albo najn mówer"; // Return default text if no colon is found
+                return "czysty kom lub dziewięcioruchowiec"; // Return default text if no colon is found
             }
         }
 
@@ -2673,6 +2671,8 @@ document.addEventListener("keydown", function (event) {
         markCurrentCommAsBad();
     } else if (event.key === "n" || event.key === "N" || event.key === "3") {
         nextScramble();
+    } else if (event.key === "4") {
+        triggerSpecialAction("D4");
     }
 });
 
@@ -3262,7 +3262,7 @@ const EXCLUDED_TRIOS = [
     ["W", "B", "T"], // Trio 6
     ["Z", "S", "H"], // Trio 7
     // Add more trios as needed
-]; 
+];
 
 function findMissingCombinations(selectedLetter, algs) {
     // Generate all possible pairs for the selected letter
