@@ -3142,18 +3142,21 @@ document.getElementById("letterSelector").addEventListener("click", function () 
         toggleButton.textContent = "Toggle All Sets";
         toggleButton.className = "toggle-button"; // Use the CSS class
         toggleButton.addEventListener("click", () => {
+            // Determine if all sets are currently toggled on
             const allToggled = Object.values(selectedSets).every(state => state);
+
+            // Toggle all sets
             Object.keys(selectedSets).forEach(setName => {
-                selectedSets[setName] = !allToggled; // Toggle all sets
+                selectedSets[setName] = !allToggled; // Toggle all sets based on the current state
             });
 
             // Update the visual state of the buttons
             document.querySelectorAll(".gridButton").forEach(button => {
                 const setName = button.dataset.letter;
-                button.classList.toggle("untoggled", !selectedSets[setName]);
+                button.classList.toggle("untoggled", !selectedSets[setName]); // Update appearance
             });
 
-            saveSelectedSets();
+            saveSelectedSets(); // Save the updated state to localStorage
             updateUserDefinedAlgs(); // Update the textbox with combined algorithms
         });
         selectionGrid.appendChild(toggleButton);
