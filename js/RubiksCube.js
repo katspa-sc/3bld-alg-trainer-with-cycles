@@ -2400,7 +2400,7 @@ function processRegularMode(text) {
             }
             return isMobile ? move : `${move},`; // Add a comma for non-mobile devices
         })
-        .join(isMobile ? " " : " "); // Join with spaces for both, but commas are added for non-mobile
+        .join(isMobile ? "," : " "); // Join with spaces for both, but commas are added for non-mobile
 }
 
 function speakText(text, rate = 1.0, readComm = false) {
