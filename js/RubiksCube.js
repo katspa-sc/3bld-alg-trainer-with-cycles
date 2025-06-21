@@ -3256,7 +3256,7 @@ document.addEventListener("DOMContentLoaded", function () {
 const ALL_LETTERS = "AOIEFGHJKLNBPQTSRCDWZ".split(""); // Array of all letters
 
 // Predefined excluded trios
-const EXCLUDED_TRIOS = [
+const EXCLUDED_TRIOS_CORNERS = [
     ["A", "E", "R"], // Trio 1
     ["O", "Q", "N"], // Trio 2
     ["I", "J", "F"], // Trio 3
@@ -3264,7 +3264,22 @@ const EXCLUDED_TRIOS = [
     ["D", "K", "P"], // Trio 5
     ["W", "B", "T"], // Trio 6
     ["Z", "S", "H"], // Trio 7
-    // Add more trios as needed
+    ["U", "Y", "M"], // buffer
+];
+
+const EXCLUDED_DUOS_EDGES = [
+    ["A", "Q"], // Duo 1
+    ["O", "M"], // Duo 2
+    ["I", "E"], // Duo 3
+    ["F", "L"], // Duo 4
+    ["G", "Z"], // Duo 5
+    ["H", "R"], // Duo 6
+    ["J", "P"], // Duo 7
+    ["K", "C"], // Duo 7
+    ["N", "R"], // Duo 7
+    ["B", "D"], // Duo 7
+    ["S", "W"], // Duo 7
+    ["U", "Y"], // buffer
 ];
 
 function findMissingCombinations(selectedLetter, algs) {
@@ -3284,10 +3299,12 @@ function findMissingCombinations(selectedLetter, algs) {
 }
 
 function isExcludedCombination(combination) {
-    // Check if the combination belongs to any excluded trio
-    for (const trio of EXCLUDED_TRIOS) {
+    const currentExclusions = determineCycleType() === "corner" ? EXCLUDED_TRIOS_CORNERS : EXCLUDED_DUOS_EDGES;
+
+    // Check if the combination belongs to any excluded trio or duo
+    for (const group of currentExclusions) {
         const [letter1, letter2] = combination.split("");
-        if (trio.includes(letter1) && trio.includes(letter2)) {
+        if (group.includes(letter1) && group.includes(letter2)) {
             return true; // Exclude the combination
         }
     }
