@@ -3276,7 +3276,7 @@ const EXCLUDED_DUOS_EDGES = [
     ["H", "R"], // Duo 6
     ["J", "P"], // Duo 7
     ["K", "C"], // Duo 7
-    ["N", "R"], // Duo 7
+    ["N", "T"], // Duo 7
     ["B", "D"], // Duo 7
     ["S", "W"], // Duo 7
     ["U", "Y"], // buffer
