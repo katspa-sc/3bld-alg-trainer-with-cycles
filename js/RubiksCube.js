@@ -3681,7 +3681,6 @@ document.getElementById("orozcoButton").addEventListener("click", function () {
     console.log("User-defined algs filled with Orozco list.");
 });
 
-// Add a new button to toggle all sets and reset all stickers
 document.addEventListener("DOMContentLoaded", function () {
     const selectionGrid = document.getElementById("selectionGrid");
 
@@ -3696,10 +3695,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 selectedSets[setName] = true; // Toggle all sets on
             });
 
-            // Reset all stickers to toggled state
-            Object.keys(stickerState).forEach(pair => {
-                stickerState[pair] = true; // Toggle all stickers on
-            });
+            // Reset all stickers to toggled state using updateStickerState
+            const allStickerKeys = Object.keys(stickerState); // Get all sticker keys
+            updateStickerState(allStickerKeys); // Pass all keys to updateStickerState
 
             // Update the visual state of the buttons
             document.querySelectorAll(".gridButton").forEach(button => {
@@ -3709,7 +3707,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Save the updated states
             saveSelectedSets();
-            saveStickerState();
 
             // Update the user-defined algorithms
             updateUserDefinedAlgs();
@@ -3719,6 +3716,25 @@ document.addEventListener("DOMContentLoaded", function () {
         selectionGrid.appendChild(resetButton);
     }
 });
+
+function updateStickerState(keysWithValues) {
+    console.log("Updating sticker state...");
+
+    // Set all stickers to false first
+    Object.keys(stickerState).forEach(key => {
+        stickerState[key] = false;
+    });
+
+    // Update the global sticker state for keys with non-empty values
+    keysWithValues.forEach(key => {
+        stickerState[key] = true;
+    });
+
+    console.log("Updated sticker state:", stickerState);
+
+    // Save the updated sticker state
+    saveStickerState();
+}
 
 const single_letter_map = {
     "A": "a",
@@ -4322,26 +4338,37 @@ async function fetchAndApplyPartialFilter() {
 
         console.log("Keys with non-empty values:", keysWithValues);
 
-        // Set all stickers to false first
-        Object.keys(stickerState).forEach(key => {
-            stickerState[key] = false;
-        });
-
-        // Update the global sticker state for keys with non-empty values
-        keysWithValues.forEach(key => {
-            stickerState[key] = true;
-        });
-
-        console.log("Updated sticker state:", stickerState);
+        // Update the sticker state using the extracted function
+        updateStickerState(keysWithValues);
 
         // Call the helper method to reload sets and stickers
         updateSetAndStickerStatePartial();
+
+        // Reload algorithms based on the updated sticker state
+        reloadAlgorithmsBasedOnStickers();
 
         alert("Sticker selection state updated based on the partial sheet.");
     } catch (error) {
         console.error("Error fetching or processing the partial algorithm list:", error);
         alert("Failed to fetch or process the partial algorithm list.");
     }
+}
+
+function reloadAlgorithmsBasedOnStickers() {
+    console.log("Reloading algorithms based on selected stickers...");
+
+    // Gather all active stickers
+    const activeStickers = Object.keys(stickerState).filter(pair => stickerState[pair]);
+
+    // Filter the fetched algorithms to match the active stickers
+    const matchingComms = fetchedAlgs.filter(pair => activeStickers.includes(pair.key));
+
+    // Extract the commutators (values) and update the userDefinedAlgs textbox
+    const commutators = matchingComms.map(pair => pair.value.trim());
+    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
+    userDefinedAlgs.value = commutators.join("\n"); // Combine all commutators into a single string
+
+    console.log("Updated user-defined algorithms:", commutators);
 }
 
 function updateSetAndStickerStatePartial() {
@@ -4363,16 +4390,13 @@ function updateSetAndStickerStatePartial() {
         }
     });
 
-    // // Step 3: Update the visual state of the grid buttons
-    // document.querySelectorAll(".gridButton").forEach(button => {
-    //     const setName = button.dataset.letter;
-    //     button.classList.toggle("untoggled", !selectedSets[setName]); // Update appearance based on the set state
-    // });
-
-    // Step 4: Save the updated set state
+    // Step 3: Save the updated set state
     saveSelectedSets();
 
     console.log("Set selection state updated:", selectedSets);
+
+    // Step 4: Reload algorithms based on the updated sticker state
+    reloadAlgorithmsBasedOnStickers();
 }
 
 async function fetchAlgorithms(proxyUrl) {
