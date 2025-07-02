@@ -90,8 +90,75 @@ const LETTER_COLORS = {
     "Z": { background: "#FFD700", text: "black" }  // Yellow
 };
 
+let wakeLock = null;
+
+async function acquireWakeLock() {
+    // Check if the Wake Lock API is supported.
+    if ('wakeLock' in navigator) {
+      try {
+        // Request a 'system' wake lock. This prevents the CPU from sleeping.
+        wakeLock = await navigator.wakeLock.request('system');
+        
+        wakeLock.addEventListener('release', () => {
+          console.log('Wake Lock was released.');
+          wakeLock = null;
+        });
+        
+        console.log('Wake Lock is active.');
+        // You could update a UI element here to show the lock is active.
+  
+      } catch (err) {
+        console.error(`${err.name}, ${err.message}`);
+      }
+    } else {
+      console.warn('Wake Lock API not supported.');
+    }
+  }
+
 let previousScramble = "";
 let previousCycle = "";
+
+// Near the top of your script
+let audioContext = null;
+
+async function playAudioInBackground(url) {
+    // 1. Create the AudioContext on the first user interaction if it doesn't exist
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.error("Web Audio API is not supported in this browser.");
+            return;
+        }
+    }
+
+    // If the context is suspended (e.g., after a page load), resume it.
+    if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+    }
+
+    try {
+        // 2. Fetch the audio file
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+
+        // 3. Decode the audio data into a buffer
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        // 4. Create a source node to play the buffer
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+
+        // 5. Connect the source to the output (your speakers)
+        source.connect(audioContext.destination);
+
+        // 6. Play the sound now
+        source.start(0);
+
+    } catch (e) {
+        console.error(`Error with playing audio from ${url}:`, e);
+    }
+}
 
 function getStorageKey(baseKey) {
     return `${currentMode}_${baseKey}`; // Prefix the key with the current mode (e.g., "corner_fetchedAlgs")
@@ -99,8 +166,8 @@ function getStorageKey(baseKey) {
 
 var PROXY_URL = "";
 
-      
-      
+
+
 let drillingPairs = [];
 let currentDrillingPair = null;
 let isSecondInPair = false;
@@ -118,7 +185,7 @@ function initializeDrillingPairs() {
         const [firstLetter, secondLetter] = pair.key.split("");
         return isStickerSelected && (selectedSetNames.includes(firstLetter) || selectedSetNames.includes(secondLetter));
     });
-    
+
     const algMap = new Map(activeAlgs.map(item => [item.key, item.value]));
     const processed = new Set();
     drillingPairs = [];
@@ -146,7 +213,7 @@ function initializeDrillingPairs() {
         const j = Math.floor(Math.random() * (i + 1));
         [drillingPairs[i], drillingPairs[j]] = [drillingPairs[j], drillingPairs[i]];
     }
-    
+
     totalDrillPairs = drillingPairs.length;
     console.log(`Found and shuffled ${totalDrillPairs} pairs for drilling.`);
     isSecondInPair = false;
@@ -155,22 +222,23 @@ function initializeDrillingPairs() {
 
 // In the resetSessionButton event listener:
 document.getElementById("resetSessionButton").addEventListener("click", function () {
+     acquireWakeLock();
     updateUserDefinedAlgs();
 
     if (isDrillingMode) {
         isFirstDrillRun = true; // Fix for jingle on start
         initializeDrillingPairs();
     } else {
-        remainingAlgs = []; 
-        isFirstRun = true; 
+        remainingAlgs = [];
+        isFirstRun = true;
     }
 
-    repetitionCounter = 0; 
+    repetitionCounter = 0;
     localStorage.setItem("repetitionCounter", repetitionCounter);
     document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
     document.getElementById("progressDisplay").innerText = "Progress: 0/0";
 
-    nextScramble(); 
+    nextScramble();
     console.log("Session reset. Starting a new practice session.");
 });
 
@@ -191,9 +259,9 @@ function retryDrill() {
     const jingle = document.getElementById("drillJingle");
     jingle.volume = 0.8;
     jingle.play();
-    
+
     // Disable TTS for the next automatic scramble generation
-    shouldReadDrillTTS = false; 
+    shouldReadDrillTTS = false;
 
     console.log("Drilling same algorithm:", lastTest.rawAlgs[0]);
     startTimer();
@@ -211,7 +279,7 @@ function advanceDrill() {
 
     // Get the next algorithm in the sequence
     nextScramble();
-} 
+}
 
 const modeToggle = document.getElementById("modeToggle");
 const modeToggleLabel = document.getElementById("modeToggleLabel");
@@ -450,14 +518,11 @@ function applyMoves(moves) {
 
         if (pivotIndex != -1) {
             fixPivotRotation = findRotationToFixPivot(pivotIndex);
-            if (fixPivotRotation.length > 0) {
-                // doAlg(fixPivotRotation, true);
-                // doAlg(alg.cube.invert(fixPivotRotation), true);
-
-                console.log(lastTest.solutions[0], "pivot at", pivotIndex, "fix with rotation", fixPivotRotation);
+            // if (fixPivotRotation.length > 0) {
+            //     console.log(lastTest.solutions[0], "pivot at", pivotIndex, "fix with rotation", fixPivotRotation);
 
 
-            }
+            // }
         }
 
         cube.doAlgorithm(alg.cube.invert(tmp));
@@ -501,9 +566,6 @@ function applyMoves(moves) {
 
     checkForSpecialSequences();
 }
-
-// connect smart cube
-//////////////////////////////////////////////////////////////
 
 let conn = null;
 
@@ -609,15 +671,7 @@ var defaults = {
     "goToNextCase": false,
     "mirrorAllAlgs": false,
     "mirrorAllAlgsAcrossS": false,
-    "colourneutrality1": "",
-    "colourneutrality2": "",
-    "colourneutrality3": "",
-    // "colourneutrality2":"x2",
-    // "colourneutrality3":"y",
-    // "userDefined":false,
     "userDefinedAlgs": "",
-    "fullCN": false,
-    // "algsetpicker":document.getElementById("algsetpicker").options[0].value,
     "visualCubeView": "plan",
     "randomizeSMirror": false,
     "randomizeMMirror": false,
@@ -1047,44 +1101,6 @@ function generatePreScramble(raw_alg, generator, times, obfuscateAlg, premoves =
 
 }
 
-function generateOrientation() {
-    var cn1 = document.getElementById("colourneutrality1").value;
-    if (document.getElementById("fullCN").checked) {
-        var firstRotation = ["", "x", "x'", "x2", "y", "y'"]
-        // each one of these first rotations puts a different color face on F
-        var secondRotation = ["", "z", "z'", "z2"]
-        // each second rotation puts a different edge on UF
-        // each unique combination of a first and second rotation 
-        // must result in a unique orientation because a different color is on F
-        // and a different edge is on UF. Hence all 6x4=24 rotations are reached.
-
-        var rand1 = Math.floor(Math.random() * 6);
-        var rand2 = Math.floor(Math.random() * 4);
-        var randomPart = firstRotation[rand1] + secondRotation[rand2];
-        if (randomPart == "x2z2") {
-            randomPart = "y2";
-        }
-        var fullOrientation = cn1 + randomPart; // Preorientation to perform starting from white top green front
-        return [fullOrientation, randomPart];
-    }
-    var cn2 = document.getElementById("colourneutrality2").value;
-    var cn3 = document.getElementById("colourneutrality3").value;
-
-    //todo: warn if user enters invalid strings
-
-    localStorage.setItem("colourneutrality1", cn1);
-    localStorage.setItem("colourneutrality2", cn2);
-    localStorage.setItem("colourneutrality3", cn3);
-
-    var rand1 = Math.floor(Math.random() * 4);
-    var rand2 = Math.floor(Math.random() * 4);
-
-    //console.log(cn1 + cn2.repeat(rand1) + cn3.repeat(rand2));
-    var randomPart = cn2.repeat(rand1) + cn3.repeat(rand2); // Random part of the orientation
-    var fullOrientation = cn1 + randomPart; // Preorientation to perform starting from white top green front
-    return [fullOrientation, randomPart];
-}
-
 class AlgTest {
     constructor(cycleLetters, rawAlgs, scramble, solutions, preorientation, solveTime, time, visualCubeView, orientRandPart) {
         this.cycleLetters = cycleLetters
@@ -1155,7 +1171,7 @@ function generateAlgTest() {
 
     var [cycleLetters, scramble] = generateAlgScramble(correctRotation(commToMoves(solutions[0])), obfuscateAlg, shouldPrescramble);
 
-    var [preorientation, orientRandPart] = generateOrientation();
+    var [preorientation, orientRandPart] = ["", ""];
     orientRandPart = alg.cube.simplify(orientRandPart);
 
     var solveTime = null;
@@ -1362,9 +1378,7 @@ function randomFromList(set) {
             if (drillingPairs.length === 0) {
                 // We've completed the set. Re-initialize.
                 if (!isFirstDrillRun) { // Fix: Don't play jingle on the very first run
-                    const jingle = document.getElementById("completionJingle");
-                    jingle.volume = 0.5
-                    jingle.play();
+                    playAudioInBackground('./drillJingle.ogg');
                 }
                 isFirstDrillRun = false; // It's no longer the first run
                 initializeDrillingPairs();
@@ -2445,6 +2459,11 @@ function checkForSpecialSequences() {
         triggerSpecialAction("D4");
     }
 
+    if (recentMoves.endsWith("D D D D D D D D ") || recentMoves.endsWith("D'D'D'D'D'D'D'D'")) {
+        console.log("Special sequence detected: D4");
+        triggerSpecialAction("D8");
+    }
+
     if (recentMoves.endsWith("B B B B ") || recentMoves.endsWith("B'B'B'B'")) {
         console.log("Special sequence detected: B4");
         triggerSpecialAction("B4");
@@ -2597,7 +2616,7 @@ function processTextForTTS(text, readComm = false) {
 function triggerSpecialAction(sequence) {
     moveHistory.length = 0; // Clear the history after checking
     switch (sequence) {
-        case "D4":
+        case "D8":
             console.log("D4 detected! Reading out current displayed scramble");
             // Retrieve the scramble currently displayed on the screen
             const displayedScrambleElement = document.getElementById("scramble");
@@ -2620,12 +2639,6 @@ function triggerSpecialAction(sequence) {
             markCurrentCommAsBad();
             retryCurrentAlgorithm();
             break;
-        case "R4":
-            console.log("F4 detected! Marking last comm as drill/change alg");
-            let jingleDrill = document.getElementById("drillJingle");
-            jingleDrill.play();
-            markLastCommAsChange();
-            break;
         case "L4":
             console.log("L4 detected! Advancing drill or running next alg.");
             if (isDrillingMode) {
@@ -2635,11 +2648,14 @@ function triggerSpecialAction(sequence) {
                 nextScramble();
             }
             break;
+        case "R4":
+            console.log("R4 detected! Marking last comm as drill/change alg");
+            playAudioInBackground('./linkedin_1.ogg'); // Correct - no getElementById needed
+            markLastCommAsChange();
+            break;
         case "U6":
             console.log("U6 detected! Marking last alg as good");
-            let jingleGood = document.getElementById("goodJingle");
-            jingleGood.volume = 0.6
-            jingleGood.play();
+            playAudioInBackground('./good.ogg'); // Correct - no getElementById needed
             markLastCommAsGood();
             break;
         default:
@@ -3494,16 +3510,16 @@ document.getElementById("resetSessionButton").addEventListener("click", function
         initializeDrillingPairs();
     } else {
         // Otherwise, reset the regular practice state
-        remainingAlgs = []; 
-        isFirstRun = true; 
+        remainingAlgs = [];
+        isFirstRun = true;
     }
 
-    repetitionCounter = 0; 
+    repetitionCounter = 0;
     localStorage.setItem("repetitionCounter", repetitionCounter);
     document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
     document.getElementById("progressDisplay").innerText = "Progress: 0/0";
 
-    nextScramble(); 
+    nextScramble();
     console.log("Session reset. Starting a new practice session.");
 });
 
