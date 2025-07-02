@@ -1,3 +1,5 @@
+console.log("starting script...aaa");
+
 import {
     SOLVED_POSITIONS,
     POSITION_TO_LETTER_MAP,
@@ -9,6 +11,8 @@ import {
 } from './constants.js';
 
 let wakeLock = null;
+
+console.log("starting script...");
 
 async function acquireWakeLock() {
     // Check if the Wake Lock API is supported.
@@ -3128,24 +3132,6 @@ async function filterAlgsByLetter(selectedLetter) {
     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
     userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
     console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
-
-    // // Check for missing combinations if the filtered values are less than 36
-    // const missingCommsLabel = document.getElementById("missingCommsLabel");
-    // if (filteredValues.length < 36) {
-    //     const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
-    //     console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
-
-    //     if (missingCombinations.length > 0) {
-    //         // Update the dynamic label with missing combinations
-    //         missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
-    //     } else {
-    //         // Clear the label if there are no missing combinations
-    //         missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-    //     }
-    // } else {
-    //     // Clear the label if there are no missing combinations
-    //     missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-    // }
 }
 
 // Load cached algorithms on page load
@@ -3353,46 +3339,46 @@ function isExcludedCombination(combination) {
     return false; // Include the combination
 }
 
-async function filterAlgsByLetter(selectedLetter) {
-    if (!selectedLetter) {
-        console.warn("No letter selected.");
-        return;
-    }
+// async function filterAlgsByLetter(selectedLetter) {
+//     if (!selectedLetter) {
+//         console.warn("No letter selected.");
+//         return;
+//     }
 
-    // Fetch algs if the array is empty
-    if (fetchedAlgs.length === 0) {
-        console.log("Fetching algorithms as fetchedAlgs is empty...");
-        await fetchAlgs();
-    }
+//     // Fetch algs if the array is empty
+//     if (fetchedAlgs.length === 0) {
+//         console.log("Fetching algorithms as fetchedAlgs is empty...");
+//         await fetchAlgs();
+//     }
 
-    // Filter the fetchedAlgs array for keys that match the selected letter
-    const filteredValues = fetchedAlgs
-        .filter(pair => pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter))
-        .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
+//     // Filter the fetchedAlgs array for keys that match the selected letter
+//     const filteredValues = fetchedAlgs
+//         .filter(pair => pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter))
+//         .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
 
-    // Paste the filtered values into the input box
-    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-    userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
-    console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
+//     // Paste the filtered values into the input box
+//     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
+//     userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
+//     console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
 
-    // Check for missing combinations if the filtered values are less than 36
-    const missingCommsLabel = document.getElementById("missingCommsLabel");
-    if (filteredValues.length < 36) {
-        const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
-        console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
+//     // Check for missing combinations if the filtered values are less than 36
+//     const missingCommsLabel = document.getElementById("missingCommsLabel");
+//     if (filteredValues.length < 36) {
+//         const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
+//         console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
 
-        if (missingCombinations.length > 0) {
-            // Update the dynamic label with missing combinations
-            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
-        } else {
-            // Clear the label if there are no missing combinations
-            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-        }
-    } else {
-        // Clear the label if there are no missing combinations
-        missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-    }
-}
+//         if (missingCombinations.length > 0) {
+//             // Update the dynamic label with missing combinations
+//             missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
+//         } else {
+//             // Clear the label if there are no missing combinations
+//             missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+//         }
+//     } else {
+//         // Clear the label if there are no missing combinations
+//         missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+//     }
+// }
 
 // Add an event listener to the dropdown selector
 document.getElementById("letterSelector").addEventListener("change", async function () {
