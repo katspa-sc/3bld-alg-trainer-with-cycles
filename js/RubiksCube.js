@@ -1,28 +1,3 @@
-let wakeLock = null;
-
-async function acquireWakeLock() {
-    // Check if the Wake Lock API is supported.
-    if ('wakeLock' in navigator) {
-      try {
-        // Request a 'system' wake lock. This prevents the CPU from sleeping.
-        wakeLock = await navigator.wakeLock.request('system');
-        
-        wakeLock.addEventListener('release', () => {
-          console.log('Wake Lock was released.');
-          wakeLock = null;
-        });
-        
-        console.log('Wake Lock is active.');
-        // You could update a UI element here to show the lock is active.
-  
-      } catch (err) {
-        console.error(`${err.name}, ${err.message}`);
-      }
-    } else {
-      console.warn('Wake Lock API not supported.');
-    }
-  }
-
 let previousScramble = "";
 let previousCycle = "";
 
@@ -130,7 +105,6 @@ function initializeDrillingPairs() {
 
 // In the resetSessionButton event listener:
 document.getElementById("resetSessionButton").addEventListener("click", function () {
-     acquireWakeLock();
     updateUserDefinedAlgs();
 
     if (isDrillingMode) {
