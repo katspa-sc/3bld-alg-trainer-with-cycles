@@ -1,46 +1,16 @@
 let previousScramble = "";
 let previousCycle = "";
 
-// Near the top of your script
-let audioContext = null;
-
-async function playAudioInBackground(url) {
-    // 1. Create the AudioContext on the first user interaction if it doesn't exist
-    if (!audioContext) {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-            console.error("Web Audio API is not supported in this browser.");
-            return;
-        }
+function tryNotify() {
+    // First: Request permission
+Notification.requestPermission().then(permission => {
+    if (permission === "granted") {
+      new Notification(" ", {
+        body: "",         // no text
+        silent: false,    // allow sound
+      });
     }
-
-    // If the context is suspended (e.g., after a page load), resume it.
-    if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-    }
-
-    try {
-        // 2. Fetch the audio file
-        const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-
-        // 3. Decode the audio data into a buffer
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-        // 4. Create a source node to play the buffer
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-
-        // 5. Connect the source to the output (your speakers)
-        source.connect(audioContext.destination);
-
-        // 6. Play the sound now
-        source.start(0);
-
-    } catch (e) {
-        console.error(`Error with playing audio from ${url}:`, e);
-    }
+  });
 }
 
 function getStorageKey(baseKey) {
@@ -141,6 +111,8 @@ function retryDrill() {
     const jingle = document.getElementById("drillJingle");
     jingle.volume = 0.8;
     jingle.play();
+
+    tryNotify();
 
     // Disable TTS for the next automatic scramble generation
     shouldReadDrillTTS = false;
@@ -1188,7 +1160,7 @@ function randomFromList(set) {
             if (drillingPairs.length === 0) {
                 // We've completed the set. Re-initialize.
                 if (!isFirstDrillRun) { // Fix: Don't play jingle on the very first run
-                    playAudioInBackground('./drillJingle.ogg');
+                    tryNotify();
                 }
                 isFirstDrillRun = false; // It's no longer the first run
                 initializeDrillingPairs();
@@ -2460,12 +2432,12 @@ function triggerSpecialAction(sequence) {
             break;
         case "R4":
             console.log("R4 detected! Marking last comm as drill/change alg");
-            playAudioInBackground('./linkedin_1.ogg'); // Correct - no getElementById needed
+            changeAlg.play();
             markLastCommAsChange();
             break;
         case "U6":
             console.log("U6 detected! Marking last alg as good");
-            playAudioInBackground('./good.ogg'); // Correct - no getElementById needed
+            goodAlg.play(); // Play a sound to indicate success
             markLastCommAsGood();
             break;
         default:

@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.1 - webaudio+screenoff"; 
+const APP_VERSION = "v0.1.1 - try notify"; 
 
 const SOLVED_STATE = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
 const SOLVED_POSITIONS = [
