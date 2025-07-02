@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.1 - webaudio"; 
+const APP_VERSION = "v0.1 - webaudio+screenoff"; 
 
 const SOLVED_STATE = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
 const SOLVED_POSITIONS = [
