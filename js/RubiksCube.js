@@ -99,6 +99,8 @@ function getStorageKey(baseKey) {
 
 var PROXY_URL = "";
 
+
+
 const modeToggle = document.getElementById("modeToggle");
 const modeToggleLabel = document.getElementById("modeToggleLabel");
 
@@ -759,9 +761,6 @@ let timerIsRunning = false;
 
 function doAlg(algorithm, updateTimer = false) {
     cube.doAlgorithm(algorithm);
-    // updateVirtualCube();
-
-    // console.log(isIncludeRecognitionTime);
 
     if (isUsingVirtualCube() && !isIncludeRecognitionTime && updateTimer) {
         if (!timerIsRunning) {
@@ -773,9 +772,14 @@ function doAlg(algorithm, updateTimer = false) {
         if (updateTimer) {
             stopTimer();
             markCurrentCommAsGood();
-            nextScramble();
-        }
-        else {
+
+            // Check if Drilling Mode is enabled
+            if (isDrillingMode) {
+                retryCurrentAlgorithmDrill(); // Retry the same commutator
+            } else {
+                nextScramble(); // Move to the next commutator
+            }
+        } else {
             markCurrentCommAsGood();
             stopTimer();
         }
@@ -1616,8 +1620,6 @@ function nextScramble(displayReady = true) {
     if (displayReady) {
         document.getElementById("timer").innerHTML = 'Ready';
     }
-
-
 
     // Update the last cycle info before generating a new scramble
     updateLastCycleInfo();
@@ -2499,7 +2501,6 @@ function triggerSpecialAction(sequence) {
         case "R4":
             console.log("F4 detected! Marking last comm as drill/change alg");
             let jingleDrill = document.getElementById("drillJingle");
-            jingleDrill.volume = 0.6
             jingleDrill.play();
             markLastCommAsChange();
             break;
@@ -2518,6 +2519,38 @@ function triggerSpecialAction(sequence) {
         default:
             console.log(`No action defined for sequence: ${sequence}`);
     }
+}
+
+function retryCurrentAlgorithmDrill() {
+    const lastTest = algorithmHistory[algorithmHistory.length - 1];
+    stopTimer(false); // Stop timer without logging a new time (it was already logged in doAlg)
+
+    if (!lastTest) {
+        alert("No algorithm to retry.");
+        return;
+    }
+
+    // Reset the cube and apply the scramble
+    cube.resetCube();
+    doAlg(lastTest.scramble, false); // Use `false` to prevent a recursive loop
+    updateVirtualCube();
+
+    // Reset the timer display
+    document.getElementById("timer").innerHTML = "0.00";
+
+    // Display the scramble and cycle letters again
+    document.getElementById("scramble").innerHTML = `<span>${lastTest.orientRandPart}</span> ${lastTest.rawAlgs[0]}`;
+    document.getElementById("cycle").innerHTML = lastTest.cycleLetters;
+
+    // Play a jingle to indicate successful completion and restart
+    const jingle = document.getElementById("drillJingle"); // Make sure you have an audio element with id="successJingle" in your HTML
+    jingle.volume = 0.6;
+    jingle.play();
+
+    console.log("Retrying algorithm in Drilling Mode:", lastTest.rawAlgs[0]);
+
+    // Start the timer for the next attempt of the same alg
+    startTimer();
 }
 
 function enableTtsOnStartup() {
@@ -3735,6 +3768,26 @@ function updateStickerState(keysWithValues) {
     // Save the updated sticker state
     saveStickerState();
 }
+
+const drillingModeToggle = document.getElementById("drillingModeToggle");
+const drillingModeLabel = document.getElementById("drillingModeLabel");
+
+// Default to "Regular" mode if no mode is saved in localStorage
+const savedDrillingMode = localStorage.getItem("drillingMode") === "true";
+let isDrillingMode = savedDrillingMode;
+
+// Set the initial state of the toggle and label
+drillingModeToggle.checked = isDrillingMode;
+drillingModeLabel.textContent = isDrillingMode ? "Drilling" : "Regular";
+
+// Add an event listener to handle toggle changes
+drillingModeToggle.addEventListener("change", function () {
+    isDrillingMode = this.checked; // Update the mode
+    localStorage.setItem("drillingMode", isDrillingMode); // Save the mode to localStorage
+    drillingModeLabel.textContent = isDrillingMode ? "Drilling" : "Regular"; // Update the label text
+
+    console.log(`Drilling Mode switched to: ${isDrillingMode ? "Drilling" : "Regular"}`);
+});
 
 const single_letter_map = {
     "A": "a",

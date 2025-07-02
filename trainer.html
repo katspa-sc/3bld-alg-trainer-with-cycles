@@ -32,6 +32,14 @@
                 </label>
             </div>
 
+            <!-- Add a toggle for Drilling Mode -->
+            <div class="mode-toggle">
+                <label class="toggle-container-drilling">
+                    <input type="checkbox" id="drillingModeToggle" />
+                    <span class="toggle-slider-drilling" id="drillingModeLabel">Regular</span>
+                </label>
+            </div>
+
             <!-- Hidden grid for letter selection -->
             <div id="selectionGrid" class="selection-grid">
                 <!-- White row -->
@@ -277,7 +285,7 @@
     </div>
 
     <audio id="completionJingle" src="molang_wow.ogg" preload="auto"></audio>
-    <audio id="drillJingle" src="linkedin_1.ogg" preload="auto"></audio>
+    <audio id="drillJingle" src="drillJingle.ogg" preload="auto"></audio>
     <audio id="goodJingle" src="good.ogg" preload="auto"></audio>
 
     <script src="js/cube.js"></script>
