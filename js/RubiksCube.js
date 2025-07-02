@@ -99,7 +99,119 @@ function getStorageKey(baseKey) {
 
 var PROXY_URL = "";
 
+      
+      
+let drillingPairs = [];
+let currentDrillingPair = null;
+let isSecondInPair = false;
+let totalDrillPairs = 0;
 
+// --- Add/Modify these variables ---
+let isFirstDrillRun = true;  // To fix the initial jingle problem
+let shouldReadDrillTTS = true; // To control TTS readouts during drills
+
+function initializeDrillingPairs() {
+    console.log("Initializing drilling session...");
+    const selectedSetNames = Object.keys(selectedSets).filter(setName => selectedSets[setName]);
+    const activeAlgs = fetchedAlgs.filter(pair => {
+        const isStickerSelected = stickerState[pair.key] ?? true;
+        const [firstLetter, secondLetter] = pair.key.split("");
+        return isStickerSelected && (selectedSetNames.includes(firstLetter) || selectedSetNames.includes(secondLetter));
+    });
+    
+    const algMap = new Map(activeAlgs.map(item => [item.key, item.value]));
+    const processed = new Set();
+    drillingPairs = [];
+
+    for (const [key, value] of algMap.entries()) {
+        if (processed.has(key)) {
+            continue;
+        }
+        const inverseKey = key[1] + key[0];
+
+        if (algMap.has(inverseKey)) {
+            const inverseValue = algMap.get(inverseKey);
+            drillingPairs.push([value, inverseValue]);
+            processed.add(key);
+            processed.add(inverseKey);
+        }
+    }
+
+    if (drillingPairs.length === 0) {
+        alert("No valid algorithm pairs found for Drilling mode. Please check your selections.");
+        return;
+    }
+
+    for (let i = drillingPairs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [drillingPairs[i], drillingPairs[j]] = [drillingPairs[j], drillingPairs[i]];
+    }
+    
+    totalDrillPairs = drillingPairs.length;
+    console.log(`Found and shuffled ${totalDrillPairs} pairs for drilling.`);
+    isSecondInPair = false;
+    shouldReadDrillTTS = true; // IMPORTANT: Reset TTS flag for the new session
+}
+
+// In the resetSessionButton event listener:
+document.getElementById("resetSessionButton").addEventListener("click", function () {
+    updateUserDefinedAlgs();
+
+    if (isDrillingMode) {
+        isFirstDrillRun = true; // Fix for jingle on start
+        initializeDrillingPairs();
+    } else {
+        remainingAlgs = []; 
+        isFirstRun = true; 
+    }
+
+    repetitionCounter = 0; 
+    localStorage.setItem("repetitionCounter", repetitionCounter);
+    document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
+    document.getElementById("progressDisplay").innerText = "Progress: 0/0";
+
+    nextScramble(); 
+    console.log("Session reset. Starting a new practice session.");
+});
+
+// This function will be called on a successful solve in drilling mode
+function retryDrill() {
+    const lastTest = algorithmHistory[algorithmHistory.length - 1];
+    if (!lastTest) return;
+
+    // Reset the cube to the same scramble
+    cube.resetCube();
+    doAlg(lastTest.scramble, false);
+    updateVirtualCube();
+
+    // Reset the timer
+    document.getElementById("timer").innerHTML = "0.00";
+
+    // Play the drill jingle, but do NOT read the letters again
+    const jingle = document.getElementById("drillJingle");
+    jingle.volume = 0.6;
+    jingle.play();
+    
+    // Disable TTS for the next automatic scramble generation
+    shouldReadDrillTTS = false; 
+
+    console.log("Drilling same algorithm:", lastTest.rawAlgs[0]);
+    startTimer();
+}
+
+// This function will be called by the L4 gesture
+function advanceDrill() {
+    if (!isDrillingMode) return;
+
+    console.log("L4 gesture: Advancing to next drill case...");
+    stopTimer(false); // Stop any active timer
+
+    // Enable TTS for the *new* algorithm that's about to be generated
+    shouldReadDrillTTS = true;
+
+    // Get the next algorithm in the sequence
+    nextScramble();
+} 
 
 const modeToggle = document.getElementById("modeToggle");
 const modeToggleLabel = document.getElementById("modeToggleLabel");
@@ -770,14 +882,15 @@ function doAlg(algorithm, updateTimer = false) {
 
     if (timerIsRunning && cube.isSolved(initialMask.value) && isUsingVirtualCube()) {
         if (updateTimer) {
-            stopTimer();
+            stopTimer(); // Log the time
             markCurrentCommAsGood();
 
-            // Check if Drilling Mode is enabled
             if (isDrillingMode) {
-                retryCurrentAlgorithmDrill(); // Retry the same commutator
+                // In drilling mode, retry the SAME alg
+                retryDrill();
             } else {
-                nextScramble(); // Move to the next commutator
+                // In regular mode, get a new random alg
+                nextScramble();
             }
         } else {
             markCurrentCommAsGood();
@@ -892,12 +1005,16 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
     let letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
-    // TODO remove this Temporary feature: Replace 'O' with '_' if it's a corners 3-cycle
     if (orozcoCheckbox.checked && letters.includes('O')) {
         letters = letters.map(letter => (letter === 'O' ? '_' : letter));
     }
 
-    speakText(parseLettersForTTS(letters));
+    // --- TTS CONTROL LOGIC ---
+    if (shouldReadDrillTTS) {
+        speakText(parseLettersForTTS(letters));
+    }
+    // --- END TTS CONTROL ---
+
     const cycleLetters = letters.join('');
 
     return [cycleLetters, scramble];
@@ -1233,49 +1350,54 @@ let remainingAlgs = []; // Stores the remaining algorithms for the current cycle
 let isFirstRun = true; // Flag to track the first run
 
 function randomFromList(set) {
-    // Ensure the set is not empty
-    if (!set || set.length === 0) {
-        alert("No algorithms available. Please add algorithms to the list.");
-        return null;
-    }
-
-    // Initialize remainingAlgs if it's empty
-    if (remainingAlgs.length === 0) {
-        remainingAlgs = [...set];
-
-        // Skip the jingle on the first run
-        if (isFirstRun) {
-            isFirstRun = false; // Set the flag to false after the first run
+    if (isDrillingMode) {
+        // --- DRILLING (PAIRED) LOGIC ---
+        if (isSecondInPair) {
+            // Serve the second (inverse) algorithm of the current pair.
+            isSecondInPair = false; // Reset for the next pair
+            document.getElementById("progressDisplay").innerText = `Progress: ${totalDrillPairs - drillingPairs.length}/${totalDrillPairs}`;
+            return currentDrillingPair[1];
         } else {
-            // Play the jingle when the set is completed (not the first run)
-            const jingle = document.getElementById("completionJingle");
-            jingle.volume = 0.5
-            jingle.play();
+            // Serve the first algorithm of a new pair.
+            if (drillingPairs.length === 0) {
+                // We've completed the set. Re-initialize.
+                if (!isFirstDrillRun) { // Fix: Don't play jingle on the very first run
+                    const jingle = document.getElementById("completionJingle");
+                    jingle.volume = 0.5
+                    jingle.play();
+                }
+                isFirstDrillRun = false; // It's no longer the first run
+                initializeDrillingPairs();
+                if (drillingPairs.length === 0) return null;
+            }
 
-            // // Delay the prompt until after the jingle starts playing
-            // setTimeout(() => {
-            //     const continuePractice = confirm("You have completed the set! Would you like to continue?");
-            //     if (continuePractice) {
-            //         // Repopulate the remainingAlgs array
-            //         remainingAlgs = [...set];
-            //     } else {
-            //         remainingAlgs = []; // Clear the list if the user doesn't want to continue
-            //     }
-            // }, 500); // Delay the prompt by 500ms (adjust as needed)
-            // return null; // Exit early to avoid selecting an algorithm during the prompt
+            currentDrillingPair = drillingPairs.pop();
+            isSecondInPair = true;
+            document.getElementById("progressDisplay").innerText = `Progress: ${totalDrillPairs - drillingPairs.length - 1}/${totalDrillPairs}`;
+            return currentDrillingPair[0];
         }
+    } else {
+        // --- REGULAR (EXISTING) LOGIC ---
+        if (!set || set.length === 0) {
+            alert("No algorithms available. Please add algorithms to the list.");
+            return null;
+        }
+        if (remainingAlgs.length === 0) {
+            remainingAlgs = [...set];
+            if (!isFirstRun) {
+                const jingle = document.getElementById("completionJingle");
+                jingle.volume = 0.5
+                jingle.play();
+            }
+            isFirstRun = false;
+        }
+        const randIndex = Math.floor(Math.random() * remainingAlgs.length);
+        const selectedAlgorithm = remainingAlgs.splice(randIndex, 1)[0];
+        const currentIndex = set.length - remainingAlgs.length;
+        const totalAlgs = set.length;
+        document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
+        return selectedAlgorithm;
     }
-
-    // Pick a random algorithm from the remainingAlgs array
-    const randIndex = Math.floor(Math.random() * remainingAlgs.length);
-    const selectedAlgorithm = remainingAlgs.splice(randIndex, 1)[0]; // Remove the selected algorithm
-
-    // Update the progress display
-    const currentIndex = set.length - remainingAlgs.length;
-    const totalAlgs = set.length;
-    document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
-
-    return selectedAlgorithm;
 }
 
 var timeArray = [];
@@ -2505,9 +2627,13 @@ function triggerSpecialAction(sequence) {
             markLastCommAsChange();
             break;
         case "L4":
-            console.log("L4 detected! Running next alg");
-            markCurrentCommAsBad();
-            nextScramble();
+            console.log("L4 detected! Advancing drill or running next alg.");
+            if (isDrillingMode) {
+                advanceDrill(); // Special action for drilling mode
+            } else {
+                markCurrentCommAsBad(); // Original behavior for regular mode
+                nextScramble();
+            }
             break;
         case "U6":
             console.log("U6 detected! Marking last alg as good");
@@ -2519,38 +2645,6 @@ function triggerSpecialAction(sequence) {
         default:
             console.log(`No action defined for sequence: ${sequence}`);
     }
-}
-
-function retryCurrentAlgorithmDrill() {
-    const lastTest = algorithmHistory[algorithmHistory.length - 1];
-    stopTimer(false); // Stop timer without logging a new time (it was already logged in doAlg)
-
-    if (!lastTest) {
-        alert("No algorithm to retry.");
-        return;
-    }
-
-    // Reset the cube and apply the scramble
-    cube.resetCube();
-    doAlg(lastTest.scramble, false); // Use `false` to prevent a recursive loop
-    updateVirtualCube();
-
-    // Reset the timer display
-    document.getElementById("timer").innerHTML = "0.00";
-
-    // Display the scramble and cycle letters again
-    document.getElementById("scramble").innerHTML = `<span>${lastTest.orientRandPart}</span> ${lastTest.rawAlgs[0]}`;
-    document.getElementById("cycle").innerHTML = lastTest.cycleLetters;
-
-    // Play a jingle to indicate successful completion and restart
-    const jingle = document.getElementById("drillJingle"); // Make sure you have an audio element with id="successJingle" in your HTML
-    jingle.volume = 0.6;
-    jingle.play();
-
-    console.log("Retrying algorithm in Drilling Mode:", lastTest.rawAlgs[0]);
-
-    // Start the timer for the next attempt of the same alg
-    startTimer();
 }
 
 function enableTtsOnStartup() {
@@ -3395,25 +3489,21 @@ document.getElementById("resetSessionButton").addEventListener("click", function
     // Update the userDefinedAlgs textbox based on the current selection
     updateUserDefinedAlgs();
 
-    // Reset the practice state
-    remainingAlgs = []; // Clear the remaining algorithms
-    isFirstRun = true; // Reset the first run flag
-    repetitionCounter = 0; // Reset the repetition counter
-    localStorage.setItem("repetitionCounter", repetitionCounter); // Save the reset state
-    document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`; // Update the UI
-
-    // Clear the progress display
-    document.getElementById("progressDisplay").innerText = "Progress: 0/0";
-
-    // Create a new list of algorithms from userDefinedAlgs
-    const algList = createAlgList();
-    if (algList.length === 0) {
-        return;
+    if (isDrillingMode) {
+        // If in drilling mode, initialize the pairs
+        initializeDrillingPairs();
+    } else {
+        // Otherwise, reset the regular practice state
+        remainingAlgs = []; 
+        isFirstRun = true; 
     }
 
-    // Start a new session
-    remainingAlgs = [...algList]; // Populate the remaining algorithms
-    nextScramble(); // Start the first scramble
+    repetitionCounter = 0; 
+    localStorage.setItem("repetitionCounter", repetitionCounter);
+    document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
+    document.getElementById("progressDisplay").innerText = "Progress: 0/0";
+
+    nextScramble(); 
     console.log("Session reset. Starting a new practice session.");
 });
 
