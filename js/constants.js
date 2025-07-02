@@ -1,3 +1,5 @@
+const APP_VERSION = "v0.1 - webaudio"; 
+
 const SOLVED_STATE = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
 const SOLVED_POSITIONS = [
     [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], // U face
@@ -90,7 +92,7 @@ const LETTER_COLORS = {
     "Z": { background: "#FFD700", text: "black" }  // Yellow
 };
 
-const SINGLE_LETTER_MAP = {
+const single_letter_map = {
     "A": "a",
     "B": "b",
     "C": "c",
@@ -602,3 +604,28 @@ const LETTER_PAIR_TO_WORD = {
     'ZW': 'zet wu',
     'ZZ': 'zet zet'
 }
+
+var keypadLayout = [
+    ["b", "S'", "E", "f'", "x", "f", "E'", "S", "b"],
+    ["z'", "l'", "L'", "U'", "M'", "U", "R", "r", "z"],
+    ["y'", "l", "L", "F'", "M", "F", "R'", "r'", "y"],
+    ["d", "B", "u'", "D", "x'", "D'", "u", "B'", "d'"]
+]
+
+var defaults = {
+    "useVirtual": true,
+    "hideTimer": false,
+    "includeRecognitionTime": true,
+    "showScramble": true,
+    "realScrambles": false,
+    "randAUF": false,
+    "prescramble": false,
+    "goInOrder": false,
+    "goToNextCase": false,
+    "mirrorAllAlgs": false,
+    "mirrorAllAlgsAcrossS": false,
+    "userDefinedAlgs": "",
+    "visualCubeView": "plan",
+    "randomizeSMirror": false,
+    "randomizeMMirror": false,
+};

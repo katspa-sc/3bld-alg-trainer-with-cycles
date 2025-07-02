@@ -1,18 +1,4 @@
-console.log("starting script...aaa");
-
-import {
-    SOLVED_POSITIONS,
-    POSITION_TO_LETTER_MAP,
-    EDGE_PIECE_MAP,
-    CORNER_PIECE_MAP,
-    LETTER_COLORS,
-    SINGLE_LETTER_MAP,
-    LETTER_PAIR_TO_WORD
-} from './constants.js';
-
 let wakeLock = null;
-
-console.log("starting script...");
 
 async function acquireWakeLock() {
     // Check if the Wake Lock API is supported.
@@ -297,6 +283,7 @@ const initialMask = document.getElementById('initialMask');
 const finalMask = document.getElementById('finalMask');
 
 document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById('version-label').textContent = `Version: ${APP_VERSION}`;
     handleOrientation();
     handleInitialMask();
     handleFinalMask();
@@ -539,65 +526,11 @@ var lastPackSize = numCubes % packSize;
 
 var container = document.getElementById("cubeSelectButtons");
 
-var keypadLayout = [
-    ["b", "S'", "E", "f'", "x", "f", "E'", "S", "b"],
-    ["z'", "l'", "L'", "U'", "M'", "U", "R", "r", "z"],
-    ["y'", "l", "L", "F'", "M", "F", "R'", "r'", "y"],
-    ["d", "B", "u'", "D", "x'", "D'", "u", "B'", "d'"]
-]
-
-// for (let i = 0; i <= numFullPacks; ++i) {
-//     var cubeContainer = document.createElement('div');
-//     cubeContainer.className = 'cube-container';
-
-//     // Create a grid container for buttons
-//     var buttonGrid = document.createElement('div');
-//     buttonGrid.className = 'button-grid';
-
-//     // Create packSize number of buttons inside the button grid
-//     for (var j = 1; j <= (i === numFullPacks ? lastPackSize : packSize); ++j) {
-//         var button = document.createElement('button');
-//         button.textContent = keypadLayout[i][j-1];
-//         button.className = 'cube-select-button';
-//         button.id = 'container-' + i + '-button-' + j;
-//         button.addEventListener("click", handleButtonClick);
-
-//         buttonGrid.appendChild(button);
-//     }
-
-//     cubeContainer.appendChild(buttonGrid);
-//     container.appendChild(cubeContainer);
-// }
-
-// adjustButtonWidths();
-
-
-
-//////////////////////////////////////////////////////////////
-
 document.getElementById("loader").style.display = "none";
 var myVar = setTimeout(showPage, 1);
 function showPage() {
     document.getElementById("page").style.display = "block";
 }
-
-var defaults = {
-    "useVirtual": true,
-    "hideTimer": false,
-    "includeRecognitionTime": true,
-    "showScramble": true,
-    "realScrambles": false,
-    "randAUF": false,
-    "prescramble": false,
-    "goInOrder": false,
-    "goToNextCase": false,
-    "mirrorAllAlgs": false,
-    "mirrorAllAlgsAcrossS": false,
-    "userDefinedAlgs": "",
-    "visualCubeView": "plan",
-    "randomizeSMirror": false,
-    "randomizeMMirror": false,
-};
 
 for (var setting in defaults) {
     // If no previous setting exists, use default and update localStorage. Otherwise, set to previous setting
@@ -3952,3 +3885,4 @@ async function fetchAlgorithms(proxyUrl) {
 }
 
 document.getElementById("applyPartialFilterButton").addEventListener("click", fetchAndApplyPartialFilter);
+
