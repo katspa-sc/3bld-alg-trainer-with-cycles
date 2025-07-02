@@ -2,22 +2,11 @@ let previousScramble = "";
 let previousCycle = "";
 
 function tryNotify() {
-    if (Notification.permission === "granted") {
-        new Notification(" ", {
-          body: "",         // Empty = minimal UI
-          silent: false     // This is the key — allow sound
-        });
-      } else {
-        Notification.requestPermission().then(permission => {
-          if (permission === "granted") {
-            new Notification(" ", {
-              body: "",
-              silent: false
-            });
-          }
-        });
-      }
-    }
+    const options = isHypeMode ? hypeDrillOptions : regularDrillOptions; // Use hype or regular options
+    const text = options[Math.floor(Math.random() * options.length)];
+    const rate = isHypeMode ? 1.3 : 1.5; // Faster rate for hype mode
+    speakText(text, rate, false, isHypeMode);
+}
 
 function getStorageKey(baseKey) {
     return `${currentMode}_${baseKey}`; // Prefix the key with the current mode (e.g., "corner_fetchedAlgs")
@@ -25,7 +14,22 @@ function getStorageKey(baseKey) {
 
 var PROXY_URL = "";
 
+const hypeModeCheckbox = document.getElementById("hypeModeCheckbox");
 
+// Default to "false" if no mode is saved in localStorage
+const savedHypeMode = localStorage.getItem("hypeMode") === "true";
+let isHypeMode = savedHypeMode;
+
+// Set the initial state of the checkbox
+hypeModeCheckbox.checked = isHypeMode;
+
+// Add an event listener to handle checkbox changes
+hypeModeCheckbox.addEventListener("change", function () {
+    isHypeMode = this.checked; // Update the mode
+    localStorage.setItem("hypeMode", isHypeMode); // Save the mode to localStorage
+
+    console.log(`Hype Mode switched to: ${isHypeMode ? "enabled" : "disabled"}`);
+});
 
 let drillingPairs = [];
 let currentDrillingPair = null;
@@ -112,11 +116,6 @@ function retryDrill() {
 
     // Reset the timer
     document.getElementById("timer").innerHTML = "0.00";
-
-    // Play the drill jingle, but do NOT read the letters again
-    const jingle = document.getElementById("drillJingle");
-    jingle.volume = 0.8;
-    jingle.play();
 
     tryNotify();
 
@@ -846,10 +845,6 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
 
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
     let letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
-
-    if (orozcoCheckbox.checked && letters.includes('O')) {
-        letters = letters.map(letter => (letter === 'O' ? '_' : letter));
-    }
 
     // --- TTS CONTROL LOGIC ---
     if (shouldReadDrillTTS) {
@@ -2285,39 +2280,7 @@ function checkForSpecialSequences() {
 }
 
 function determineReadingMode(text) {
-    if (orozcoCheckbox.checked) {
-        return processOrozcoMode(text);
-    } else {
-        return processRegularMode(text);
-    }
-}
-
-function processOrozcoMode(text) {
-    // Process text for Orozco mode
-    if (text.includes("_") && text.length === 3) {
-        const [first, second] = text.split(" ");
-        if (first === "_") {
-            const mappedSecond = second
-                .split("") // Split into characters
-                .map(char => SINGLE_LETTER_MAP[char] || char) // Map each character or leave it unchanged
-                .join(" "); // Join back into a string
-            return `drugie ${mappedSecond}`;
-        } else if (second === "_") {
-            const mappedFirst = first
-                .split("") // Split into characters
-                .map(char => SINGLE_LETTER_MAP[char] || char) // Map each character or leave it unchanged
-                .join(" "); // Join back into a string
-            return `${mappedFirst} pierwsze`;
-        } else {
-            return text; // Fallback to the original text
-        }
-    } else {
-        // Map all characters in the text using the SINGLE_LETTER_MAP
-        return text
-            .split("") // Split into characters
-            .map(char => SINGLE_LETTER_MAP[char] || char) // Map each character or leave it unchanged
-            .join(" "); // Join back into a string
-    }
+    return processRegularMode(text);
 }
 
 function processRegularMode(text) {
@@ -2336,7 +2299,7 @@ function processRegularMode(text) {
         .join(isMobile ? "," : " "); // Join with spaces for both, but commas are added for non-mobile
 }
 
-function speakText(text, rate = 1.0, readComm = false) {
+function speakText(text, rate = 1.0, readComm = false, readHype = false) {
     const enableTTS = localStorage.getItem("enableTTS") === "true";
 
     if (!enableTTS) {
@@ -2358,7 +2321,11 @@ function speakText(text, rate = 1.0, readComm = false) {
         utterance.lang = localStorage.getItem("ttsLanguage") || "pl-PL"; // Get language or use default
 
         // Process the text using the extracted method
-        utterance.text = processTextForTTS(text, readComm);
+        if (!readHype) {
+            utterance.text = processTextForTTS(text, readComm);
+        } else {
+            utterance.text = text; // Use the original text for hype reading
+        }
 
         // Speak the text immediately
         window.speechSynthesis.speak(utterance);
@@ -2913,18 +2880,6 @@ document.getElementById("clearUserAlgsButton").addEventListener("click", functio
     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
     userDefinedAlgs.value = ""; // Clear the textarea
     console.log("User-defined algs cleared.");
-});
-
-const orozcoCheckbox = document.getElementById("orozcoCheckbox");
-
-// Load the saved state from localStorage
-const savedOrozcoState = localStorage.getItem("orozcoMode") === "true";
-orozcoCheckbox.checked = savedOrozcoState;
-
-// Add an event listener to update localStorage when the checkbox is toggled
-orozcoCheckbox.addEventListener("change", function () {
-    localStorage.setItem("orozcoMode", orozcoCheckbox.checked);
-    console.log(`Orozco mode is now ${orozcoCheckbox.checked ? "enabled" : "disabled"}`);
 });
 
 let fetchedAlgs = []; // Array to store fetched algorithms
@@ -3545,51 +3500,6 @@ document.getElementById("cycle").addEventListener("click", function () {
     }).catch(err => {
         console.error("Failed to copy piece notation to clipboard:", err);
     });
-});
-
-document.getElementById("orozcoButton").addEventListener("click", function () {
-    const orozcoAlgs = [
-        "R' B' R: U', R D R'",
-        "R F' R': R' D R, U",
-        "R: U, R D R'",
-        "R': R' D' R, U'",
-        "R' D R, U",
-        "U', R D' R'",
-        "R: U2, R D R'",
-        "D': R' D R, U",
-        "D: R' D' R, U",
-        "U', R D R'",
-        "R' D' R, U",
-        "R': R' D' R, U2",
-        "D': U', R D R'",
-        "D: U', R D' R'",
-        "R F': R' U' R, D",
-        "R' D R U' R D' R', U",
-        "U', R D' R' U R' D R",
-        "R' B: D', R U R'",
-        "R' B' R: R D R', U'",
-        "R F' R': U, R' D R",
-        "R: R D R', U",
-        "R': U', R' D' R",
-        "U, R' D R",
-        "R D' R', U'",
-        "R: R D R', U2",
-        "D': U, R' D R",
-        "D: U, R' D' R",
-        "R D R', U'",
-        "U, R' D' R",
-        "R': U2, R' D' R",
-        "D': R D R', U'",
-        "D: R D' R', U'",
-        "R F': D, R' U' R",
-        "U, R' D R U' R D' R'",
-        "R D' R' U R' D R, U'",
-        "R' B: R U R', D'"
-    ];
-
-    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-    userDefinedAlgs.value = orozcoAlgs.join("\n"); // Fill the textarea with the algs, each on a new line
-    console.log("User-defined algs filled with Orozco list.");
 });
 
 document.addEventListener("DOMContentLoaded", function () {

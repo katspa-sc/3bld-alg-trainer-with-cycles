@@ -1,5 +1,22 @@
 const APP_VERSION = "v0.1.1 - try notify +"; 
 
+const regularDrillOptions = ["tak", "klik", "bip"];
+const hypeDrillOptions = [
+    "jedziesz kurwa!",
+    "dawaj kurwa!",
+    "szybciej zapierdalaj!",
+    "napierdalaj dalej!",
+    "szybciej dalej!",
+    "dokręcaj te, ręce!",
+    "szybcieeeeeej dokręcaaaaj!",
+    "raz dwaaa trzyyy!",
+    "powiedziano raz dwa trzy!",
+    "arbajt arbajt!",
+    "trzeba ciebie skrócić troszkę!",
+    "jazda jazda!",
+    "jedziesz ten triceps dalej!"
+  ];
+
 const SOLVED_STATE = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
 const SOLVED_POSITIONS = [
     [1, 0], [1, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], // U face
