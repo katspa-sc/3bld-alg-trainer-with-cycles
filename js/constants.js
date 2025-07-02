@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.1.1 - try notify +"; 
+const APP_VERSION = "v0.1.1 - add hype mode"; 
 
 const regularDrillOptions = [
     "klik", "bip",
