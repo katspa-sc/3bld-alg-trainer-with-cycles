@@ -1,6 +1,10 @@
 const APP_VERSION = "v0.1.1 - try notify +"; 
 
-const regularDrillOptions = ["tak", "klik", "bip"];
+const regularDrillOptions = [
+    "klik", "bip",
+    "zap", "zip", "bop", "blip", "bazz", "tik", "tok", "pip", "pop", "ding", "dong",
+  ];
+
 const hypeDrillOptions = [
     "jedziesz kurwa!",
     "dawaj kurwa!",
@@ -14,7 +18,8 @@ const hypeDrillOptions = [
     "arbajt arbajt!",
     "trzeba ciebie skrócić troszkę!",
     "jazda jazda!",
-    "jedziesz ten triceps dalej!"
+    "jedziesz ten triceps dalej!",
+    "ding dong! nie pojedziesz tą windą!"
   ];
 
 const SOLVED_STATE = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
