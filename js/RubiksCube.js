@@ -2,16 +2,22 @@ let previousScramble = "";
 let previousCycle = "";
 
 function tryNotify() {
-    // First: Request permission
-Notification.requestPermission().then(permission => {
-    if (permission === "granted") {
-      new Notification(" ", {
-        body: "",         // no text
-        silent: false,    // allow sound
-      });
+    if (Notification.permission === "granted") {
+        new Notification(" ", {
+          body: "",         // Empty = minimal UI
+          silent: false     // This is the key — allow sound
+        });
+      } else {
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") {
+            new Notification(" ", {
+              body: "",
+              silent: false
+            });
+          }
+        });
+      }
     }
-  });
-}
 
 function getStorageKey(baseKey) {
     return `${currentMode}_${baseKey}`; // Prefix the key with the current mode (e.g., "corner_fetchedAlgs")
@@ -1160,7 +1166,9 @@ function randomFromList(set) {
             if (drillingPairs.length === 0) {
                 // We've completed the set. Re-initialize.
                 if (!isFirstDrillRun) { // Fix: Don't play jingle on the very first run
-                    tryNotify();
+                    const jingle = document.getElementById("completionJingle");
+                    jingle.volume = 0.5
+                    jingle.play();
                 }
                 isFirstDrillRun = false; // It's no longer the first run
                 initializeDrillingPairs();
@@ -3831,4 +3839,3 @@ async function fetchAlgorithms(proxyUrl) {
 }
 
 document.getElementById("applyPartialFilterButton").addEventListener("click", fetchAndApplyPartialFilter);
-
