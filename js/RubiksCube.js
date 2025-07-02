@@ -189,7 +189,7 @@ function retryDrill() {
 
     // Play the drill jingle, but do NOT read the letters again
     const jingle = document.getElementById("drillJingle");
-    jingle.volume = 0.6;
+    jingle.volume = 0.8;
     jingle.play();
     
     // Disable TTS for the next automatic scramble generation
