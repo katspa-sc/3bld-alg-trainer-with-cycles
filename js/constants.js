@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.1.1 - add hype mode"; 
+const APP_VERSION = "v0.2 - init session on cube connection"; 
 
 const regularDrillOptions = [
     "klik", "bip",
@@ -8,11 +8,11 @@ const regularDrillOptions = [
 const hypeDrillOptions = [
     "jedziesz kurwa!",
     "dawaj kurwa!",
-    "szybciej zapierdalaj!",
+    "szybciej zapierdallaj!",
     "napierdalaj dalej!",
     "szybciej dalej!",
     "dokręcaj te, ręce!",
-    "szybcieeeeeej dokręcaaaaj!",
+    "szybcieeeeeej dokręcaaaj!",
     "raz dwaaa trzyyy!",
     "powiedziano raz dwa trzy!",
     "arbajt arbajt!",

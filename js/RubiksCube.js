@@ -97,11 +97,7 @@ function initializeDrillingPairs(algsFromTextarea) {
     shouldReadDrillTTS = true;
 }
 
-// The "Start Session" button listener
-document.getElementById("resetSessionButton").addEventListener("click", function () {
-    // This button now ONLY reads from the textbox to start the session.
-    // It no longer cares how the textbox was populated.
-
+function initializeSession() {
     if (isDrillingMode) {
         const boxAlgs = document.getElementById("userDefinedAlgs").value;
 
@@ -110,7 +106,7 @@ document.getElementById("resetSessionButton").addEventListener("click", function
         if (cleanedAlgs.length === 0) {
             alert("The algorithm box is empty. Please add algorithms before starting a session.");
             return;
-    }
+        }
 
         initializeDrillingPairs(cleanedAlgs); // Pass the list to the drill initializer
         isFirstDrillRun = true;
@@ -125,7 +121,12 @@ document.getElementById("resetSessionButton").addEventListener("click", function
     document.getElementById("progressDisplay").innerText = "Progress: 0/0";
 
     nextScramble();
-    console.log("Session reset. Starting a new practice session.");
+    console.log("Session initialized. Starting a new practice session.");
+}
+
+// The "Start Session" button listener
+document.getElementById("resetSessionButton").addEventListener("click", function () {
+ initializeSession();
 });
 
 // This function will be called on a successful solve in drilling mode
@@ -258,7 +259,6 @@ const initialMask = document.getElementById('initialMask');
 const finalMask = document.getElementById('finalMask');
 
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById('version-label').textContent = `Version: ${APP_VERSION}`;
     handleOrientation();
     handleInitialMask();
     handleFinalMask();
@@ -2482,9 +2482,7 @@ async function connectSmartCube() {
                     .map(Number);
 
                 if (currentProgress === 0) {
-                    createAlgList();
-                    // Start a new session if progress is 0
-                    nextScramble();
+                    initializeSession(); // Initialize the session if no progress
                 } else {
                     // Retry the current scramble if progress is higher than 0
                     retryCurrentAlgorithm();
