@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.2 - init session on cube connection"; 
+const APP_VERSION = "v0.9.1 - alert on missing pairs"; 
 
 const regularDrillOptions = [
     "klik", "bip",

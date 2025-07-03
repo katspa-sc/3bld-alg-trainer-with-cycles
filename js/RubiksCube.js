@@ -54,11 +54,11 @@ function initializeDrillingPairs(algsFromTextarea) {
     });
 
     // Create a map of (key -> comm) to find the inverse commutator
-    // TODO just make this static and gen on my own
     const keyToCommMap = new Map(fetchedAlgs.map(item => [item.key.trim(), item.value.trim()]));
 
     const processed = new Set();
     drillingPairs = [];
+    const missingPairs = []; // Track commutators missing their inverse
 
     for (const alg of algsFromTextarea) {
         const trimmedAlg = alg.trim();
@@ -77,6 +77,9 @@ function initializeDrillingPairs(algsFromTextarea) {
             drillingPairs.push([trimmedAlg, inverseAlg]);
             processed.add(trimmedAlg);
             processed.add(inverseAlg.trim());
+        } else {
+            // If the inverse is missing, add to the missingPairs list
+            missingPairs.push(`${trimmedAlg} (${key})`); // Display the commutator and its associated letters
         }
     }
 
@@ -95,6 +98,12 @@ function initializeDrillingPairs(algsFromTextarea) {
     console.log(`Found and shuffled ${totalDrillPairs} pairs for drilling.`);
     isSecondInPair = false;
     shouldReadDrillTTS = true;
+
+    // Inform the user about missing pairs
+    if (missingPairs.length > 0) {
+        alert(`The following commutators were valid but had no corresponding inverse:\n${missingPairs.join("\n")}`);
+        console.log("Missing pairs:", missingPairs);
+    }
 }
 
 function initializeSession() {
@@ -259,6 +268,7 @@ const initialMask = document.getElementById('initialMask');
 const finalMask = document.getElementById('finalMask');
 
 document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById('version-label').textContent = `Version: ${APP_VERSION}`;
     handleOrientation();
     handleInitialMask();
     handleFinalMask();
