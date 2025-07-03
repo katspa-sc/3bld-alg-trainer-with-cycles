@@ -746,3 +746,17 @@ div.hidden {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Optional: shadow for better visibility */
     z-index: 1000; /* Ensure it appears above other elements */
 }
+
+.apply-button {
+  background-color: #4CAF50; /* Green */
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 5px;
+  border-radius: 4px;
+}
+.apply-button:hover {
+  background-color: #45a049;
+}

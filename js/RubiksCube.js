@@ -40,38 +40,52 @@ let totalDrillPairs = 0;
 let isFirstDrillRun = true;  // To fix the initial jingle problem
 let shouldReadDrillTTS = true; // To control TTS readouts during drills
 
-function initializeDrillingPairs() {
-    console.log("Initializing drilling session...");
-    const selectedSetNames = Object.keys(selectedSets).filter(setName => selectedSets[setName]);
-    const activeAlgs = fetchedAlgs.filter(pair => {
-        const isStickerSelected = stickerState[pair.key] ?? true;
-        const [firstLetter, secondLetter] = pair.key.split("");
-        return isStickerSelected && (selectedSetNames.includes(firstLetter) || selectedSetNames.includes(secondLetter));
+function initializeDrillingPairs(algsFromTextarea) {
+    console.log("Initializing drilling session from textbox content...");
+    
+    // Create a map of the *full* alg set (comm -> key) to find inverses.
+    const fullAlgMap = new Map(fetchedAlgs.map(item => [item.value.trim(), item.key.trim()]));
+    
+    // Create a map of (key -> inverseKey) for quick lookup
+    const inverseKeyMap = new Map();
+    fetchedAlgs.forEach(item => {
+        const inverseKey = item.key[1] + item.key[0];
+        inverseKeyMap.set(item.key, inverseKey);
     });
 
-    const algMap = new Map(activeAlgs.map(item => [item.key, item.value]));
+    // Create a map of (key -> comm) to find the inverse commutator
+    // TODO just make this static and gen on my own
+    const keyToCommMap = new Map(fetchedAlgs.map(item => [item.key.trim(), item.value.trim()]));
+
     const processed = new Set();
     drillingPairs = [];
 
-    for (const [key, value] of algMap.entries()) {
-        if (processed.has(key)) {
+    for (const alg of algsFromTextarea) {
+        const trimmedAlg = alg.trim();
+        if (processed.has(trimmedAlg)) {
             continue;
         }
-        const inverseKey = key[1] + key[0];
 
-        if (algMap.has(inverseKey)) {
-            const inverseValue = algMap.get(inverseKey);
-            drillingPairs.push([value, inverseValue]);
-            processed.add(key);
-            processed.add(inverseKey);
+        const key = fullAlgMap.get(trimmedAlg);
+        if (!key) continue; // Alg not found in master list, skip it.
+
+        const inverseKey = inverseKeyMap.get(key);
+        const inverseAlg = keyToCommMap.get(inverseKey);
+        
+        // Check if the inverse alg is also present in the user's provided list
+        if (inverseAlg && algsFromTextarea.map(a => a.trim()).includes(inverseAlg.trim())) {
+            drillingPairs.push([trimmedAlg, inverseAlg]);
+            processed.add(trimmedAlg);
+            processed.add(inverseAlg.trim());
         }
     }
 
     if (drillingPairs.length === 0) {
-        alert("No valid algorithm pairs found for Drilling mode. Please check your selections.");
+        alert("No valid algorithm pairs found for Drilling mode based on the content of the textbox. Please check your algorithms.");
         return;
     }
 
+    // Shuffle the pairs
     for (let i = drillingPairs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [drillingPairs[i], drillingPairs[j]] = [drillingPairs[j], drillingPairs[i]];
@@ -80,18 +94,28 @@ function initializeDrillingPairs() {
     totalDrillPairs = drillingPairs.length;
     console.log(`Found and shuffled ${totalDrillPairs} pairs for drilling.`);
     isSecondInPair = false;
-    shouldReadDrillTTS = true; // IMPORTANT: Reset TTS flag for the new session
+    shouldReadDrillTTS = true;
 }
 
-// In the resetSessionButton event listener:
+// The "Start Session" button listener
 document.getElementById("resetSessionButton").addEventListener("click", function () {
-    updateUserDefinedAlgs();
+    // This button now ONLY reads from the textbox to start the session.
+    // It no longer cares how the textbox was populated.
 
     if (isDrillingMode) {
-        isFirstDrillRun = true; // Fix for jingle on start
-        initializeDrillingPairs();
+        const boxAlgs = document.getElementById("userDefinedAlgs").value;
+
+        const cleanedAlgs = boxAlgs.split("\n").filter(alg => alg.trim() !== "");
+
+        if (cleanedAlgs.length === 0) {
+            alert("The algorithm box is empty. Please add algorithms before starting a session.");
+            return;
+    }
+
+        initializeDrillingPairs(cleanedAlgs); // Pass the list to the drill initializer
+        isFirstDrillRun = true;
     } else {
-        remainingAlgs = [];
+        remainingAlgs = []; // This will be repopulated in `randomFromList`
         isFirstRun = true;
     }
 
@@ -2944,38 +2968,6 @@ async function fetchAlgs() {
     }
 }
 
-// Filter algorithms by letter without re-fetching
-async function filterAlgsByLetter(selectedLetter) {
-    if (!selectedLetter) {
-        console.warn("No letter selected.");
-        return;
-    }
-
-    // Fetch algs if the array is empty
-    if (fetchedAlgs.length === 0) {
-        console.log("Fetching algorithms as fetchedAlgs is empty...");
-        await fetchAlgs();
-    }
-
-    // Filter the fetchedAlgs array for keys that match the selected letter
-    const filteredValues = fetchedAlgs
-        .filter(pair => {
-            // Check if the pair starts or ends with the selected letter
-            const matchesLetter = pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter);
-
-            // Check if the pair is toggled on in stickerState
-            const isStickerSelected = stickerState[pair.key] ?? true; // Default to true if not explicitly set
-
-            return matchesLetter && isStickerSelected;
-        })
-        .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
-
-    // Paste the filtered values into the input box
-    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-    userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
-    console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
-}
-
 // Load cached algorithms on page load
 document.addEventListener("DOMContentLoaded", loadCachedAlgs);
 
@@ -3027,7 +3019,7 @@ document.getElementById("letterSelector").addEventListener("click", function () 
             });
 
             saveSelectedSets(); // Save the updated state to localStorage
-            updateUserDefinedAlgs(); // Update the textbox with combined algorithms
+            //updateUserDefinedAlgs(); // Update the textbox with combined algorithms
         });
         selectionGrid.appendChild(toggleButton);
     }
@@ -3045,7 +3037,6 @@ function handleGridButtonClick(button, setName) {
     button.classList.toggle("untoggled", !selectedSets[setName]); // Update appearance
 
     saveSelectedSets(); // Save the state to localStorage
-    updateUserDefinedAlgs(); // Update the textbox with combined algorithms
 
     if (selectedSets[setName]) {
         // Open the pair selection grid only if the set is being toggled on
@@ -3181,73 +3172,51 @@ function isExcludedCombination(combination) {
     return false; // Include the combination
 }
 
-// async function filterAlgsByLetter(selectedLetter) {
-//     if (!selectedLetter) {
-//         console.warn("No letter selected.");
-//         return;
-//     }
+async function filterAlgsByLetter(selectedLetter) {
+    if (!selectedLetter) {
+        console.warn("No letter selected.");
+        return;
+    }
 
-//     // Fetch algs if the array is empty
-//     if (fetchedAlgs.length === 0) {
-//         console.log("Fetching algorithms as fetchedAlgs is empty...");
-//         await fetchAlgs();
-//     }
+    // Fetch algs if the array is empty
+    if (fetchedAlgs.length === 0) {
+        console.log("Fetching algorithms as fetchedAlgs is empty...");
+        await fetchAlgs();
+    }
 
-//     // Filter the fetchedAlgs array for keys that match the selected letter
-//     const filteredValues = fetchedAlgs
-//         .filter(pair => pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter))
-//         .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
+    // Filter the fetchedAlgs array for keys that match the selected letter
+    const filteredValues = fetchedAlgs
+        .filter(pair => pair.key.startsWith(selectedLetter) || pair.key.endsWith(selectedLetter))
+        .map(pair => pair.value.trim()); // Extract only the values and trim whitespace
 
-//     // Paste the filtered values into the input box
-//     const userDefinedAlgs = document.getElementById("userDefinedAlgs");
-//     userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
-//     console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
+    // Paste the filtered values into the input box
+    const userDefinedAlgs = document.getElementById("userDefinedAlgs");
+    userDefinedAlgs.value = filteredValues.join("\n"); // Join with newlines
+    console.log(`Filtered algorithms for "${selectedLetter}":`, filteredValues);
 
-//     // Check for missing combinations if the filtered values are less than 36
-//     const missingCommsLabel = document.getElementById("missingCommsLabel");
-//     if (filteredValues.length < 36) {
-//         const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
-//         console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
+    // Check for missing combinations if the filtered values are less than 36
+    const missingCommsLabel = document.getElementById("missingCommsLabel");
+    if (filteredValues.length < 36) {
+        const missingCombinations = findMissingCombinations(selectedLetter, fetchedAlgs);
+        console.log(`Missing combinations for "${selectedLetter}":`, missingCombinations);
 
-//         if (missingCombinations.length > 0) {
-//             // Update the dynamic label with missing combinations
-//             missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
-//         } else {
-//             // Clear the label if there are no missing combinations
-//             missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-//         }
-//     } else {
-//         // Clear the label if there are no missing combinations
-//         missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
-//     }
-// }
+        if (missingCombinations.length > 0) {
+            // Update the dynamic label with missing combinations
+            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span> <span style="color: red;">${missingCombinations.join(", ")}</span>`;
+        } else {
+            // Clear the label if there are no missing combinations
+            missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+        }
+    } else {
+        // Clear the label if there are no missing combinations
+        missingCommsLabel.innerHTML = `<span style="color: white;">Missing Comms:</span>`;
+    }
+}
 
 // Add an event listener to the dropdown selector
 document.getElementById("letterSelector").addEventListener("change", async function () {
     const selectedLetter = this.value; // Get the selected letter
     await filterAlgsByLetter(selectedLetter); // Call the filtering method
-});
-
-document.getElementById("resetSessionButton").addEventListener("click", function () {
-    // Update the userDefinedAlgs textbox based on the current selection
-    updateUserDefinedAlgs();
-
-    if (isDrillingMode) {
-        // If in drilling mode, initialize the pairs
-        initializeDrillingPairs();
-    } else {
-        // Otherwise, reset the regular practice state
-        remainingAlgs = [];
-        isFirstRun = true;
-    }
-
-    repetitionCounter = 0;
-    localStorage.setItem("repetitionCounter", repetitionCounter);
-    document.getElementById("repetitionCounter").innerText = `${repetitionCounter}`;
-    document.getElementById("progressDisplay").innerText = "Progress: 0/0";
-
-    nextScramble();
-    console.log("Session reset. Starting a new practice session.");
 });
 
 document.getElementById("connectSmartCubeReplica").addEventListener("click", function () {
@@ -3357,7 +3326,7 @@ function showPairSelectionGrid(setName) {
                 }
 
                 saveStickerState(); // Save the state to localStorage
-                updateUserDefinedAlgs(); // Update the user-defined algorithms
+                //updateUserDefinedAlgs(); // Update the user-defined algorithms
             });
 
             // Append the button to the appropriate row
@@ -3435,7 +3404,23 @@ document.addEventListener("DOMContentLoaded", function () {
     loadFetchedAlgs();
     loadSelectedSets();
     loadStickerState();
+    bindApplyButton();
 });
+
+function bindApplyButton() {
+    const applyButton = document.getElementById("applySelectionsButton");
+    if (applyButton) {
+        applyButton.addEventListener("click", function () {
+            console.log("Applying set/sticker selections to textbox...");
+            updateUserDefinedAlgs(); // This populates the textbox based on selectors.
+            alert("Textbox updated with your selections.");
+
+            // Optionally hide the grid after applying
+            const selectionGrid = document.getElementById("selectionGrid");
+            selectionGrid.style.display = "none";
+        });
+    }
+}
 
 // Function to close the sticker selection grid
 // Close sticker selection grid by pressing "Apply Selection" button
@@ -3446,15 +3431,11 @@ function pressApplySelectionButton() {
     }
 }
 
-// Trigger "Apply Selection" when "Select Sets" is clicked
-document.getElementById("letterSelector").addEventListener("click", function () {
-    pressApplySelectionButton();
-});
+// // Trigger "Apply Selection" when "Select Sets" is clicked
+// document.getElementById("letterSelector").addEventListener("click", function () {
+//     pressApplySelectionButton();
+// });
 
-// Trigger "Apply Selection" when "Start Session" is clicked
-document.getElementById("resetSessionButton").addEventListener("click", function () {
-    pressApplySelectionButton();
-});
 
 function determineCycleType() {
     return currentMode; // Return "corner" or "edge" based on the toggle state
@@ -3530,7 +3511,7 @@ document.addEventListener("DOMContentLoaded", function () {
             saveSelectedSets();
 
             // Update the user-defined algorithms
-            updateUserDefinedAlgs();
+       //     updateUserDefinedAlgs();
 
             console.log("All sets and stickers reset to toggled state.");
         });
@@ -3652,33 +3633,28 @@ async function fetchAndApplyPartialFilter() {
         : 'https://commexportproxy.vercel.app/api/algs?sheet=edges_partial';
 
     try {
-        console.log("Fetching partial algorithm list...");
-
-        // Fetch the partial list
+        console.log("Fetching partial algorithm list to populate textbox...");
         const partialList = await fetchAlgorithms(partialProxyUrl);
 
-        console.log("Partial list fetched:", partialList);
+        if (partialList.length === 0) {
+            alert("No algorithms found in the partial sheet.");
+            return;
+        }
 
-        // Get all keys with non-empty values
-        const keysWithValues = partialList
-            .filter(pair => pair.value && pair.value.trim() !== "")
-            .map(pair => pair.key);
+        // Get the commutators (the 'value' part of the pairs)
+        const commutators = partialList
+            .map(pair => pair.value.trim())
+            .filter(comm => comm !== "");
 
-        console.log("Keys with non-empty values:", keysWithValues);
+        // Directly update the userDefinedAlgs textbox
+        document.getElementById("userDefinedAlgs").value = commutators.join("\n");
 
-        // Update the sticker state using the extracted function
-        updateStickerState(keysWithValues);
+        console.log(`Textbox populated with ${commutators.length} algs from the partial sheet.`);
+        alert("Textbox has been updated with algorithms from the partial filter.");
 
-        // Call the helper method to reload sets and stickers
-        updateSetAndStickerStatePartial();
-
-        // Reload algorithms based on the updated sticker state
-        reloadAlgorithmsBasedOnStickers();
-
-        alert("Sticker selection state updated based on the partial sheet.");
     } catch (error) {
-        console.error("Error fetching or processing the partial algorithm list:", error);
-        alert("Failed to fetch or process the partial algorithm list.");
+        console.error("Error fetching or applying the partial filter:", error);
+        alert("Failed to fetch or apply the partial filter.");
     }
 }
 
