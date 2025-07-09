@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.9.1 - alert on missing pairs"; 
+const APP_VERSION = "v0.9.1 - hanus test"; 
 
 const regularDrillOptions = [
     "klik", "bip",
