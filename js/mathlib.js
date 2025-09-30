@@ -1390,9 +1390,9 @@ var mathlib = (function() {
 		var seed = '' + new Date().getTime();
 		if (typeof crypto != 'undefined' && crypto.getRandomValues) {
 			seed = String.fromCharCode.apply(null, crypto.getRandomValues(new Uint16Array(256)));
-			console.log('[mathlib] use crypto seed', seed);
+		//	console.log('[mathlib] use crypto seed', seed);
 		} else {
-			console.log('[mathlib] use datetime seed', seed);
+		//	console.log('[mathlib] use datetime seed', seed);
 		}
 		setSeed(256, seed);
 

@@ -210,7 +210,7 @@ function updateProxyUrl() {
     } else if (currentMode === "edge") {
         PROXY_URL = 'https://commexportproxy.vercel.app/api/algs?sheet=edges';
     }
-    console.log(`PROXY_URL updated to: ${PROXY_URL}`);
+  //  console.log(`PROXY_URL updated to: ${PROXY_URL}`);
 }
 
 // Call this function on page load to set the initial URL
@@ -393,7 +393,7 @@ function applyMoves(moves) {
     let ori = cube.wcaOrient();
     doAlg(alg.cube.invert(ori), false);
     let startingRotation = ori;
-    console.log("starting rotation: ", startingRotation);
+  //  console.log("starting rotation: ", startingRotation);
 
 
     let fixPivotRotation = "";
@@ -725,7 +725,7 @@ function getRotationMap(moves) {
     let rotationMap = {};
 
     let rotationCube = new RubiksCube();
-    console.log('moves: ', moves);
+   // console.log('moves: ', moves);
     rotationCube.doAlgorithm(moves);
     // let rotationCubeString = rotationCube.toString();
     // console.log(rotationCubeString);
@@ -739,7 +739,7 @@ function getRotationMap(moves) {
 }
 
 function updateVirtualCube(initialRotations = holdingOrientation.value + ' ' + currentPreorientation) {
-    console.log("preorientation: ", currentPreorientation);
+    //console.log("preorientation: ", currentPreorientation);
     vc.cubeString = cube.toString();
     let initialMaskedCubeString = cube.toInitialMaskedString(initialMask.value);
     // console.log(initialMaskedCubeString);
@@ -2682,10 +2682,10 @@ function hideScramble() {
     if (obfuscateScrambleCheckbox.checked) {
         scrambleElement.classList.remove("revealed");
         scrambleElement.classList.add("obfuscated");
-        console.log("Scramble obfuscated.");
+      //  console.log("Scramble obfuscated.");
     } else {
         revealScramble();
-        console.log("Scramble shown by default.");
+      //  console.log("Scramble shown by default.");
     }
 }
 
@@ -2946,7 +2946,7 @@ function loadFetchedAlgs() {
     if (cachedAlgs && lastFetchDate) {
         fetchedAlgs = JSON.parse(cachedAlgs);
         lastFetchLabel.innerHTML = `<span style="color: #00FF00; font-size: 20px;">Last Fetch: ${lastFetchDate}</span>`;
-        console.log("Fetched algorithms loaded:", fetchedAlgs);
+      //  console.log("Fetched algorithms loaded:", fetchedAlgs);
     } else {
         fetchedAlgs = [];
         lastFetchLabel.innerHTML = `<span style="color: red; font-size: 30px;">NO ALGS</span>`;
@@ -3380,7 +3380,7 @@ function loadSelectedSets() {
     const savedSets = localStorage.getItem(getStorageKey("selectedSets"));
     if (savedSets) {
         Object.assign(selectedSets, JSON.parse(savedSets));
-        console.log(`Selected sets loaded for ${currentMode}:`, selectedSets);
+    //    console.log(`Selected sets loaded for ${currentMode}:`, selectedSets);
 
         // Update the visual state of the grid buttons
         document.querySelectorAll(".gridButton").forEach(button => {
@@ -3404,7 +3404,7 @@ function loadStickerState() {
     const savedState = localStorage.getItem(getStorageKey("stickerState"));
     if (savedState) {
         Object.assign(stickerState, JSON.parse(savedState));
-        console.log("Sticker state loaded:", stickerState);
+   //     console.log("Sticker state loaded:", stickerState);
     }
 }
 

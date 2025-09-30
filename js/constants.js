@@ -19,7 +19,6 @@ const hypeDrillOptions = [
     "trzeba ciebie skrócić troszkę!",
     "jazda jazda!",
     "jedziesz ten triceps dalej!",
-    "ding dong! nie pojedziesz tą windą!"
   ];
 
 const SOLVED_STATE = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
