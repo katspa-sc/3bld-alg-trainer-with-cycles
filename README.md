@@ -1,4 +1,4 @@
-# [wilkojc.github.io/3bld-alg-trainer-with-cycles/](https://wilkojc.github.io/3bld-alg-trainer-with-cycles/)
+# [wilkojc.github.io/3bld-alg-trainer-with-cycles/](https://katspa-sc.github.io/3bld-alg-trainer-with-cycles/trainer.html)
 
 Alg Trainer is a website that makes it easy to memorize Rubik's Cube algorithms. 
 

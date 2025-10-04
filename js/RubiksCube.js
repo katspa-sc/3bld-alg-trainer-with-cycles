@@ -2272,11 +2272,11 @@ function parseLettersForTTS(letters) {
 function checkForSpecialSequences() {
     const recentMoves = moveHistory.join("");
 
-    // Example: Detect "R R R R" (R4)
-    if (recentMoves.endsWith("D D D D ") || recentMoves.endsWith("D'D'D'D'")) {
-        console.log("Special sequence detected: D4");
-        triggerSpecialAction("D4");
-    }
+    // this needs to be commented out if we wanna use D8
+    // if (recentMoves.endsWith("D D D D ") || recentMoves.endsWith("D'D'D'D'")) {
+    //     console.log("Special sequence detected: D4");
+    //     triggerSpecialAction("D4");
+    // }
 
     if (recentMoves.endsWith("D D D D D D D D ") || recentMoves.endsWith("D'D'D'D'D'D'D'D'")) {
         console.log("Special sequence detected: D4");
