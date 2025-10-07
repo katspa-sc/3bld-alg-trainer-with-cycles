@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.9.2 - next pair preview"; 
+const APP_VERSION = "v0.9.3 - selection logic and tts fix"; 
 
 const regularDrillOptions = [
     "klik", "bip",

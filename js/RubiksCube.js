@@ -854,19 +854,6 @@ function addAUFs(algArr) {
     return algArr;
 }
 
-// function generateAlgScramble(raw_alg,obfuscateAlg,shouldPrescramble){
-
-//     // if (set == "F3L" && !document.getElementById("userDefined").checked){
-//     //     return Cube.random().solve();
-//     // }
-//     if (!obfuscateAlg){
-//         return alg.cube.invert(raw_alg);
-//     } else if (!shouldPrescramble){//if realscrambles not checked but should not prescramble, just obfuscate the inverse
-//         return obfuscate(alg.cube.invert(raw_alg));
-//     }
-
-// }
-
 function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     const scramble = !obfuscateAlg
         ? alg.cube.invert(raw_alg)
@@ -880,7 +867,7 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
 
     const cycleMapping = cube.getThreeCycleMapping(edgeBufferPosition, cornerBufferPosition);
     if (!cycleMapping) {
-        return scramble;
+        return ["", scramble]; // Return empty cycle letters if not a valid 3-cycle
     }
 
     const bufferPosition = cycleMapping.includes(edgeBufferPosition) ? edgeBufferPosition : cornerBufferPosition;
@@ -890,17 +877,11 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
     let letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
-    if (shouldReadDrillTTS) {
-        speakText(parseLettersForTTS(letters));
-    }
+    // THE TTS CALL HAS BEEN REMOVED FROM HERE
 
     const cycleLetters = letters.join('');
 
     return [cycleLetters, scramble];
-}
-
-function testGenerateAlgScramble() {
-    speakText("A G, A O, O A, A P, E P, U C, D O")
 }
 
 
@@ -1595,6 +1576,11 @@ function nextScramble(displayReady = true) {
         return;
     }
 
+    // Speak the cycle letters for the CURRENT test that is about to be displayed.
+    if (shouldReadDrillTTS && currentAlgTest.cycleLetters) {
+        speakText(parseLettersForTTS(currentAlgTest.cycleLetters.split("")));
+    }
+
     // Now, we generate the *next* upcoming test to be ready for the next scramble.
     upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
 
@@ -1810,12 +1796,6 @@ if (nextScrambleButton)
 const showSolutionButton = document.querySelector('button[name="showSolutionButton"]');
 if (showSolutionButton)
     showSolutionButton.addEventListener('click', displayAlgorithmForPreviousTest);
-
-const testScrambleButton = document.querySelector('button[name="testScrambleButton"]');
-if (testScrambleButton)
-    testScrambleButton.addEventListener('click', testGenerateAlgScramble);
-
-
 
 //CUBE OBJECT
 function RubiksCube() {
