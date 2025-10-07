@@ -760,3 +760,13 @@ div.hidden {
 .apply-button:hover {
   background-color: #45a049;
 }
+
+.upcoming-cycle {
+  font-size: 1.5em; /* A bit smaller than the main cycle */
+  font-weight: normal;
+  color: #cccccc; /* A slightly dimmer color */
+  margin-top: -10px; /* Adjust spacing as needed */
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}

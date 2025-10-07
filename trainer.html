@@ -15,6 +15,7 @@
 
         <p id="scramble" class="scramble" onclick="revealScramble(); copyScrambleAndCycle('scramble', 'cycle')">Scramble</p>
         <p id="cycle" class="cycle" onclick="copyCyclePositions()">Cycle</p>
+        <p id="upcoming_cycle" class="upcoming-cycle">Next</p>
         <!-- TODO ADD CONDITIONAL OBFUSCATION -->
         <div class=column_left>
 
@@ -208,7 +209,7 @@
                 <p id="algdisp" class=algdisp>Solution</p>
             </div> -->
 
-            <div id="controls">
+            <div id="controls" class="hidden">
                 <button id="goodButton" style="background-color: green; color: white;">Good</button>
                 <button id="badButton" style="background-color: red; color: white;">Bad</button>
                 <button id="connectSmartCube" name="connectSmartCube">Connect</button>

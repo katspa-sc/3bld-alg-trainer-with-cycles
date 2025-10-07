@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.9.1 - hanus test"; 
+const APP_VERSION = "v0.9.2 - next pair preview"; 
 
 const regularDrillOptions = [
     "klik", "bip",

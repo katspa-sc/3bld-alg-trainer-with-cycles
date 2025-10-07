@@ -1,5 +1,7 @@
 let previousScramble = "";
 let previousCycle = "";
+let sessionQueue = [];
+let upcomingAlgTest = null;
 
 function tryNotify() {
     const options = isHypeMode ? hypeDrillOptions : regularDrillOptions; // Use hype or regular options
@@ -107,9 +109,11 @@ function initializeDrillingPairs(algsFromTextarea) {
 }
 
 function initializeSession() {
+    sessionQueue = []; // Clear the queue at the start of a new session
+    upcomingAlgTest = null; // Clear any stored upcoming test
+
     if (isDrillingMode) {
         const boxAlgs = document.getElementById("userDefinedAlgs").value;
-
         const cleanedAlgs = boxAlgs.split("\n").filter(alg => alg.trim() !== "");
 
         if (cleanedAlgs.length === 0) {
@@ -117,10 +121,17 @@ function initializeSession() {
             return;
         }
 
-        initializeDrillingPairs(cleanedAlgs); // Pass the list to the drill initializer
+        initializeDrillingPairs(cleanedAlgs); // This populates the global `drillingPairs` array
+        sessionQueue = drillingPairs.flat(); // Flatten the pairs into a single, ordered queue
         isFirstDrillRun = true;
     } else {
-        remainingAlgs = []; // This will be repopulated in `randomFromList`
+        const algList = createAlgList();
+        // Shuffle the list of algorithms to create a random, but sequential, order
+        for (let i = algList.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [algList[i], algList[j]] = [algList[j], algList[i]];
+        }
+        sessionQueue = algList; // This is now our session's queue
         isFirstRun = true;
     }
 
@@ -943,24 +954,19 @@ function correctRotation(alg) {
     return alg + " " + ori;
 }
 
-function generateAlgTest() {
+function generateAlgTest(rawAlgStr) {
+    if (!rawAlgStr) {
+        return null; // Return null if no algorithm string is provided
+    }
 
     var obfuscateAlg = document.getElementById("realScrambles").checked;
     var shouldPrescramble = document.getElementById("prescramble").checked;
     var randAUF = document.getElementById("randAUF").checked;
 
-    var algList = createAlgList();
-    updateAlgsetStatistics(algList);
-    // if (shouldRecalculateStatistics){
-    //     updateAlgsetStatistics(algList);
-    //     shouldRecalculateStatistics = false;
-    // }
-    var rawAlgStr = randomFromList(algList);
     var rawAlgs = rawAlgStr.split("!");
     rawAlgs = fixAlgorithms(rawAlgs);
 
-    //Do non-randomized mirroring first. This allows a user to practise left slots, back slots, front slots, rights slots
-    // etc for F2L like algsets
+    //Do non-randomized mirroring first.
     if (mirrorAllAlgs.checked && !randomizeMMirror.checked) {
         rawAlgs = mirrorAlgsAcrossAxis(rawAlgs, axis = "M");
     }
@@ -998,6 +1004,7 @@ function generateAlgTest() {
     var algTest = new AlgTest(cycleLetters, rawAlgs, scramble, solutions, preorientation, solveTime, time, visualCubeView, orientRandPart);
     return algTest;
 }
+
 function testAlg(algTest, addToHistory = true) {
 
     var scramble = document.getElementById("scramble");
@@ -1182,55 +1189,51 @@ let lastSelectedAlgorithm = null;
 let remainingAlgs = []; // Stores the remaining algorithms for the current cycle
 let isFirstRun = true; // Flag to track the first run
 
-function randomFromList(set) {
-    if (isDrillingMode) {
-        // --- DRILLING (PAIRED) LOGIC ---
-        if (isSecondInPair) {
-            // Serve the second (inverse) algorithm of the current pair.
-            isSecondInPair = false; // Reset for the next pair
-            document.getElementById("progressDisplay").innerText = `Progress: ${totalDrillPairs - drillingPairs.length}/${totalDrillPairs}`;
-            return currentDrillingPair[1];
-        } else {
-            // Serve the first algorithm of a new pair.
-            if (drillingPairs.length === 0) {
-                // We've completed the set. Re-initialize.
-                if (!isFirstDrillRun) { // Fix: Don't play jingle on the very first run
-                    const jingle = document.getElementById("completionJingle");
-                    jingle.volume = 0.5
-                    jingle.play();
-                }
-                isFirstDrillRun = false; // It's no longer the first run
-                initializeDrillingPairs();
-                if (drillingPairs.length === 0) return null;
+function getNextAlgFromSession() {
+    // Check if the queue is empty and repopulate if needed
+    if (sessionQueue.length === 0) {
+        if (isDrillingMode) {
+            if (!isFirstDrillRun) {
+                const jingle = document.getElementById("completionJingle");
+                jingle.volume = 0.5;
+                jingle.play();
             }
-
-            currentDrillingPair = drillingPairs.pop();
-            isSecondInPair = true;
-            document.getElementById("progressDisplay").innerText = `Progress: ${totalDrillPairs - drillingPairs.length - 1}/${totalDrillPairs}`;
-            return currentDrillingPair[0];
-        }
-    } else {
-        // --- REGULAR (EXISTING) LOGIC ---
-        if (!set || set.length === 0) {
-            alert("No algorithms available. Please add algorithms to the list.");
-            return null;
-        }
-        if (remainingAlgs.length === 0) {
-            remainingAlgs = [...set];
+            isFirstDrillRun = false;
+            // Re-initialize and flatten drilling pairs to restart the cycle
+            const boxAlgs = document.getElementById("userDefinedAlgs").value.split("\n").filter(alg => alg.trim() !== "");
+            initializeDrillingPairs(boxAlgs);
+            sessionQueue = drillingPairs.flat();
+            if (sessionQueue.length === 0) return null;
+        } else { // Regular Mode
             if (!isFirstRun) {
                 const jingle = document.getElementById("completionJingle");
-                jingle.volume = 0.5
+                jingle.volume = 0.5;
                 jingle.play();
             }
             isFirstRun = false;
+            // Re-initialize and re-shuffle the list to restart the cycle
+            const algList = createAlgList();
+            if (algList.length === 0) return null;
+            for (let i = algList.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [algList[i], algList[j]] = [algList[j], algList[i]];
+            }
+            sessionQueue = algList;
         }
-        const randIndex = Math.floor(Math.random() * remainingAlgs.length);
-        const selectedAlgorithm = remainingAlgs.splice(randIndex, 1)[0];
-        const currentIndex = set.length - remainingAlgs.length;
-        const totalAlgs = set.length;
-        document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
-        return selectedAlgorithm;
     }
+
+    // Update progress display based on the mode
+    if (isDrillingMode) {
+         const completedPairs = totalDrillPairs - Math.ceil(sessionQueue.length / 2);
+         document.getElementById("progressDisplay").innerText = `Progress: ${completedPairs}/${totalDrillPairs}`;
+    } else {
+        const totalAlgs = createAlgList().length;
+        const currentIndex = totalAlgs - sessionQueue.length;
+        document.getElementById("progressDisplay").innerText = `Progress: ${currentIndex}/${totalAlgs}`;
+    }
+
+    // Return the next item from the queue, removing it
+    return sessionQueue.shift();
 }
 
 var timeArray = [];
@@ -1576,23 +1579,49 @@ function nextScramble(displayReady = true) {
         document.getElementById("timer").innerHTML = 'Ready';
     }
 
-    // Update the last cycle info before generating a new scramble
     updateLastCycleInfo();
-
-    // Hide the scramble
     hideScramble();
 
+    // On the first run, upcomingAlgTest will be null, so we generate the first one.
+    if (!upcomingAlgTest) {
+        upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
+    }
+
+    // The "upcoming" test from the last turn now becomes the "current" one.
+    const currentAlgTest = upcomingAlgTest;
+
+    // If there is no current test, it means the session is empty or complete.
+    if (!currentAlgTest) {
+        document.getElementById("scramble").innerHTML = "Session Complete!";
+        document.getElementById("cycle").innerHTML = "";
+        document.getElementById("upcoming_cycle").innerHTML = "";
+        return;
+    }
+
+    // Now, we generate the *next* upcoming test to be ready for the next scramble.
+    upcomingAlgTest = generateAlgTest(getNextAlgFromSession());
+
+    // Update the DOM to show the current and upcoming cycle letters.
+    document.getElementById("cycle").innerHTML = currentAlgTest.cycleLetters;
+    const upcomingCycleElement = document.getElementById("upcoming_cycle");
+
+    if (upcomingAlgTest) {
+        upcomingCycleElement.innerHTML = upcomingAlgTest.cycleLetters;
+    } else {
+        // This is the last algorithm in the cycle.
+        upcomingCycleElement.innerHTML = "End";
+    }
+
+    // Run the test for the current algorithm, which updates the cube and history.
+    testAlg(currentAlgTest);
+
     if (isUsingVirtualCube()) {
-        testAlg(generateAlgTest());
         if (isIncludeRecognitionTime) {
             startTimer();
         }
-    } else {
-        testAlg(generateAlgTest());
     }
 
     historyIndex = algorithmHistory.length - 1;
-    // Reset the toggle feedback flag
     toggleFeedbackUsed = false;
 }
 
