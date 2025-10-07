@@ -38,7 +38,6 @@ let currentDrillingPair = null;
 let isSecondInPair = false;
 let totalDrillPairs = 0;
 
-// --- Add/Modify these variables ---
 let isFirstDrillRun = true;  // To fix the initial jingle problem
 let shouldReadDrillTTS = true; // To control TTS readouts during drills
 
@@ -891,11 +890,9 @@ function generateAlgScramble(raw_alg, obfuscateAlg, shouldPrescramble) {
     const filteredCycle = rearrangedCycle.filter(pos => pos !== bufferPosition);
     let letters = filteredCycle.map(pos => POSITION_TO_LETTER_MAP[pos]);
 
-    // --- TTS CONTROL LOGIC ---
     if (shouldReadDrillTTS) {
         speakText(parseLettersForTTS(letters));
     }
-    // --- END TTS CONTROL ---
 
     const cycleLetters = letters.join('');
 
@@ -3333,6 +3330,7 @@ function showPairSelectionGrid(setName) {
             const button = document.createElement("button");
             button.className = "pairButton";
             button.textContent = pair;
+            button.dataset.pair = pair; // Add data attribute for easy selection
 
             // Determine which letter to use for coloring
             const colorLetter = pair[0] === setName ? pair[1] : pair[0];
@@ -3345,29 +3343,40 @@ function showPairSelectionGrid(setName) {
             // Apply the untoggled state
             button.classList.toggle("untoggled", !stickerState[pair]);
 
-            // Add click event listener to toggle the state
-            button.addEventListener("click", () => {
-                // Toggle the state for both directions of the pair
-                const reversePair = `${pair[1]}${pair[0]}`;
-                const newState = !stickerState[pair];
-                stickerState[pair] = newState;
-                stickerState[reversePair] = newState;
+            // Determine if the button is on the left or right side
+            const isLeftSide = pair.startsWith(setName);
 
-                // Update the appearance of the button
+            // Add click event listener with conditional logic
+            button.addEventListener("click", () => {
+                const newState = !stickerState[pair];
+
+                // Rule 1: Always toggle the state of the clicked button
+                stickerState[pair] = newState;
                 button.classList.toggle("untoggled", !newState);
 
-                // Update the appearance of the reverse pair button if it exists
-                const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
-                if (reverseButton) {
-                    reverseButton.classList.toggle("untoggled", !newState);
-                }
+                // Rule 2: If a left-side button is clicked, also toggle the right-side counterpart
+                if (isLeftSide) {
+                    const reversePair = `${pair[1]}${pair[0]}`;
+                    stickerState[reversePair] = newState; // Sync the state
 
-                saveStickerState(); // Save the state to localStorage
-                //updateUserDefinedAlgs(); // Update the user-defined algorithms
+                    // Find and visually update the corresponding right-side button
+                    const reverseButton = document.querySelector(`.pairButton[data-pair="${reversePair}"]`);
+                    if (reverseButton) {
+                        // Explicitly set the class based on the new state to ensure synchronization
+                        if (newState) {
+                            reverseButton.classList.remove("untoggled");
+                        } else {
+                            reverseButton.classList.add("untoggled");
+                        }
+                    }
+                }
+                // If a right-side button is clicked, no further action is needed.
+
+                saveStickerState(); // Save the updated state to localStorage
             });
 
             // Append the button to the appropriate row
-            if (pair[0] === setName) {
+            if (isLeftSide) {
                 leftRow.appendChild(button);
             } else {
                 rightRow.appendChild(button);
@@ -3386,7 +3395,6 @@ function showPairSelectionGrid(setName) {
     // Show the grid
     pairSelectionGrid.style.display = "block";
 }
-
 // Add event listener to the "Apply Selection" button
 document.getElementById("applyPairSelectionButton").addEventListener("click", function () {
     const pairSelectionGrid = document.getElementById("pairSelectionGrid");
@@ -3448,13 +3456,26 @@ function bindApplyButton() {
     const applyButton = document.getElementById("applySelectionsButton");
     if (applyButton) {
         applyButton.addEventListener("click", function () {
-            console.log("Applying set/sticker selections to textbox...");
-            updateUserDefinedAlgs(); // This populates the textbox based on selectors.
-            alert("Textbox updated with your selections.");
+            // Get the pair selection grid element
+            const pairSelectionGrid = document.getElementById("pairSelectionGrid");
 
-            // Optionally hide the grid after applying
+            // If the pair selection grid is currently displayed, handle its closure and save its state first.
+            if (pairSelectionGrid && pairSelectionGrid.style.display !== "none") {
+                pairSelectionGrid.style.display = "none"; // Hide the grid
+                saveStickerState(); // Save the state of the selections made in the pair grid
+                console.log("Pair selection grid closed and state saved.");
+            }
+
+            // Continue with the original logic for the "applySelectionsButton"
+            console.log("Applying set/sticker selections to textbox...");
+            updateUserDefinedAlgs(); // This populates the textbox based on the combined set and sticker selections.
+     //       alert("Textbox updated with your selections.");
+
+            // Hide the main selection grid after applying
             const selectionGrid = document.getElementById("selectionGrid");
-            selectionGrid.style.display = "none";
+            if (selectionGrid) {
+                selectionGrid.style.display = "none";
+            }
         });
     }
 }
