@@ -770,3 +770,14 @@ div.hidden {
   text-align: center;
   font-family: Arial, sans-serif;
 }
+
+body {
+  /* This tells the body to ALWAYS animate background color changes over 0.3 seconds. */
+  /* This will apply to both the fade-in AND the fade-out. */
+  transition: background-color 0.4s ease-in-out;
+}
+
+body.solve-success-flash {
+  /* This class now ONLY sets the target color. The transition is handled above. */
+  background-color: #0b4300;
+}

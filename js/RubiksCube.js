@@ -784,25 +784,25 @@ function doAlg(algorithm, updateTimer = false) {
         }
     }
 
+    // Check if the cube is solved while the timer is running
     if (timerIsRunning && cube.isSolved(initialMask.value) && isUsingVirtualCube()) {
         if (updateTimer) {
             stopTimer(); // Log the time
             markCurrentCommAsGood();
+            showSuccessFeedback();
 
             if (isDrillingMode) {
-                // In drilling mode, retry the SAME alg
                 retryDrill();
             } else {
-                // In regular mode, get a new random alg
                 nextScramble();
             }
         } else {
             markCurrentCommAsGood();
             stopTimer();
+            showSuccessFeedback();
         }
     }
 }
-
 
 function getRandAuf(letter) {
     var rand = Math.floor(Math.random() * 4);//pick 0,1,2 or 3
@@ -2939,7 +2939,10 @@ function loadCachedAlgs() {
 }
 
 function saveFetchedAlgs(algs) {
-    const currentDate = new Date().toLocaleString(); // Get current date and time
+    const currentDate = new Date().toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short"
+    });
     localStorage.setItem(getStorageKey("fetchedAlgs"), JSON.stringify(algs));
     localStorage.setItem(getStorageKey("lastFetchDate"), currentDate);
     lastFetchLabel.innerHTML = `<span style="color: #00FF00; font-size: 20px">Last Fetch: ${currentDate}</span>`;
@@ -3763,3 +3766,50 @@ async function fetchAlgorithms(proxyUrl) {
 }
 
 document.getElementById("applyPartialFilterButton").addEventListener("click", fetchAndApplyPartialFilter);
+
+/**
+ * Provides visual feedback for a successful solve by flashing
+ * the background green and changing the timer color temporarily.
+ */
+function showSuccessFeedback() {
+    if (!isVisualFeedbackEnabled) {
+        return;
+    }
+    const body = document.body;
+    const timerElement = document.getElementById("timer");
+
+    // 1. Add the CSS class to the body to trigger the green background flash
+    body.classList.add("solve-success-flash");
+
+    // 2. Change the timer's text color for extra reinforcement
+   // timerElement.style.color = "#66bb6a"; // A lighter, vibrant green
+
+    // 3. Set a timer to automatically remove the feedback after a short duration
+    setTimeout(() => {
+        body.classList.remove("solve-success-flash"); // Revert background
+  //      timerElement.style.color = "white";             // Revert timer color
+    }, 400); // The feedback will be visible for 350 milliseconds (0.35s)
+}
+
+// 1. Get the new checkbox element from the DOM
+const visualFeedbackCheckbox = document.getElementById("visualFeedbackCheckbox");
+
+// 2. Load the saved state from localStorage. Default to 'true' (enabled) if it's not set.
+// Note: We are now defaulting it to true, so users see the new feature immediately.
+const savedVisualFeedback = localStorage.getItem("visualFeedbackEnabled");
+let isVisualFeedbackEnabled = savedVisualFeedback === null ? true : savedVisualFeedback === "true";
+
+// 3. Set the initial state of the checkbox to match what we loaded
+visualFeedbackCheckbox.checked = isVisualFeedbackEnabled;
+localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled); // Save default if it was null
+
+// 4. Add an event listener to handle when the user clicks the checkbox
+visualFeedbackCheckbox.addEventListener("change", function () {
+    // Update our global variable with the new state
+    isVisualFeedbackEnabled = this.checked;
+    
+    // Save the new state to localStorage so it's remembered
+    localStorage.setItem("visualFeedbackEnabled", isVisualFeedbackEnabled);
+
+    console.log(`Visual feedback flash switched to: ${isVisualFeedbackEnabled ? "enabled" : "disabled"}`);
+});
